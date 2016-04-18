@@ -155,6 +155,7 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
     try:  # catch keyboard interrupts and system exits, ensure CSV data is saved.
 
         if type(wait) is int:  # if user specified to wait for time.
+            # TODO BUG TimeflagHang: When run with -t, ping() does not terminate processi after time.
             print('Pinging %s for %s seconds.\nThe longer the time pings are sent for, the larger the resulting CSV '
                   'file will be.' % (address, wait))
             totaltime = 0
