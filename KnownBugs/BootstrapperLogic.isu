@@ -1,4 +1,3 @@
 TOP:  |  ./PingStats.py
-344  |   Documenting all of the ways the bootstrap logic tree fails would'nt be worth the time.
-345  |   Bootstrap logic currently fails on destination designation.
-
+362  |   Documenting all of the ways the bootstrap logic tree fails would'nt be worth the time.
+363  |   Bootstrap logic currently fails on destination designation.
