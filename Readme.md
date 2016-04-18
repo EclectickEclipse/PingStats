@@ -24,3 +24,8 @@ The build script also has support for MacOSx's "say" functionality. If you are n
 these lines. By default, they are left uncommented.
 
     say "GIVEN TTS OUTPUT"
+    
+## PingStats contribution
+
+To get involved in contributino to PingStats, please create a branch for your new feature or bugfix, and create pull
+requests to the master to submit.
