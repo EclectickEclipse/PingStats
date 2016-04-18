@@ -313,7 +313,8 @@ def read(filepos):
                     ax1.clear()
                     ax1.plot(x, y)
 
-                # TODO BUG MakeplotMissingFrame: read.makeplot() does not show a plot, and does not hang for animation.
+                # TODO BUG MakeplotMissingFrame: read.makeplot() does not show a plot.
+                # TODO BUG MakeplotMissingFrame: read.makeplot() does not hang for animation.
                 ani = animation.FuncAnimation(fig, animate, interval=1000)
                 # DEBUG
                 # sys.stderr.write('Showing plot \n')
