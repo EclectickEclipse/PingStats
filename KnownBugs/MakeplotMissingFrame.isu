@@ -1,3 +1,0 @@
-0 | TOP:  |  ./PingStats.py
-1 | 316  |   read.makeplot() does not show a plot.
-2 | 317  |   read.makeplot() does not hang for animation.
