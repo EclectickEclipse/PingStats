@@ -1,2 +1,0 @@
-1 | TOP:  |  ./PingStats.py
-2 | 158  |   When run with -t, ping() does not terminate processi after time.
