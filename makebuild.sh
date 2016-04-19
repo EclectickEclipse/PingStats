@@ -2,6 +2,8 @@
 # Requires options BUILDFILE, BUILDNAME, Distribute option
 # BUILDNAME should be the same as the BUILDFILE, without .py...
 
+# TODO BUG FileCreationError: Upon execution, creates a random blank file titled either 1 or 2. REQUIRES BUG REPORT
+
 if [ $(cat $1 | grep -c "# TODO") > 1 ]; then
     echo "There are TODO's that require attention, would you like to review them? [y/n]"
     say "There are TODO's that require your attention!"
