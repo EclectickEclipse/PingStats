@@ -1,3 +1,4 @@
 1 | TOP:  |  ./makebuild.sh
-2 | 5  |   Bug was caused the statement if [ $(cat $1 | grep -c "# TODO") > 0] was outputting the results of grep to ./0
-3 | 6  |   **CLOSED**
+2 | 5  |   Bug was caused by the statement "if [ $(cat $1 | grep -c "# TODO") > 0]" was outputting the results of grep to ./0
+3 | 6  |   Review Pull Request #9 for full bug report.
+4 | 7  |   **CLOSED**
