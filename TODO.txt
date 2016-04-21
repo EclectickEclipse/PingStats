@@ -2,18 +2,17 @@ TODO MASTER
 
 ./PingStats.py
 # TODO Build an interactive mode.
-# TODO Further document bugs.
 # TODO Further document preamble.
-    # TODO Build parameter checks into function, make bootstrap easier to read. Its getting very excessive.
-    # TODO Restructure main logic to parse program arguments.
-            # TODO BUG TimeflagHang: When run with -t, ping() does not terminate processi after time.
-    # TODO Further define read90
+    # TODO Should the arguments be handled within there own functions? The method used provides garunteed usecases...
+            # TODO BUG TimeflagHang: Need to re write logic to enable asynchronus dataparsing of the csvfile.
+            # TODO BUG TimeflagHang: **CLOSED**
+                    # TODO Re structure standard regular ping usage logic. Currently spawns limitless processi.
+    # TODO Further define read()
                 # TODO Populate list of minutes elapsed
-                # TODO Define animation function.
                 # TODO BUG MakeplotMissingFrame: read.makeplot() does not show a plot.
                 # TODO BUG MakeplotMissingFrame: read.makeplot() does not hang for animation.
-    # TODO BUG BootstrapperLogic: Documenting all of the ways the bootstrap logic tree fails would'nt be worth the time.
-    # TODO BUG BootstrapperLogic: Bootstrap logic currently fails on destination designation.
+    # TODO BUG BootstrapperLogic: "Fixed" all the bugs by removing the logic and ensuring ping() handled the arguments.
+    # TODO BUG BootstrapperLogic: **CLOSED**
 
 ./makebuild.sh
 # TODO BUG FileCreationError: Bug was caused by the statement "if [ $(cat $1 | grep -c "# TODO") > 0]" was outputting the results of grep to ./0

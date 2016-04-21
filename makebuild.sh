@@ -39,5 +39,4 @@ echo "Done!"
 say "Done!"
 echo ""
 echo "Testing build..."
-./dist/$2 -v
-
+./dist/$2 -v facebook.com # supplied address to avoid errors at runtime, and enable the software to display version.

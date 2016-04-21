@@ -35,7 +35,6 @@ except OSError as e:
     sys.stderr.write('Could not load matplotlib!\n')
 
 # TODO Build an interactive mode.
-# TODO Further document bugs.
 # TODO Further document preamble.
 
 version = '0.07.03a'
@@ -45,8 +44,7 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions,
 
 # Run the main functionality.
 
-def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False, pingfrequency=60):
-    # TODO Build parameter checks into function, make bootstrap easier to read. Its getting very excessive.
+def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False, pingfrequency=None):
     """ Runs a ping and collects statistics.
     :param address: The address to ping.
     :param customarg: A string with user specified custom arguments.
@@ -56,9 +54,31 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
     :param nofile: Flag this option to disable CSV output.
     :param pingfrequency: The amount of time between spawning new ping processi.
     """
+    # Conversion handlers.
+    # TODO Should the arguments be handled within there own functions? The method used provides garunteed usecases...
+
+    # Address handler.
     if address is None:  # ensure a host was specified.
-        print('Please include at least one option...\nType -h for help...')
+        sys.stderr.write('Please include at least one option...\nType -h for help...\n')
         quit()  # Break
+
+    # Wait handler.
+    if type(wait) is str:
+        try:
+            wait = int(wait)
+        except ValueError:
+            sys.stderr.write('Please enter numbers only for the -t flag.\n')
+            quit()
+
+    # handle pingfrequency argument logic.
+    if pingfrequency is None:
+        pingfrequency = 60
+    elif type(pingfrequency) is str:
+        try:
+            pingfrequency = int(pingfrequency)
+        except ValueError:  # Handle non integer values....
+            sys.stderr.write('Please specify a number with the -f option.\n')
+            exit()  # break
 
     def parsearg(custom_argument):
         """ Creates an argument for the subprocess.Popen object.
@@ -69,7 +89,7 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
         if custom_argument is not None:
             return ['ping', shlex.split(custom_argument), address]
         else:
-            return ['ping', '-c 1', address]
+            return ['ping', address]
 
     def ping(argument, file):
         """ Pings a host.
@@ -80,10 +100,11 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
         """
         return subprocess.Popen(argument, stdout=file)
 
-    def buildfiles(path, name=None):
+    def buildfiles(path, name):
         """ Builds the files used for processing.
 
         :param path: The path to output the files to.
+        :param name: The custom name supplied by the user.
         :return: A tuple containing the csvfile object and the outfile object.
         """
         try:
@@ -109,14 +130,14 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
             print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
             quit()  # break
 
-    csvfile, outfile = buildfiles(path, name)
+    csvfile, outfile = buildfiles(path, name)  # build csvfile and outfile.
 
     def writeCsv(file, row):
         """ Writes a row of CSV data.
 
         :param file: The file object to write to.
         :param row: The row to be saved.
-        :return: The file object passed to the function.
+        :return: The row written by the process.
         """
         cwriter = csv.writer(file)
         cwriter.writerow(row)
@@ -150,36 +171,36 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
                     yield row
 
     # Main Logic
-    # TODO Restructure main logic to parse program arguments.
 
     try:  # catch keyboard interrupts and system exits, ensure CSV data is saved.
-
-        if type(wait) is int:  # if user specified to wait for time.
-            # TODO BUG TimeflagHang: When run with -t, ping() does not terminate processi after time.
-            print('Pinging %s for %s seconds.\nThe longer the time pings are sent for, the larger the resulting CSV '
-                  'file will be.' % (address, wait))
-            totaltime = 0
-            while totaltime < wait:
-                timestart = time.time()
+        if wait is not None:
+            # This implementation does not allow the process to read the outfile of the ping() process until after the
+            # ping process has completed execution. This is not really a problem, but it would be better to have the
+            # process read the file as each line is written.
+            # TODO BUG TimeflagHang: Need to re write logic to enable asynchronus dataparsing of the csvfile.
+            # TODO BUG TimeflagHang: **CLOSED**
+            if type(wait) is int:  # if user specified to wait for time.
+                print('Pinging %s for %s seconds.\nThe longer the time pings are sent for, the larger the resulting CSV'
+                      ' file will be.' % (address, wait))
 
                 process = ping(parsearg(customarg), outfile)
-                time.sleep(pingfrequency)  # hang to ensure user specified ping frequency.
+                time.sleep(wait)  # wait for user specified time.
+                process.kill()
                 while process.poll() is None:
-                    pass  # hang for process competion.
+                    pass
 
                 if not nofile:
+                    print('\n--------\nConverting ping statistics to CSV data and outputting to a file...')
                     with open(outfile.name) as datafile:
                         for row in dataparser(datafile):
-                            writeCsv(csvfile, row)
+                            print('Output: \'%s\' to %s.' % (writeCsv(csvfile, row), csvfile.name))
 
-                totaltime += time.time() - timestart
+                print('\n--------\nExiting...')
 
             else:
-                if not nofile:
-                    print('Quiting Ping and saving stats to a CSV file.')
-                    with open(outfile.name) as datafile:
-                        for row in dataparser(datafile):
-                            writeCsv(csvfile, row)
+                # This notification is handled by the conversion handler.
+                # sys.stderr.write('Please use a number representing seconds with the -t flag.\n')
+                exit()  # break
 
         else:  # else ping.
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
@@ -193,8 +214,10 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
                     process = ping(parsearg(customarg), outfile)
                     processes.append(process)
                     time.sleep(pingfrequency)  # hang to ensure user specified ping frequency.
+                    # TODO Re structure standard regular ping usage logic. Currently spawns limitless processi.
+
                     while process.poll() is None:
-                        pass  # hang for process competion.
+                        pass  # hang for process completion.
 
                     if not nofile:
                         with open(outfile.name) as datafile:
@@ -219,7 +242,7 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
 
                     break
 
-    except (KeyboardInterrupt, SystemExit):
+    except KeyboardInterrupt:
         print('Quiting Ping and saving stats to a CSV file.')
         if not nofile:
             with open(outfile.name) as datafile:
@@ -239,7 +262,7 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
 # Read CSV logs.
 
 def read(filepos):
-    # TODO Further define read90
+    # TODO Further define read()
     """ Parses through a PingStats generated CSV file.
 
     :param filepos: The position of the file.
@@ -288,13 +311,11 @@ def read(filepos):
             psuccess = (1.0 * (len(success) / len(table)) * 100)
             pfailed = (1.0 * (len(failed) / len(table)) * 100)
 
-
             averagettl = 1.0 * (ttlssum / len(ttls))
             averagetime = 1.0 * (timessum / len(times))
 
             def makeplot():
                 # TODO Populate list of minutes elapsed
-                # TODO Define animation function.
                 # Should this be its own function? Possibly class? Use of matplotlib inherently makes this "function"
                 # hard to call a function. I feel as if it would be best to use an object instead. This would provide
                 # easier modification and interaction later down the line.
@@ -341,7 +362,7 @@ def getversion():
 if __name__ == '__main__':
     # Define program arguments.
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--address', help='The IP address to ping.')
+    parser.add_argument('address', help='The IP address to ping.')
     parser.add_argument('-c', '--customarg', help='Define your own argument for the ping.'
                                                   'If you are experiencing issues with pings ending before intended,'
                                                   'try using \'-c \"-c 999999999\"\' to spawn a process with an '
@@ -355,239 +376,16 @@ if __name__ == '__main__':
                                                  'breaking down the statistics of the pings.')
     parser.add_argument('-t', '--time', help='The time to wait before killing the process in seconds.')
     parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
-    parser.add_argument('-V', '--verbose', help='Flag this option for verbosity during option parsing logic.',
-                        action='store_true')
-    parser.add_argument('--debug', help='Flag this to enable debugging. As of 1.5, it prevents the program from '
-                                        'outputting a CSV file.', action='store_true')
     parsed = parser.parse_args()
 
     # Parse argument logic for ping().
-    # TODO BUG BootstrapperLogic: Documenting all of the ways the bootstrap logic tree fails would'nt be worth the time.
-    # TODO BUG BootstrapperLogic: Bootstrap logic currently fails on destination designation.
-    # Seriously tho. Why is the program doing any of this? It could just as easily pass the parsed args to ping() and
-    # read() respectively.
-    sys.stderr.write("\nAs of Version %s, this program does not have very good functionality outside of pinging "
-                     "addresses. I.e, -t produces a working ping, but does not hang for time.\nThis requires a major "
-                     "restructuring of the \'if __name__ == \'__main__\':\' boostrapping logic.\nThis is coming in "
-                     "version 1.07.04a(ish(c)).\n\n" % version)
-    if parsed.readfile is None and not parsed.version:  # If not single operation options,
-
-        if parsed.address is not None:  # address
-            if parsed.verbose:
-                print('have address')
-
-            if parsed.destination is not None:  # address, destination
-                if parsed.verbose:
-                    print('have destination')
-
-                if parsed.name is not None:  # address, destination, name
-                    if parsed.verbose:
-                        print('have name')
-
-                    if parsed.time is not None:  # address, destination, name, time
-                        if parsed.verbose:
-                            print('have time')
-
-                        if parsed.pingfrequency is not None:  # address, destination, name, time, pingfrequency
-                            if parsed.verbose:
-                                print('have frequency')
-
-                            if parsed.customarg is not None:  # address, destination, name, time, pingfrequency, arg
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time),
-                                     path=parsed.destination, name=parsed.name, pingfrequency=int(parsed.pingfrequency))
-
-                            else:  # address, destination, name time, pingfrequency
-
-                                ping(parsed.address, wait=int(parsed.time), path=parsed.destination, name=parsed.name,
-                                     pingfrequency=int(parsed.pingfrequency))
-
-                        else:
-
-                            if parsed.customarg is not None:  # address, destination, name, time, argument
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time),
-                                     path=parsed.destination, name=parsed.name)
-
-                            else:  # address, destination, name, time
-
-                                ping(parsed.address, wait=int(parsed.time), path=parsed.destination, name=parsed.name,
-                                     nofile=parsed.debug)
-
-                    else:  # address, destination, name
-
-                        if parsed.pingfrequency is not None:  # address, destination, name, pingfrequency
-                            if parsed.verbose:
-                                print('have frequency')
-
-                            if parsed.customarg is not None:  # address, destination, name, pingfrequency, arg
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, path=parsed.destination,
-                                     name=parsed.name, pingfrequency=int(parsed.pingfrequency))
-
-                            else:  # address, destination, name pingfrequency
-
-                                ping(parsed.address, path=parsed.destination, name=parsed.name,
-                                     pingfrequency=int(parsed.pingfrequency))
-                        else:
-
-                            if parsed.customarg is not None:  # address, destination, name, time, argument
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, path=parsed.destination,
-                                     name=parsed.name)
-
-                            else:  # address, destination, name
-
-                                ping(parsed.address, path=parsed.destination, name=parsed.name, nofile=parsed.debug)
-
-                else:  # address, destination
-                    if parsed.time is not None:  # address, destination, time
-                        if parsed.verbose:
-                            print('have time')
-
-                        if parsed.pingfrequency is not None:  # address, destination time, pingfrequency
-                            if parsed.verbose:
-                                print('have frequency')
-
-                            if parsed.customarg is not None:  # address, destination, time, pingfrequency, arg
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time),
-                                     path=parsed.destination, pingfrequency=int(parsed.pingfrequency))
-
-                            else:  # address, destination, time, pingfrequency
-
-                                ping(parsed.address, wait=int(parsed.time), path=parsed.destination,
-                                     pingfrequency=int(parsed.pingfrequency))
-
-                        else:
-
-                            if parsed.customarg is not None:  # address, destination, time, argument
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time),
-                                     path=parsed.destination, name=parsed.name)
-
-                            else:  # address, destination
-                                ping(parsed.address, path=parsed.destination)
-
-            else:  # address
-                if parsed.name is not None:  # address, name
-                    if parsed.verbose:
-                        print('have name')
-
-                    if parsed.time is not None:  # address, name, time
-                        if parsed.verbose:
-                            print('have time')
-
-                        if parsed.pingfrequency is not None:  # address, name, time, pingfrequency
-                            if parsed.verbose:
-                                print('have frequency')
-
-                            if parsed.customarg is not None:  # address, name, time, pingfrequency, arg
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time),
-                                     name=parsed.name, pingfrequency=int(parsed.pingfrequency))
-
-                            else:  # address, name time, pingfrequency
-
-                                ping(parsed.address, wait=int(parsed.time), name=parsed.name,
-                                     pingfrequency=int(parsed.pingfrequency))
-                        else:
-
-                            if parsed.customarg is not None:  # address, name, time, argument
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time), name=parsed.name)
-
-                            else:  # address, name, time
-
-                                ping(parsed.address, wait=int(parsed.time), name=parsed.name, nofile=parsed.debug)
-
-                    else:  # address, name
-
-                        if parsed.pingfrequency is not None:  # address, name, pingfrequency
-                            if parsed.verbose:
-                                print('have frequency')
-
-                            if parsed.customarg is not None:  # address, name, pingfrequency, arg
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, name=parsed.name,
-                                     pingfrequency=int(parsed.pingfrequency))
-
-                            else:  # address, name pingfrequency
-
-                                ping(parsed.address, name=parsed.name, pingfrequency=int(parsed.pingfrequency))
-
-                        else:
-
-                            if parsed.customarg is not None:  # address, name, time, argument
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, name=parsed.name)
-
-                            else:  # address, name
-
-                                ping(parsed.address, name=parsed.name, nofile=parsed.debug)
-
-                else:  # address
-                    if parsed.time is not None:  # address, name, time
-                        if parsed.verbose:
-                            print('have time')
-
-                        if parsed.pingfrequency is not None:  # address, name, time, pingfrequency
-                            if parsed.verbose:
-                                print('have frequency')
-
-                            if parsed.customarg is not None:  # address, name, time, pingfrequency, arg
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time),
-                                     name=parsed.name, pingfrequency=int(parsed.pingfrequency))
-
-                            else:  # address, name time, pingfrequency
-
-                                ping(parsed.address, wait=int(parsed.time), name=parsed.name,
-                                     pingfrequency=int(parsed.pingfrequency))
-                        else:
-
-                            if parsed.customarg is not None:  # address, name, time, argument
-                                if parsed.verbose:
-                                    print('have customarg')
-
-                                ping(parsed.address, customarg=parsed.customarg, wait=int(parsed.time), name=parsed.name)
-
-                            else:  # address, name, time
-
-                                ping(parsed.address, wait=int(parsed.time), name=parsed.name, nofile=parsed.debug)
-
-                    else:  # address
-                        ping(parsed.address)
-
-        else:  # No address, requires at least an address to use ping()
-            print('Please include an address with the -a flag...\nUse -h for help...')
-
-    else:  # Parse arguments for read() and getversion()
-        if parsed.readfile is not None:
-            read(parsed.readfile)
-        elif parsed.version:
-            print(getversion())
-        else:
-            print('Please include an address with the -a flag...\nUse -h for help...')
+    # TODO BUG BootstrapperLogic: "Fixed" all the bugs by removing the logic and ensuring ping() handled the arguments.
+    # TODO BUG BootstrapperLogic: **CLOSED**
+
+    if parsed.version:
+        print(getversion())
+    elif parsed.readfile is None:
+        ping(parsed.address, wait=parsed.time, customarg=parsed.customarg, path=parsed.destination,
+             pingfrequency=parsed.pingfrequency)
+    else:
+        read(parsed.readfile)
