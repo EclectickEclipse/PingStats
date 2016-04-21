@@ -44,6 +44,7 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions,
 
 # Run the main functionality.
 
+# TODO Remove pingfrequency argument, current build does not use it.
 def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False, pingfrequency=None):
     """ Runs a ping and collects statistics.
     :param address: The address to ping.
@@ -206,41 +207,34 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
                   'Press CNTRL+C to exit...' % address)
 
-            processes = []
+            process = ping(parsearg(customarg), outfile)
 
-            while 1:
-                try:  # catch keyboard interrupts and system exits, ensure CSV data is saved.
+            try:  # catch keyboard interrupts and system exits, ensure CSV data is saved.
 
-                    process = ping(parsearg(customarg), outfile)
-                    processes.append(process)
-                    time.sleep(pingfrequency)  # hang to ensure user specified ping frequency.
-                    # TODO Re structure standard regular ping usage logic. Currently spawns limitless processi.
+                # TODO Need to read output of system ping process when each line is produced.
+                # The logic below waits until the ping has been told to stop to read the output from the file.
 
+                while process.poll() is None:
+                    pass
+
+                if not nofile:
+                    with open(outfile.name) as datafile:
+                        for row in dataparser(datafile):
+                            print(row)
+                            writeCsv(csvfile, row)
+
+            except (KeyboardInterrupt, SystemExit):
+                print('Quiting Ping and saving stats to a CSV file.')
+
+                if process.poll() is None:
+                    process.kill()  # exit ping.
                     while process.poll() is None:
-                        pass  # hang for process completion.
+                        pass  # hang for ping exit.
 
-                    if not nofile:
-                        with open(outfile.name) as datafile:
-                            for row in dataparser(datafile):
-                                writeCsv(csvfile, row)
-
-                except (KeyboardInterrupt, SystemExit):
-                    print('Quiting Ping and saving stats to a CSV file.')
-                    try:
-                        for p in processes:
-                            p.kill()
-                    except OSError as e:
-                        if e.errno is 3:
-                            pass
-                        else:
-                            raise e
-
-                    if not nofile:
-                        with open(outfile.name) as datafile:
-                            for row in dataparser(datafile):
-                                writeCsv(csvfile, row)
-
-                    break
+                if not nofile:
+                    with open(outfile.name) as datafile:
+                        for row in dataparser(datafile):
+                            writeCsv(csvfile, row)
 
     except KeyboardInterrupt:
         print('Quiting Ping and saving stats to a CSV file.')

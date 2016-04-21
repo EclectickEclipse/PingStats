@@ -3,10 +3,10 @@ TODO MASTER
 ./PingStats.py
 # TODO Build an interactive mode.
 # TODO Further document preamble.
+# TODO Remove pingfrequency argument, current build does not use it.
     # TODO Should the arguments be handled within there own functions? The method used provides garunteed usecases...
             # TODO BUG TimeflagHang: Need to re write logic to enable asynchronus dataparsing of the csvfile.
             # TODO BUG TimeflagHang: **CLOSED**
-                    # TODO Re structure standard regular ping usage logic. Currently spawns limitless processi.
     # TODO Further define read()
                 # TODO Populate list of minutes elapsed
                 # TODO BUG MakeplotMissingFrame: read.makeplot() does not show a plot.
