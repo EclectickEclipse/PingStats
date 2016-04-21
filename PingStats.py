@@ -37,8 +37,8 @@ except OSError as e:
 # TODO Build an interactive mode.
 # TODO Further document preamble.
 
-version = '0.07.03a'
-versiondate = 'Sun Apr 17 15:24:43 2016'
+version = '0.07.04a'
+versiondate = 'Wed Apr 20 20:48:59 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
