@@ -6,6 +6,8 @@
 # TODO BUG FileCreationError: Review Pull Request #9 for full bug report.
 # TODO BUG FileCreationError: **CLOSED**
 
+echo "Updating TODO tags for ./PingStats.py and ./makebuil.sh."
+
 echo "TODO MASTER" &> "TODO.txt"
 echo "" >> "TODO.txt"
 
@@ -24,12 +26,13 @@ if [ "$(cat $1 | grep -c "# TODO")" != "0" ]; then  # logic changed to reflect u
     read checkfortodo
     if [ "$checkfortodo" == "y" ]; then
         cat $1 | grep "# TODO"
-        echo "Build? [y/n]"
-        read checkforbuild
-        if [ "$checkforbuild" == "n" ]; then
-            echo "Exiting!"; say "Exiting"; exit
-        fi
     fi
+fi
+
+echo "Build? [y/n]"
+read checkforbuild
+if [ "$checkforbuild" == "n" ]; then
+    echo "Exiting!"; say "Exiting"; exit
 fi
 
 echo "Building $1!"

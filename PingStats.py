@@ -255,94 +255,33 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
 
 # Read CSV logs.
 
-def read(filepos):
-    # TODO Further define read()
-    """ Parses through a PingStats generated CSV file.
+# TODO Define a backend for matplotlib that enables bundled usage.
+def showplot(filepath):
+    # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
+    # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
+    style.use('fivethirtyeight')
 
-    :param filepos: The position of the file.
-    :return:
-    """
-    # Row structure is as follows.
-    # SIZE,ADDRESS:,ICMP_SEQ,TTL,TIME
-    try:  # catch OSErrors
+    rows = []
+    with open(filepath) as f:
+        creader = csv.reader(f)
+        for line in creader:
+            ctime, size, addr, icmp, ttl, time = line
+            rows.append((ctime, size, addr, icmp, ttl, time))
 
-        with open(filepos) as f:  # open user specified file for parsing.
-            print("Reading given CSV file...")
-            creader = csv.reader(f)
-            table = {}
-            success = {}
-            failed = {}
-            # refined stats
-            ttls = {}
-            ttlssum = 0  # for maths
-            times = {}
-            timessum = 0  # for maths
+    timestart = rows[0][0]
+    x = []
+    y = []
+    for row in rows:
+        x.append((float(row[0]) - float(timestart)) * 1000)
+        # x.append(float(row[0]) - float(timestart))
+        y.append(row[5].split('=')[1])
 
-            for i, row in enumerate(creader):  # build table.
-                table[i] = row
-                if len(row) == 1 or row.count('cannot resolve') or row.count('request timeout') > 1:  # catch failed
-                    failed[i] = row
-                else:
-                    success[i] = row
-
-            address = table[0][2]  # Grab the address used in the read.
-
-            for key in success:  # build ttls
-                try:
-                    ttlssum += float(success[key][-2].split('=')[1])
-                    ttls[key] = success[key][-2].split('=')[1]
-                except IndexError:
-                    pass
-
-            for key in success:  # build times
-                try:
-                    timessum += float(success[key][-1].split('=')[1])
-                    times[key] = success[key][-1].split('=')[1]
-                except IndexError:
-                    pass
-
-            print('Calculating percentages...')
-            psuccess = (1.0 * (len(success) / len(table)) * 100)
-            pfailed = (1.0 * (len(failed) / len(table)) * 100)
-
-            averagettl = 1.0 * (ttlssum / len(ttls))
-            averagetime = 1.0 * (timessum / len(times))
-
-            def makeplot():
-                # TODO Populate list of minutes elapsed
-                # Should this be its own function? Possibly class? Use of matplotlib inherently makes this "function"
-                # hard to call a function. I feel as if it would be best to use an object instead. This would provide
-                # easier modification and interaction later down the line.
-                style.use('fivethirtyeight')
-
-                fig = plt.figure()
-                ax1 = fig.add_subplot(1,1,1)
-
-                def getvalues():
-                    for val in ttls:
-                        yield ttls[val], success[val][0]
-
-                def animate(i):
-                    timestart = table[0][0]
-                    x, raw_y = getvalues()
-                    y = raw_y - timestart / 60
-                    ax1.clear()
-                    ax1.plot(x, y)
-
-                # TODO BUG MakeplotMissingFrame: read.makeplot() does not show a plot.
-                # TODO BUG MakeplotMissingFrame: read.makeplot() does not hang for animation.
-                ani = animation.FuncAnimation(fig, animate, interval=1000)
-                # DEBUG
-                # sys.stderr.write('Showing plot \n')
-                plt.show()
-
-            makeplot()
-
-            return 0
-
-    except OSError as e:
-        print('Please ensure you have included a valid file path....\n%s, %s' % (e.errno, e.strerror))
-        return 1
+    plt.plot(x, y)
+    plt.xlabel('Time in Minutes')
+    plt.ylabel('Return time.')
+    # DEBUG
+    sys.stderr.write('Showing plot...\n')
+    plt.show()
 
 
 # Get version variables
@@ -356,7 +295,7 @@ def getversion():
 if __name__ == '__main__':
     # Define program arguments.
     parser = argparse.ArgumentParser()
-    parser.add_argument('address', help='The IP address to ping.')
+    parser.add_argument('-a', '--address', help='The IP address to ping.')
     parser.add_argument('-c', '--customarg', help='Define your own argument for the ping.'
                                                   'If you are experiencing issues with pings ending before intended,'
                                                   'try using \'-c \"-c 999999999\"\' to spawn a process with an '
@@ -370,6 +309,7 @@ if __name__ == '__main__':
                                                  'breaking down the statistics of the pings.')
     parser.add_argument('-t', '--time', help='The time to wait before killing the process in seconds.')
     parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
+    parser.add_argument('-f', '--filepath', help='The path of the CSV file to attempt to read.')
     parsed = parser.parse_args()
 
     # Parse argument logic for ping().
@@ -378,8 +318,10 @@ if __name__ == '__main__':
 
     if parsed.version:
         print(getversion())
-    elif parsed.readfile is None:
+    if parsed.address is not None:
         ping(parsed.address, wait=parsed.time, customarg=parsed.customarg, path=parsed.destination,
              pingfrequency=parsed.pingfrequency)
+    elif parsed.filepath is not None:
+        showplot(parsed.filepath)
     else:
-        read(parsed.readfile)
+        parser.print_help()
