@@ -236,7 +236,7 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
                         for row in dataparser(datafile):
                             writeCsv(csvfile, row)
 
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         print('Quiting Ping and saving stats to a CSV file.')
         if not nofile:
             with open(outfile.name) as datafile:
