@@ -6,6 +6,17 @@
 # TODO BUG FileCreationError: Review Pull Request #9 for full bug report.
 # TODO BUG FileCreationError: **CLOSED**
 
+echo "TODO MASTER" &> "TODO.txt"
+echo "" >> "TODO.txt"
+
+echo "./PingStats.py" >> "TODO.txt"
+cat ./PingStats.py | grep "# TODO" >> "TODO.txt"
+echo "" >> "TODO.txt"
+
+echo "./makebuild.sh" >> "TODO.TXT"
+cat ./makebuild.sh | grep "# TODO" >> "TODO.txt"
+echo "" >> "TODO.txt"
+
 if [ "$(cat $1 | grep -c "# TODO")" != "0" ]; then  # logic changed to reflect usage.
     echo "There are TODO's that require attention, would you like to review them? [y/n]"
     # COMMENT SAY LINES FOR NON MACOSX SYSTEMS
@@ -26,7 +37,16 @@ echo "Building $1!"
 # COMMENT SAY LINES FOR NON MACOSX SYSTEMS
 say "Performing build!"
 
-pyinstaller -F -c -n "$2" "$1"
+#cp $1 ./build/build.py
+## Version Dating string replacement functionality
+#OLD="versiondate = **DEV**"
+#NEW="versiondate = "
+#currdate=$(date)
+#newdate="version date = '$currdate'"
+#echo $newdate
+#sed "s/$OLD/$newdate/g"
+
+pyinstaller -w -n "$2" "$1"
 
 if [ "$3" == "dist" ]; then
     echo "Removing old binary '$2' from /usr/local/bin/ and copying the new one."
@@ -39,4 +59,4 @@ echo "Done!"
 say "Done!"
 echo ""
 echo "Testing build..."
-./dist/$2 -v facebook.com # supplied address to avoid errors at runtime, and enable the software to display version.
+./dist/$2 -v
