@@ -37,6 +37,7 @@ except OSError as e:
 # TODO Build an interactive mode.
 # TODO Further document preamble.
 
+buildname = 'PingStats'
 version = '0.07.04a'
 versiondate = 'Wed Apr 20 20:48:59 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
@@ -199,6 +200,7 @@ def read(filepos):
 def getversion():
     return versionstr
 
+
 def buildfiles(path, name):
     """ Builds the files used for processing.
 
@@ -220,11 +222,11 @@ def buildfiles(path, name):
             # TODO Pass through default name..........
 
             if path is not None:  # If user specified an output path.
-                csvfile = open('%s%s-%s.csv' % (path, address, time.ctime()), 'w+')
+                csvfile = open('%s%slog-%s.csv' % (path, buildname, time.ctime()), 'w+')
                 outfile = open('%sout.txt' % path, 'w+')
                 return csvfile, outfile
             else:
-                csvfile = open('%s-%s.csv' % (address, time.ctime()), 'w+')
+                csvfile = open('%sLog-%s.csv' % (buildname, time.ctime()), 'w+')
                 outfile = open('out.txt', 'w+')
                 return csvfile, outfile
     except OSError as e:
@@ -232,24 +234,23 @@ def buildfiles(path, name):
         quit()  # break
 
 
-def writeCsv(file, row):
-    """ Writes a row of CSV data.
-
-    :param file: The file object to write to.
-    :param row: The row to be saved.
-    :return: The row written by the process.
-    """
-    cwriter = csv.writer(file)
-    cwriter.writerow(row)
-    return row
-
-
-def dataparser(datafile):
+def dataparser(datafile, csvfile):
     """Parses through lines of text returned by ping and further refines it.
 
     :param datafile: The position of the log file to read.
     :return: The lines read.
     """
+    def writeCsv(file, row):
+        """ Writes a row of CSV data.
+
+        :param file: The file object to write to.
+        :param row: The row to be saved.
+        :return: The row written by the process.
+        """
+        cwriter = csv.writer(file)
+        cwriter.writerow(row)
+        return row
+
     with open(datafile) as df:
         for data in df:
             row = [time.time(), ]
@@ -270,7 +271,7 @@ def dataparser(datafile):
                     else:  # append data.
                         row.append(val)
                 if len(row) > 1:
-                    # TODO Output CSV data during dataparser loop.
+                    writeCsv(csvfile, row)
                     yield row
 
 # Bootstrap logic.
@@ -304,20 +305,13 @@ if __name__ == '__main__':
     elif parsed.address is not None:
         print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
               'Press CNTRL+C to exit...' % parsed.address)
-        if parsed.name is not None:
-            csvfile, outfile = buildfiles(parsed.address, parsed.name)
-        else:
-            csvfile, outfile = buildfiles(parsed.address,)
+        csvfile, outfile = buildfiles(parsed.destination, parsed.name)
         # TODO Deprecate calls to --pingfrequency
         p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
                     outfile=outfile)
         try:
             while p.poll() is None:
-                pass
+                dataparser(l.name, csvfile)
         except (KeyboardInterrupt, SystemExit):
             p.kill()
-        writeCsv(csvfile, dataparser(l.name))
-        csvfile.close()
-
-    else:
-        read(parsed.readfile)
+            csvfile.close()
