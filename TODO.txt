@@ -13,6 +13,7 @@ TODO MASTER
     # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
     # TODO BUG BootstrapperLogic: "Fixed" all the bugs by removing the logic and ensuring ping() handled the arguments.
     # TODO BUG BootstrapperLogic: **CLOSED**
+        # TODO Deprecate calls to --pingfrequency
 
 ./makebuild.sh
 # TODO BUG FileCreationError: Bug was caused by the statement "if [ $(cat $1 | grep -c "# TODO") > 0]" was outputting the results of grep to ./0
