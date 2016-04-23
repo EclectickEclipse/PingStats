@@ -42,81 +42,6 @@ versiondate = 'Wed Apr 20 20:48:59 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
-def buildfiles(path, name):
-    """ Builds the files used for processing.
-
-    :param path: The path to output the files to.
-    :param name: The custom name supplied by the user.
-    :return: A tuple containing the csvfile object and the outfile object.
-    """
-    try:
-        if name is not None:  # If user specified a custom name.
-            if path is not None:  # If user specified an output path.
-                csvfile = open('%s%s-%s.csv' % (path, name, time.ctime()), 'w+')
-                outfile = open('%sout.txt' % path, 'w+')
-                return csvfile, outfile
-            else:
-                csvfile = open('%s-%s.csv' % (name, time.ctime()), 'w+')
-                outfile = open('out.txt', 'w+')
-                return csvfile, outfile
-        else:
-            # TODO Pass through default name..........
-
-            if path is not None:  # If user specified an output path.
-                csvfile = open('%s%s-%s.csv' % (path, address, time.ctime()), 'w+')
-                outfile = open('%sout.txt' % path, 'w+')
-                return csvfile, outfile
-            else:
-                csvfile = open('%s-%s.csv' % (address, time.ctime()), 'w+')
-                outfile = open('out.txt', 'w+')
-                return csvfile, outfile
-    except OSError as e:
-        print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
-        quit()  # break
-
-
-def writeCsv(file, row):
-    """ Writes a row of CSV data.
-
-    :param file: The file object to write to.
-    :param row: The row to be saved.
-    :return: The row written by the process.
-    """
-    cwriter = csv.writer(file)
-    cwriter.writerow(row)
-    return row
-
-
-def dataparser(datafile):
-    """Parses through lines of text returned by ping and further refines it.
-
-    :param datafile: The position of the log file to read.
-    :return: The lines read.
-    """
-    with open(datafile) as df:
-        for data in df:
-            row = [time.time(), ]
-            if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
-                row.append(data)
-            elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or
-                  data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):  # Break on ping end.
-                pass
-            else:
-                for val in data.split():  # Split lines by space and iterate.
-                    if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                                    val.count('\x00') > 0:  # skippable values
-                        pass
-                    elif len(row) is 1:  # if this is the first data field.
-                        row.append('size=%s' % val)
-                    elif len(row) is 2:  # if this is the second data field.
-                        row.append(val[:-1])
-                    else:  # append data.
-                        row.append(val)
-                if len(row) > 1:
-                    # TODO Output CSV data during dataparser loop.
-                    yield row
-
-
 # TODO Remove pingfrequency argument, current build does not use it.
 def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
     """ Runs a ping and collects statistics.
@@ -274,6 +199,79 @@ def read(filepos):
 def getversion():
     return versionstr
 
+def buildfiles(path, name):
+    """ Builds the files used for processing.
+
+    :param path: The path to output the files to.
+    :param name: The custom name supplied by the user.
+    :return: A tuple containing the csvfile object and the outfile object.
+    """
+    try:
+        if name is not None:  # If user specified a custom name.
+            if path is not None:  # If user specified an output path.
+                csvfile = open('%s%s-%s.csv' % (path, name, time.ctime()), 'w+')
+                outfile = open('%sout.txt' % path, 'w+')
+                return csvfile, outfile
+            else:
+                csvfile = open('%s-%s.csv' % (name, time.ctime()), 'w+')
+                outfile = open('out.txt', 'w+')
+                return csvfile, outfile
+        else:
+            # TODO Pass through default name..........
+
+            if path is not None:  # If user specified an output path.
+                csvfile = open('%s%s-%s.csv' % (path, address, time.ctime()), 'w+')
+                outfile = open('%sout.txt' % path, 'w+')
+                return csvfile, outfile
+            else:
+                csvfile = open('%s-%s.csv' % (address, time.ctime()), 'w+')
+                outfile = open('out.txt', 'w+')
+                return csvfile, outfile
+    except OSError as e:
+        print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
+        quit()  # break
+
+
+def writeCsv(file, row):
+    """ Writes a row of CSV data.
+
+    :param file: The file object to write to.
+    :param row: The row to be saved.
+    :return: The row written by the process.
+    """
+    cwriter = csv.writer(file)
+    cwriter.writerow(row)
+    return row
+
+
+def dataparser(datafile):
+    """Parses through lines of text returned by ping and further refines it.
+
+    :param datafile: The position of the log file to read.
+    :return: The lines read.
+    """
+    with open(datafile) as df:
+        for data in df:
+            row = [time.time(), ]
+            if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
+                row.append(data)
+            elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or
+                  data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):  # Break on ping end.
+                pass
+            else:
+                for val in data.split():  # Split lines by space and iterate.
+                    if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
+                                    val.count('\x00') > 0:  # skippable values
+                        pass
+                    elif len(row) is 1:  # if this is the first data field.
+                        row.append('size=%s' % val)
+                    elif len(row) is 2:  # if this is the second data field.
+                        row.append(val[:-1])
+                    else:  # append data.
+                        row.append(val)
+                if len(row) > 1:
+                    # TODO Output CSV data during dataparser loop.
+                    yield row
 
 # Bootstrap logic.
 
