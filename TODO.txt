@@ -3,21 +3,25 @@ TODO MASTER
 ./PingStats.py
 # TODO Build an interactive mode.
 # TODO Further document preamble.
+            # TODO Pass through default name..........
+                    # TODO Output CSV data during dataparser loop.
 # TODO Remove pingfrequency argument, current build does not use it.
     # TODO Should the arguments be handled within there own functions? The method used provides garunteed usecases...
-            # TODO BUG TimeflagHang: Need to re write logic to enable asynchronus dataparsing of the csvfile.
-            # TODO BUG TimeflagHang: **CLOSED**
     # TODO Further define read()
                 # TODO Populate list of minutes elapsed
                 # TODO BUG MakeplotMissingFrame: read.makeplot() does not show a plot.
                 # TODO BUG MakeplotMissingFrame: read.makeplot() does not hang for animation.
+    # TODO Rename --destination to --path for clarity.
     # TODO BUG BootstrapperLogic: "Fixed" all the bugs by removing the logic and ensuring ping() handled the arguments.
     # TODO BUG BootstrapperLogic: **CLOSED**
+        # TODO Deprecate calls to --pingfrequency
 
 ./makebuild.sh
 # TODO BUG FileCreationError: Bug was caused by the statement "if [ $(cat $1 | grep -c "# TODO") > 0]" was outputting the results of grep to ./0
 # TODO BUG FileCreationError: Review Pull Request #9 for full bug report.
 # TODO BUG FileCreationError: **CLOSED**
+cat ./PingStats.py | grep "# TODO" >> "TODO.txt"
+cat ./makebuild.sh | grep "# TODO" >> "TODO.txt"
 if [ "$(cat $1 | grep -c "# TODO")" != "0" ]; then  # logic changed to reflect usage.
         cat $1 | grep "# TODO"
 
