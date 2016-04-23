@@ -257,31 +257,55 @@ def ping(address, customarg=None, wait=None, path=None, name=None, nofile=False,
 
 # TODO Define a backend for matplotlib that enables bundled usage.
 def showplot(filepath):
+    """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
+
+    :param filepath: The path of the file to be read.
+    :return: The matplotlib.animation.FunAnimation object.
+    """
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
     # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
     style.use('fivethirtyeight')
 
-    rows = []
-    with open(filepath) as f:
-        creader = csv.reader(f)
-        for line in creader:
-            ctime, size, addr, icmp, ttl, time = line
-            rows.append((ctime, size, addr, icmp, ttl, time))
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
 
-    timestart = rows[0][0]
-    x = []
-    y = []
-    for row in rows:
-        x.append((float(row[0]) - float(timestart)) * 1000)
-        # x.append(float(row[0]) - float(timestart))
-        y.append(row[5].split('=')[1])
+    def animate(i):
+        """ Reads rows from a CSV file and render them to a plot.
 
-    plt.plot(x, y)
-    plt.xlabel('Time in Minutes')
-    plt.ylabel('Return time.')
+        :param i: Arbitrary.
+        :return: None
+        """
+        rows = []
+        with open(filepath) as f:
+            creader = csv.reader(f)
+            for line in creader:
+                ctime, size, addr, icmp, ttl, time = line
+                rows.append((ctime, size, addr, icmp, ttl, time))
+
+        timestart = rows[0][0]
+        x = []
+        y = []
+        if len(rows) > 500:
+            for row in rows[-500:]:
+                x.append((float(row[0]) - float(timestart)) * 1000)
+                # x.append(float(row[0]) - float(timestart))
+                y.append(row[5].split('=')[1])
+        else:
+            for row in rows:
+                x.append((float(row[0]) - float(timestart)) * 1000)
+                # x.append(float(row[0]) - float(timestart))
+                y.append(row[5].split('=')[1])
+
+        ax1.clear()
+        ax1.plot(x, y)
+
+    # plt.xlabel('Time in Minutes')
+    # plt.ylabel('Return time.')
     # DEBUG
-    sys.stderr.write('Showing plot...\n')
+    # sys.stderr.write('Showing plot...\n')
+    ani = animation.FuncAnimation(fig, animate, interval=1000)
     plt.show()
+    return ani
 
 
 # Get version variables
@@ -295,20 +319,25 @@ def getversion():
 if __name__ == '__main__':
     # Define program arguments.
     parser = argparse.ArgumentParser()
+
     parser.add_argument('-a', '--address', help='The IP address to ping.')
+
     parser.add_argument('-c', '--customarg', help='Define your own argument for the ping.'
                                                   'If you are experiencing issues with pings ending before intended,'
                                                   'try using \'-c \"-c 999999999\"\' to spawn a process with an '
                                                   'extremely long runtime.')
+
     parser.add_argument('-d', '--destination', help='To supply a specific path to output any files to, include a path.')
+
     parser.add_argument('-F', '--pingfrequency', help='The frequency with which to ping the host. Defaults to 0.25 '
                                                       'seconds.')
+
     parser.add_argument('-n', '--name', help='Flag this option to use a custom name for the CSV output file.')
-    parser.add_argument('-r', '--readfile', help='Flag this option and the path to a csv file containing ping '
-                                                 'statistics, and this program will provide various options for '
-                                                 'breaking down the statistics of the pings.')
+
     parser.add_argument('-t', '--time', help='The time to wait before killing the process in seconds.')
+
     parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
+
     parser.add_argument('-f', '--filepath', help='The path of the CSV file to attempt to read.')
     parsed = parser.parse_args()
 
