@@ -38,9 +38,107 @@ except OSError as e:
 # TODO Further document preamble.
 
 buildname = 'PingStats'
-version = '0.07.04a'
-versiondate = 'Wed Apr 20 20:48:59 2016'
+version = '0.08a'
+versiondate = 'Sun Apr 24 23:55:06 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
+
+
+def buildfiles(path, name):
+    """ Builds the files used for processing.
+
+    :param path: The path to output the files to.
+    :param name: The custom name supplied by the user.
+    :return: A tuple containing the csvfile object and the outfile object.
+    """
+    try:
+        if name is not None:  # If user specified a custom name.
+            if path is not None:  # If user specified an output path.
+                csvfile = open('%s%s-%s.csv' % (path, name, time.ctime()), 'w+')
+                outfile = open('%sout.txt' % path, 'w+')
+                return csvfile, outfile
+            else:
+                csvfile = open('%s-%s.csv' % (name, time.ctime()), 'w+')
+                outfile = open('out.txt', 'w+')
+                return csvfile, outfile
+        else:
+
+            if path is not None:  # If user specified an output path.
+                csvfile = open('%s%slog-%s.csv' % (path, buildname, time.ctime()), 'w+')
+                outfile = open('%sout.txt' % path, 'w+')
+                return csvfile, outfile
+            else:
+                csvfile = open('%sLog-%s.csv' % (buildname, time.ctime()), 'w+')
+                outfile = open('out.txt', 'w+')
+                return csvfile, outfile
+    except OSError as e:
+        print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
+        quit()  # break
+
+
+def writecsv(file, row):
+    """ Writes a row of CSV data.
+
+    :param file: The file object to write to.
+    :param row: The row to be saved.
+    :return: The row written by the process.
+    """
+    # TODO writecsv() reads the whole csv file to determine if the new row is unique. This is horribly inefficient.
+    crr = csv.reader(file)
+    t = []
+    for cr in crr:
+        t.append(cr)
+
+    if t.count(row) is 0:
+        cw = csv.writer(file)
+        cw.writerow(row)
+        return True
+    else:
+        return False
+
+
+def dataparser(datafilepath, csvfile):
+    """Parses through lines of text returned by ping and further refines it. This function creates a generator that can
+    be iterated through in a for loop. For example:
+
+    '''
+
+    table = []
+
+    for data in dataparser(dfile, cfile):
+        table.append(data)
+    '''
+
+    :param datafilepath: The position of the log file to read.
+    :param csvfile: The csvfile object to write to.
+    :return: The lines read.
+    """
+
+    table = []
+    with open(datafilepath) as df:
+        for data in df:
+            row = [str(time.time()),]
+            if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
+                row.append(data)
+            elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
+                          data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
+                pass
+            else:
+                for val in data.split():  # Split lines by space and iterate.
+                    if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
+                                    val.count('\x00') > 0:  # skippable values
+                        pass
+                    elif len(row) is 1:  # if this is the first data field.
+                        row.append('size=%s' % val)
+                    elif len(row) is 2:  # if this is the second data field.
+                        row.append(val[:-1])
+                    else:  # append data.
+                        row.append(val)
+                if len(row) > 1:
+                    # if writecsv(csvfile, row):
+                    #     print('Wrote %s to %s!' % (row, csvfile.name))
+                    table.append(row)
+
+    return table
 
 
 # TODO Remove pingfrequency argument, current build does not use it.
@@ -53,7 +151,7 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
     :param outfile: The file object to write output to.
     """
     # Conversion handlers.
-    # TODO Should the arguments be handled within there own functions? The method used provides garunteed usecases...
+    # TODO Should ping() handle arguments inside functions or inside initial runtime as current?
 
     # Address handler.
     if address is None:  # ensure a host was specified.
@@ -106,10 +204,10 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
 # Read CSV logs.
 
 # TODO Define a backend for matplotlib that enables bundled usage.
-def showplot(filepath):
+def showplot(datafilepath, csvfile):
     """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
 
-    :param filepath: The path of the file to be read.
+    :param datafilepath: The path of the file to be read.
     :return: The matplotlib.animation.FunAnimation object.
     """
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
@@ -117,7 +215,7 @@ def showplot(filepath):
     style.use('fivethirtyeight')
 
     fig = plt.figure()
-    ax1 = fig.add_subplot(1,1,1)
+    ax1 = fig.add_subplot(1, 1, 1)
 
     def animate(i):
         """ Reads rows from a CSV file and render them to a plot.
@@ -125,117 +223,30 @@ def showplot(filepath):
         :param i: Arbitrary.
         :return: None
         """
-        rows = []
-        with open(filepath) as f:
-            creader = csv.reader(f)
-            for line in creader:
-                ctime, size, addr, icmp, ttl, time = line
-                rows.append((ctime, size, addr, icmp, ttl, time))
+        rows = dataparser(datafilepath, csvfile)
 
-        timestart = rows[0][0]
         x = []
         y = []
         if len(rows) > 500:
             for row in rows[-500:]:
-                x.append((float(row[0]) - float(timestart)) * 1000)
-                # x.append(float(row[0]) - float(timestart))
+                y.append(row[3].split('=')[1])
                 y.append(row[5].split('=')[1])
         else:
             for row in rows:
-                x.append((float(row[0]) - float(timestart)) * 1000)
-                # x.append(float(row[0]) - float(timestart))
+                x.append(row[3].split('=')[1])
                 y.append(row[5].split('=')[1])
 
         ax1.clear()
         ax1.plot(x, y)
 
-    # plt.xlabel('Time in Minutes')
-    # plt.ylabel('Return time.')
+    plt.xlabel('ICMP SEQ #.')
+    plt.ylabel('Return time.')
     # DEBUG
     # sys.stderr.write('Showing plot...\n')
     ani = animation.FuncAnimation(fig, animate, interval=1000)
     plt.show()
     return ani
 
-
-# Get version variables
-
-def getversion():
-    return versionstr
-
-
-def buildfiles(path, name):
-    """ Builds the files used for processing.
-
-    :param path: The path to output the files to.
-    :param name: The custom name supplied by the user.
-    :return: A tuple containing the csvfile object and the outfile object.
-    """
-    try:
-        if name is not None:  # If user specified a custom name.
-            if path is not None:  # If user specified an output path.
-                csvfile = open('%s%s-%s.csv' % (path, name, time.ctime()), 'w+')
-                outfile = open('%sout.txt' % path, 'w+')
-                return csvfile, outfile
-            else:
-                csvfile = open('%s-%s.csv' % (name, time.ctime()), 'w+')
-                outfile = open('out.txt', 'w+')
-                return csvfile, outfile
-        else:
-            # TODO Pass through default name..........
-
-            if path is not None:  # If user specified an output path.
-                csvfile = open('%s%slog-%s.csv' % (path, buildname, time.ctime()), 'w+')
-                outfile = open('%sout.txt' % path, 'w+')
-                return csvfile, outfile
-            else:
-                csvfile = open('%sLog-%s.csv' % (buildname, time.ctime()), 'w+')
-                outfile = open('out.txt', 'w+')
-                return csvfile, outfile
-    except OSError as e:
-        print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
-        quit()  # break
-
-
-def dataparser(datafile, csvfile):
-    """Parses through lines of text returned by ping and further refines it.
-
-    :param datafile: The position of the log file to read.
-    :return: The lines read.
-    """
-    def writeCsv(file, row):
-        """ Writes a row of CSV data.
-
-        :param file: The file object to write to.
-        :param row: The row to be saved.
-        :return: The row written by the process.
-        """
-        cwriter = csv.writer(file)
-        cwriter.writerow(row)
-        return row
-
-    with open(datafile) as df:
-        for data in df:
-            row = [time.time(), ]
-            if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
-                row.append(data)
-            elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or
-                  data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):  # Break on ping end.
-                pass
-            else:
-                for val in data.split():  # Split lines by space and iterate.
-                    if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                                    val.count('\x00') > 0:  # skippable values
-                        pass
-                    elif len(row) is 1:  # if this is the first data field.
-                        row.append('size=%s' % val)
-                    elif len(row) is 2:  # if this is the second data field.
-                        row.append(val[:-1])
-                    else:  # append data.
-                        row.append(val)
-                if len(row) > 1:
-                    writeCsv(csvfile, row)
-                    yield row
 
 # Bootstrap logic.
 
@@ -260,25 +271,43 @@ if __name__ == '__main__':
 
     parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
 
-    parser.add_argument('-f', '--filepath', help='The path of the CSV file to attempt to read.')
+    parser.add_argument('-s', '--showplot', help='Flag this option to display an animated plot of the last 500 ping '
+                                                 'sequences.', action='store_true')
     parsed = parser.parse_args()
 
-    # Parse argument logic for ping().
-    # TODO BUG BootstrapperLogic: "Fixed" all the bugs by removing the logic and ensuring ping() handled the arguments.
-    # TODO BUG BootstrapperLogic: **CLOSED**
-
     if parsed.version:
-        print(getversion())
+        print(versionstr)
     elif parsed.address is not None:
-        print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
-              'Press CNTRL+C to exit...' % parsed.address)
-        csvfile, outfile = buildfiles(parsed.destination, parsed.name)
-        # TODO Deprecate calls to --pingfrequency
-        p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
-                    outfile=outfile)
-        try:
-            while p.poll() is None:
-                dataparser(l.name, csvfile)
-        except (KeyboardInterrupt, SystemExit):
+        if parsed.showplot:  # TODO build animation logic.
+            csvfile, outfile = buildfiles(parsed.destination, parsed.name)
+            p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
+                        outfile=outfile)
+            showplot(l, csvfile)  # hangs while showing a plot, when user closes plot, process closes.
             p.kill()
             csvfile.close()
+            outfile.close()
+            os.remove(outfile.name)
+
+
+        else:
+            print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
+                  'Press CNTRL+C to exit...' % parsed.address)
+            csvfile, outfile = buildfiles(parsed.destination, parsed.name)
+            # TODO Deprecate calls to --pingfrequency
+            p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
+                        outfile=outfile)
+            try:
+                while p.poll() is None:
+                    for row in dataparser(l, csvfile):  # Due to the call of the dataparser within the keyboard
+                        # interrupt, this could potentially miss new lines after the keyboard interrupt happens.
+                        pass  # arbitrary to force generator to finish function.
+
+                    # animation would be a call to makeplot passing l.name and csvfile
+                    # makeplot would pass them to the animate function. every time the animate function loops it updates
+                    # automatically. This would just wait for the user to close the plot window, and once the plt.show()
+                    # finishes hanging, it runs p.kill and closes the csvfile. :D:D:D:D
+            except (KeyboardInterrupt, SystemExit):
+                p.kill()
+                csvfile.close()
+                outfile.close()
+                os.remove(outfile.name)
