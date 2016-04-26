@@ -96,7 +96,7 @@ def writecsv(file, row):
         return False
 
 
-def dataparser(datafilepath, csvfile):
+def dataparser(datafilepath):
     """Parses through lines of text returned by ping and further refines it. This function creates a generator that can
     be iterated through in a for loop. For example:
 
@@ -204,7 +204,7 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
 # Read CSV logs.
 
 # TODO Define a backend for matplotlib that enables bundled usage.
-def showplot(datafilepath, csvfile):
+def showplot(datafilepath):
     """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
 
     :param datafilepath: The path of the file to be read.
@@ -223,7 +223,7 @@ def showplot(datafilepath, csvfile):
         :param i: Arbitrary.
         :return: None
         """
-        rows = dataparser(datafilepath, csvfile)
+        rows = dataparser(datafilepath)
 
         x = []
         y = []
@@ -282,7 +282,7 @@ if __name__ == '__main__':
             csvfile, outfile = buildfiles(parsed.destination, parsed.name)
             p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
                         outfile=outfile)
-            showplot(l, csvfile)  # hangs while showing a plot, when user closes plot, process closes.
+            showplot(l)  # hangs while showing a plot, when user closes plot, process closes.
             p.kill()
             csvfile.close()
             outfile.close()
@@ -298,7 +298,7 @@ if __name__ == '__main__':
                         outfile=outfile)
             try:
                 while p.poll() is None:
-                    for row in dataparser(l, csvfile):  # Due to the call of the dataparser within the keyboard
+                    for row in dataparser(l):  # Due to the call of the dataparser within the keyboard
                         # interrupt, this could potentially miss new lines after the keyboard interrupt happens.
                         pass  # arbitrary to force generator to finish function.
 
