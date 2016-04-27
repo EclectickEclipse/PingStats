@@ -1,4 +1,4 @@
-# usage: PingStats.py 
+# usage: pingstats.py
 
     `[-h] [-a ADDRESS] [-c CUSTOMARG] [-d DESTINATION]`
     `[-F PINGFREQUENCY] [-n NAME] [-t TIME] [-v] [-s]`
