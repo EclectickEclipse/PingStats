@@ -301,8 +301,10 @@ if __name__ == '__main__':
                                                   'If you are experiencing issues with pings ending before intended,'
                                                   'try using \'-c \"-c 999999999\"\' to spawn a process with an '
                                                   'extremely long runtime.')
+
     # TODO Rename --destination to --path for clarity.
     parser.add_argument('-d', '--destination', help='To supply a specific path to output any files to, include a path.')
+
     parser.add_argument('-F', '--pingfrequency', help='The frequency with which to ping the host. Defaults to 0.25 '
                                                       'seconds.')
 
