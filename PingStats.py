@@ -1,4 +1,3 @@
-#! /Library/Frameworks/Python.framework/Versions/3.5/bin/python3.5
 
 # This software is provided under the MIT Open Source Software License:
 #
