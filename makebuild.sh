@@ -45,17 +45,4 @@ say "Performing build!"
 #echo $newdate
 #sed "s/$OLD/$newdate/g"
 
-pyinstaller -w -n "$2" "$1"
-
-if [ "$3" == "dist" ]; then
-    echo "Removing old binary '$2' from /usr/local/bin/ and copying the new one."
-    rm /usr/local/bin/$2
-    cp ./dist/$2 /usr/local/bin/$2
-fi
-
-echo "Done!"
-# COMMENT SAY LINES FOR NON MACOSX SYSTEMS
-say "Done!"
-echo ""
-echo "Testing build..."
-./dist/$2 -v
+zip ./dist/$2.zip ./PingStats.py ./install.sh
