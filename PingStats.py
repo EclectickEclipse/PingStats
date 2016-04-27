@@ -136,6 +136,8 @@ def dataparser(datafile):
 
         if len(row) > 1:  # if data was found, yield row.
             return row
+        else:
+            return None
 
 
 # TODO Remove pingfrequency argument, current build does not use it.
@@ -199,12 +201,48 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
 
 
 # Read CSV logs.
+class PlotTable:
+
+    def __init__(self, tablelength):
+        self.x = []
+        self.y = []
+        if tablelength is None:
+            self.tablelength = 200
+        else:
+            self.tablelength = int(tablelength)
+
+    def appendx(self, a):
+        if len(self.x) < self.tablelength:
+            self.x.append(a)
+        else:
+            self.x.pop(0)
+            self.x.append(a)
+
+    def appendy(self, a):
+        if len(self.y) < self.tablelength:
+            self.y.append(a)
+        else:
+            self.y.pop(0)
+            self.y.append(a)
+
+    def getx(self):
+        if len(self.x) > self.tablelength:
+            return self.x[-self.tablelength:]
+        else:
+            return self.x
+
+    def gety(self):
+        if len(self.y) > self.tablelength:
+            return self.y[self.tablelength:]
+        else:
+            return self.y
+
 
 # TODO Define a backend for matplotlib that enables bundled usage.
-def showplot(datafilepath):
+def showplot(datafile, csvfile, refreshfreq, tablelength):
     """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
 
-    :param datafilepath: The path of the file to be read.
+    :param datafile: The path of the file to be read.
     :return: The matplotlib.animation.FunAnimation object.
     """
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
@@ -214,33 +252,32 @@ def showplot(datafilepath):
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
 
+    table = PlotTable(tablelength)
+
     def animate(i):
         """ Reads rows from a CSV file and render them to a plot.
 
         :param i: Arbitrary.
         :return: None
         """
-        rows = dataparser(datafilepath)
-
-        x = []
-        y = []
-        if len(rows) > 500:
-            for row in rows[-500:]:
-                y.append(row[3].split('=')[1])
-                y.append(row[5].split('=')[1])
-        else:
-            for row in rows:
-                x.append(row[3].split('=')[1])
-                y.append(row[5].split('=')[1])
-
+        d = dataparser(datafile)
+        print(d)
+        if d is not None:  # implies new information was gotten.
+            writecsv(csvfile, d)
+            table.appendx(d[3].split('=')[1])
+            table.appendy(d[5].split('=')[1])
         ax1.clear()
-        ax1.plot(x, y)
+        ax1.plot(table.getx(), table.gety())
 
     plt.xlabel('ICMP SEQ #.')
     plt.ylabel('Return time.')
     # DEBUG
     # sys.stderr.write('Showing plot...\n')
-    ani = animation.FuncAnimation(fig, animate, interval=1000)
+    if refreshfreq is None:
+        ani = animation.FuncAnimation(fig, animate, interval=500)
+    else:
+        ani = animation.FuncAnimation(fig, animate, interval=int(refreshfreq))
+
     plt.show()
     return ani
 
@@ -270,16 +307,34 @@ if __name__ == '__main__':
 
     parser.add_argument('-s', '--showplot', help='Flag this option to display an animated plot of the last 500 ping '
                                                  'sequences.', action='store_true')
+
+    parser.add_argument('-sF', '--refreshfrequency', help='Specify a number of milliseconds to wait between refreshes'
+                                                          'of the -s plot visualization feature. THe lower the number,'
+                                                          'the better the performance of %s visualization. Handy for'
+                                                          '\"potatoes\"' % buildname)
+
+    parser.add_argument('-sL', '--tablelength', help='The total number of pings to show for -s. The lower the number, '
+                                                     'the better the performance of %s visulization. Handy for '
+                                                     '\"potatoes.\"' % buildname)
     parsed = parser.parse_args()
 
     if parsed.version:
         print(versionstr)
     elif parsed.address is not None:
         if parsed.showplot:  # TODO build animation logic.
+            print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
+                  'Press CNTRL+C to exit...' % parsed.address)
+
             csvfile, outfile = buildfiles(parsed.destination, parsed.name)
+
+            # TODO Deprecate calls to --pingfrequency
             p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
                         outfile=outfile)
-            showplot(l)  # hangs while showing a plot, when user closes plot, process closes.
+
+            with open(outfile.name) as df:
+                showplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength)
+                # hangs while showing a plot, when user closes plot, process closes.
+
             p.kill()
             csvfile.close()
             outfile.close()
@@ -289,10 +344,13 @@ if __name__ == '__main__':
         else:
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
                   'Press CNTRL+C to exit...' % parsed.address)
+
             csvfile, outfile = buildfiles(parsed.destination, parsed.name)
+
             # TODO Deprecate calls to --pingfrequency
             p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
                         outfile=outfile)
+
             try:
                 with open(outfile.name) as df:
                     while p.poll() is None:
@@ -300,10 +358,6 @@ if __name__ == '__main__':
                         if d is not None:
                             writecsv(csvfile, d)
 
-                # animation would be a call to makeplot passing l.name and csvfile
-                # makeplot would pass them to the an3imate function. every time the animate function loops it updates
-                # automatically. This would just wait for the user to close the plot window, and once the plt.show()
-                # finishes hanging, it runs p.kill and closes the csvfile. :D:D:D:D
             except (KeyboardInterrupt, SystemExit):
                 p.kill()
                 csvfile.close()
