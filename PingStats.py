@@ -81,8 +81,7 @@ def writecsv(file, row):
     :param row: The row to be saved.
     :return: The row written by the process.
     """
-    # TODO writecsv() reads the whole csv file to determine if the new row is unique. This is horribly inefficient.
-    # Should this be handled by dataparser
+    # TODO Should writecsv() be handled by dataparser?
     cwriter = csv.writer(file)
     cwriter.writerow(row)
     print('Wrote row: %s' % row)
@@ -110,34 +109,38 @@ def dataparser(datafile):
 
     row = [str(time.time())]
 
-    if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
-        row.append('failed')  # Error line.
-        row.append('failed')
-        row.append('icmp_seq=%s' % data.split()[-1])
-        row.append('ttl=0')
-        row.append('time=-10')
-        sys.stderr.write(data)
-        # row.append(data)
+    if os.name != 'nt':
+        # Parse data text
+        if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
+            row.append('failed')  # Error line.
+            row.append('failed')
+            row.append('icmp_seq=%s' % data.split()[-1])
+            row.append('ttl=0')
+            row.append('time=-10')
+            sys.stderr.write(data)
+            # row.append(data)
 
-    elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
-          data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
-        return None  # Exclude line.
+        elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
+              data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
+            return None  # Exclude line.
 
-    else:
-        for val in data.split():  # Split lines by space and iterate.
+        else:
+            for val in data.split():  # Split lines by space and iterate.
 
-            if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                         val.count('\x00') > 0:  # skippable values
-                pass
+                if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
+                             val.count('\x00') > 0:  # skippable values
+                    pass
 
-            elif len(row) is 1:  # if this is the first data field.
-                row.append('size=%s' % val)
+                elif len(row) is 1:  # if this is the first data field.
+                    row.append('size=%s' % val)
 
-            elif len(row) is 2:  # if this is the second data field.
-                row.append(val[:-1])
+                elif len(row) is 2:  # if this is the second data field.
+                    row.append(val[:-1])
 
-            else:  # append data.
-                row.append(val)
+                else:  # append data.
+                    row.append(val)
+    else:  # TODO Define parsing logic for lines on NT based ping requests.
+        raise (KeyboardInterrupt, 'Software not supported on NT based systems as of V0.08')
 
     if len(row) > 1:  # if data was found, yield row.
         return row
@@ -190,7 +193,10 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
         if custom_argument is not None:
             return ['ping', shlex.split(custom_argument), address]
         else:
-            return ['ping', address]
+            if os.name == 'nt':
+                return ['ping', '-t', address]
+            else:
+                return ['ping', address]
 
     def ping(argument, file):
         """ Pings a host.

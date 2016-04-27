@@ -1,3 +1,0 @@
-1 | TOP:  |  ./PingStats.py
-2 | 372  |   "Fixed" all the bugs by removing the logic and ensuring ping() handled the arguments.
-3 | 373  |   **CLOSED**

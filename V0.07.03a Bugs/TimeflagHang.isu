@@ -1,3 +1,0 @@
-1 | TOP:  |  ./PingStats.py
-2 | 180  |   Need to re write logic to enable asynchronus dataparsing of the csvfile.
-3 | 181  |   **CLOSED**
