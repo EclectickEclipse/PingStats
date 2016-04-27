@@ -212,51 +212,44 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
     return process, outfile.name
 
 
-# Read CSV logs.
-class PlotTable:
-
-    def __init__(self, tablelength):
-        self.x = []
-        self.y = []
-        if tablelength is None:
-            self.tablelength = 200
-        else:
-            self.tablelength = int(tablelength)
-
-    def appendx(self, a):
-        if len(self.x) < self.tablelength:
-            self.x.append(a)
-        else:
-            self.x.pop(0)
-            self.x.append(a)
-
-    def appendy(self, a):
-        if len(self.y) < self.tablelength:
-            self.y.append(a)
-        else:
-            self.y.pop(0)
-            self.y.append(a)
-
-    def getx(self):
-        # if len(self.x) > self.tablelength:
-        #     return self.x[-self.tablelength:]
-        # else:
-        return self.x
-
-    def gety(self):
-        # if len(self.y) > self.tablelength:
-        #     return self.y[self.tablelength:]
-        # else:
-        return self.y
-
-
 # TODO Define a backend for matplotlib that enables bundled usage.
-def showplot(datafile, csvfile, refreshfreq, tablelength):
+def showliveplot(datafile, csvfile, refreshfreq, tablelength):
     """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
 
     :param datafile: The path of the file to be read.
     :return: The matplotlib.animation.FunAnimation object.
     """
+
+    class PlotTable:
+
+        def __init__(self, tablelength):
+            self.x = []
+            self.y = []
+            if tablelength is None:
+                self.tablelength = 200
+            else:
+                self.tablelength = int(tablelength)
+
+        def appendx(self, a):
+            if len(self.x) < self.tablelength:
+                self.x.append(a)
+            else:
+                self.x.pop(0)
+                self.x.append(a)
+
+        def appendy(self, a):
+            if len(self.y) < self.tablelength:
+                self.y.append(a)
+            else:
+                self.y.pop(0)
+                self.y.append(a)
+
+        def getx(self):
+            return self.x
+
+        def gety(self):
+            return self.y
+
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
     # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
     style.use('fivethirtyeight')
@@ -294,6 +287,31 @@ def showplot(datafile, csvfile, refreshfreq, tablelength):
     return ani
 
 
+def showplot_fromfile(csvfilepath):
+    style.use('fivethirtyeight')
+
+    fig = plt.figure()
+
+    table = []
+
+    with open(csvfilepath) as cf:
+        creader = csv.reader(cf)
+        for line in creader:
+            table.append(line)
+
+    x = []
+    y = []
+
+    for row in table:
+        x.append(row[3].split('=')[1])
+        y.append(row[5].split('=')[1])
+
+    plt.plot(x, y)
+
+    plt.xlabel('Return Time')
+    plt.ylabel('ICMP SEQ')
+    plt.show()  # hangs until user closes plot.
+
 # Bootstrap logic.
 
 if __name__ == '__main__':
@@ -319,7 +337,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
 
-    parser.add_argument('-s', '--showplot', help='Flag this option to display an animated plot of the last 500 ping '
+    parser.add_argument('-s', '--showliveplot', help='Flag this option to display an animated plot of the last 500 ping '
                                                  'sequences.', action='store_true')
 
     parser.add_argument('-sF', '--refreshfrequency', help='Specify a number of milliseconds to wait between refreshes'
@@ -330,6 +348,10 @@ if __name__ == '__main__':
     parser.add_argument('-sL', '--tablelength', help='The total number of pings to show for -s. The lower the number, '
                                                      'the better the performance of %s visulization. Handy for '
                                                      '\"potatoes.\"' % buildname)
+
+    parser.add_argument('-pf', '--plotfile', help='Include the path to a previously generated CSV file to generate a '
+                                                  'plot.')
+
     parsed = parser.parse_args()
 
     if parsed.version:
@@ -346,7 +368,7 @@ if __name__ == '__main__':
                         outfile=outfile)
 
             with open(outfile.name) as df:
-                showplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength)
+                showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength)
                 # hangs while showing a plot, when user closes plot, process closes.
 
             p.kill()
@@ -377,3 +399,5 @@ if __name__ == '__main__':
                 csvfile.close()
                 outfile.close()
                 os.remove(outfile.name)
+    elif parsed.plotfile is not None:
+        showplot_fromfile(parsed.plotfile)

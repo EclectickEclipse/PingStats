@@ -45,7 +45,7 @@ terminal, enter `./install.sh`, and hope for the best!
   
     Flag this option to display software version.
     
-  -s, --showplot        
+  -s, --showliveplot        
   
     Flag this option to display an animated plot of the last 500 ping sequences.
     
