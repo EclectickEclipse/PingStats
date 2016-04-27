@@ -1,10 +1,10 @@
-usage: PingStats.py 
+# usage: PingStats.py 
 
     `[-h] [-a ADDRESS] [-c CUSTOMARG] [-d DESTINATION]`
     `[-F PINGFREQUENCY] [-n NAME] [-t TIME] [-v] [-s]`
     `[-sF REFRESHFREQUENCY] [-sL TABLELENGTH]`
 
-optional arguments:
+## optional arguments:
   -h, --help            
   
     show this help message and exit
