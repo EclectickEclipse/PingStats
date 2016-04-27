@@ -7,7 +7,7 @@ enable easy use.
 Unpack the VERSION.zip file that you chose, and open a terminal in the directory you downloaded it to. Then from the 
 terminal, enter `./install.sh`, and hope for the best!
 
-## usage: pingstats.py
+## usage: pingstats
 
     `[-h] [-a ADDRESS] [-c CUSTOMARG] [-d DESTINATION]`
     `[-F PINGFREQUENCY] [-n NAME] [-t TIME] [-v] [-s]`
