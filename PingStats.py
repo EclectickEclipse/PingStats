@@ -83,33 +83,12 @@ def writecsv(file, row):
     :return: The row written by the process.
     """
     # TODO writecsv() reads the whole csv file to determine if the new row is unique. This is horribly inefficient.
-
-    print(""" How should writecsv() ensure CSV concurrency?
-
-Currently, writecsv() would attempt to read the entire CSV file every time it is run, and then simply counts for an
- existing row. Not only does this often result in rows not being caught, but it is also horribly inefficient if
- writecsv() is called repeatedly.
-
-If writecsv() were instead passed a full table to output at the end of runtime, it would provide ease of maintenance,
- but a more inefficient runtime, due to having to maintain the full table.
-
-If we were to maintain a table within runtime, output it to a file once it hit a certain size, then dump the written
- rows from memory it would cap the memory usage of the table.
-""")
-    # crr = csv.reader(file)
-    # t = []
-    # for cr in crr:
-    #     t.append(cr)
-    #
-    # if t.count(row) is 0:
-    #     cw = csv.writer(file)
-    #     cw.writerow(row)
-    #     return True
-    # else:
-    #     return False
+    # Should this be handled by dataparser
+    cwriter = csv.writer(file)
+    cwriter.writerow(row)
 
 
-def dataparser(datafilepath):
+def dataparser(datafile):
     """Parses through lines of text returned by ping and further refines it. This function creates a generator that can
     be iterated through in a for loop. For example:
 
@@ -121,38 +100,42 @@ def dataparser(datafilepath):
         table.append(data)
     '''
 
-    :param datafilepath: The position of the log file to read.
+    :param datafile: The position of the log file to read.
     :param csvfile: The csvfile object to write to.
     :return: The lines read.
     """
 
-    t = []
-    with open(datafilepath) as df:
-        for data in df:
-            row = [str(time.time()),]
-            if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
-                row.append(data)
-            elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
-                          data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
-                pass
-            else:
-                for val in data.split():  # Split lines by space and iterate.
-                    if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                                    val.count('\x00') > 0:  # skippable values
-                        pass
-                    elif len(row) is 1:  # if this is the first data field.
-                        row.append('size=%s' % val)
-                    elif len(row) is 2:  # if this is the second data field.
-                        row.append(val[:-1])
-                    else:  # append data.
-                        row.append(val)
-                if len(row) > 1:
-                    # Possible yield point for row by row.
-                    # if writecsv(csvfile, row):
-                    #     print('Wrote %s to %s!' % (row, csvfile.name))
-                    t.append(row)
+    data = datafile.readline()
+    if len(data) is 0:
+        return None  # hang until new line is written.
 
-    return t
+    row = [str(time.time())]
+
+    if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
+        row.append(data)  # Error line.
+
+    elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
+          data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
+        return None  # Exclude line.
+
+    else:
+        for val in data.split():  # Split lines by space and iterate.
+
+            if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
+                         val.count('\x00') > 0:  # skippable values
+                pass
+
+            elif len(row) is 1:  # if this is the first data field.
+                row.append('size=%s' % val)
+
+            elif len(row) is 2:  # if this is the second data field.
+                row.append(val[:-1])
+
+            else:  # append data.
+                row.append(val)
+
+        if len(row) > 1:  # if data was found, yield row.
+            return row
 
 
 # TODO Remove pingfrequency argument, current build does not use it.
@@ -311,15 +294,16 @@ if __name__ == '__main__':
             p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
                         outfile=outfile)
             try:
-                while p.poll() is None:
-                    for row in dataparser(l):  # Due to the call of the dataparser within the keyboard
-                        # interrupt, this could potentially miss new lines after the keyboard interrupt happens.
-                        pass  # arbitrary to force generator to finish function.
+                with open(outfile.name) as df:
+                    while p.poll() is None:
+                        d = dataparser(df)
+                        if d is not None:
+                            writecsv(csvfile, d)
 
-                    # animation would be a call to makeplot passing l.name and csvfile
-                    # makeplot would pass them to the animate function. every time the animate function loops it updates
-                    # automatically. This would just wait for the user to close the plot window, and once the plt.show()
-                    # finishes hanging, it runs p.kill and closes the csvfile. :D:D:D:D
+                # animation would be a call to makeplot passing l.name and csvfile
+                # makeplot would pass them to the an3imate function. every time the animate function loops it updates
+                # automatically. This would just wait for the user to close the plot window, and once the plt.show()
+                # finishes hanging, it runs p.kill and closes the csvfile. :D:D:D:D
             except (KeyboardInterrupt, SystemExit):
                 p.kill()
                 csvfile.close()
