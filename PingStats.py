@@ -86,6 +86,7 @@ def writecsv(file, row):
     # Should this be handled by dataparser
     cwriter = csv.writer(file)
     cwriter.writerow(row)
+    print('Wrote row: %s' % row)
 
 
 def dataparser(datafile):
@@ -111,7 +112,13 @@ def dataparser(datafile):
     row = [str(time.time())]
 
     if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
-        row.append(data)  # Error line.
+        row.append('failed')  # Error line.
+        row.append('failed')
+        row.append('icmp_seq=%s' % data.split()[-1])
+        row.append('ttl=0')
+        row.append('time=-10')
+        sys.stderr.write(data)
+        # row.append(data)
 
     elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
           data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
@@ -133,10 +140,11 @@ def dataparser(datafile):
             else:  # append data.
                 row.append(val)
 
-        if len(row) > 1:  # if data was found, yield row.
-            return row
-        else:
-            return None
+    if len(row) > 1:  # if data was found, yield row.
+        return row
+    else:
+        print(row)
+        return None
 
 
 # TODO Remove pingfrequency argument, current build does not use it.
@@ -225,16 +233,16 @@ class PlotTable:
             self.y.append(a)
 
     def getx(self):
-        if len(self.x) > self.tablelength:
-            return self.x[-self.tablelength:]
-        else:
-            return self.x
+        # if len(self.x) > self.tablelength:
+        #     return self.x[-self.tablelength:]
+        # else:
+        return self.x
 
     def gety(self):
-        if len(self.y) > self.tablelength:
-            return self.y[self.tablelength:]
-        else:
-            return self.y
+        # if len(self.y) > self.tablelength:
+        #     return self.y[self.tablelength:]
+        # else:
+        return self.y
 
 
 # TODO Define a backend for matplotlib that enables bundled usage.
@@ -260,7 +268,7 @@ def showplot(datafile, csvfile, refreshfreq, tablelength):
         :return: None
         """
         d = dataparser(datafile)
-        print(d)
+        # print(d)
         if d is not None:  # implies new information was gotten.
             writecsv(csvfile, d)
             table.appendx(d[3].split('=')[1])
