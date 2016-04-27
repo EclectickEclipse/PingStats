@@ -101,7 +101,6 @@ def dataparser(datafile):
     '''
 
     :param datafile: The position of the log file to read.
-    :param csvfile: The csvfile object to write to.
     :return: The lines read.
     """
 
