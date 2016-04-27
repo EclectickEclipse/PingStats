@@ -1,10 +1,10 @@
 # Installation
 
-This script is meant to run on a `*NIX` OS, and as such provides a script for easy installation in ./dist/<version>.zip/
+This script is meant to run on a `*NIX` OS, and as such provides a script for easy installation in ./dist/VERSION.zip/
 install.sh. It will automatically install python and matplotlib, and creates an executable file in /usr/local/bin to 
 enable easy use. 
 
-Unpack the <version>.zip file that you chose, and open a terminal in the directory you downloaded it to. Then from the 
+Unpack the VERSION.zip file that you chose, and open a terminal in the directory you downloaded it to. Then from the 
 terminal, enter `./install.sh`, and hope for the best!
 
 ## usage: pingstats.py
