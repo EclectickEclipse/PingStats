@@ -308,8 +308,8 @@ def showplot_fromfile(csvfilepath):
 
     plt.plot(x, y)
 
-    plt.xlabel('Return Time')
-    plt.ylabel('ICMP SEQ')
+    plt.ylabel('Return Time')
+    plt.xlabel('ICMP SEQ')
     plt.show()  # hangs until user closes plot.
 
 # Bootstrap logic.
