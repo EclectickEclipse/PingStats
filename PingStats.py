@@ -83,26 +83,39 @@ def writecsv(file, row):
     :return: The row written by the process.
     """
     # TODO writecsv() reads the whole csv file to determine if the new row is unique. This is horribly inefficient.
-    crr = csv.reader(file)
-    t = []
-    for cr in crr:
-        t.append(cr)
 
-    if t.count(row) is 0:
-        cw = csv.writer(file)
-        cw.writerow(row)
-        return True
-    else:
-        return False
+    print(""" How should writecsv() ensure CSV concurrency?
+
+Currently, writecsv() would attempt to read the entire CSV file every time it is run, and then simply counts for an
+ existing row. Not only does this often result in rows not being caught, but it is also horribly inefficient if
+ writecsv() is called repeatedly.
+
+If writecsv() were instead passed a full table to output at the end of runtime, it would provide ease of maintenance,
+ but a more inefficient runtime, due to having to maintain the full table.
+
+If we were to maintain a table within runtime, output it to a file once it hit a certain size, then dump the written
+ rows from memory it would cap the memory usage of the table.
+""")
+    # crr = csv.reader(file)
+    # t = []
+    # for cr in crr:
+    #     t.append(cr)
+    #
+    # if t.count(row) is 0:
+    #     cw = csv.writer(file)
+    #     cw.writerow(row)
+    #     return True
+    # else:
+    #     return False
 
 
-def dataparser(datafilepath, csvfile):
+def dataparser(datafilepath):
     """Parses through lines of text returned by ping and further refines it. This function creates a generator that can
     be iterated through in a for loop. For example:
 
     '''
 
-    table = []
+    t = []
 
     for data in dataparser(dfile, cfile):
         table.append(data)
@@ -113,7 +126,7 @@ def dataparser(datafilepath, csvfile):
     :return: The lines read.
     """
 
-    table = []
+    t = []
     with open(datafilepath) as df:
         for data in df:
             row = [str(time.time()),]
@@ -134,11 +147,12 @@ def dataparser(datafilepath, csvfile):
                     else:  # append data.
                         row.append(val)
                 if len(row) > 1:
+                    # Possible yield point for row by row.
                     # if writecsv(csvfile, row):
                     #     print('Wrote %s to %s!' % (row, csvfile.name))
-                    table.append(row)
+                    t.append(row)
 
-    return table
+    return t
 
 
 # TODO Remove pingfrequency argument, current build does not use it.
@@ -204,7 +218,7 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
 # Read CSV logs.
 
 # TODO Define a backend for matplotlib that enables bundled usage.
-def showplot(datafilepath, csvfile):
+def showplot(datafilepath):
     """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
 
     :param datafilepath: The path of the file to be read.
@@ -223,7 +237,7 @@ def showplot(datafilepath, csvfile):
         :param i: Arbitrary.
         :return: None
         """
-        rows = dataparser(datafilepath, csvfile)
+        rows = dataparser(datafilepath)
 
         x = []
         y = []
@@ -282,7 +296,7 @@ if __name__ == '__main__':
             csvfile, outfile = buildfiles(parsed.destination, parsed.name)
             p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
                         outfile=outfile)
-            showplot(l, csvfile)  # hangs while showing a plot, when user closes plot, process closes.
+            showplot(l)  # hangs while showing a plot, when user closes plot, process closes.
             p.kill()
             csvfile.close()
             outfile.close()
@@ -298,7 +312,7 @@ if __name__ == '__main__':
                         outfile=outfile)
             try:
                 while p.poll() is None:
-                    for row in dataparser(l, csvfile):  # Due to the call of the dataparser within the keyboard
+                    for row in dataparser(l):  # Due to the call of the dataparser within the keyboard
                         # interrupt, this could potentially miss new lines after the keyboard interrupt happens.
                         pass  # arbitrary to force generator to finish function.
 
