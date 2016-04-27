@@ -331,14 +331,13 @@ if __name__ == '__main__':
     parser.add_argument('-F', '--pingfrequency', help='The frequency with which to ping the host. Defaults to 0.25 '
                                                       'seconds.')
 
+    parser.add_argument('-pf', '--plotfile', help='Include the path to a previously generated CSV file to generate a '
+                                                  'plot.')
+
     parser.add_argument('-n', '--name', help='Flag this option to use a custom name for the CSV output file.')
 
-    parser.add_argument('-t', '--time', help='The time to wait before killing the process in seconds.')
-
-    parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
-
-    parser.add_argument('-s', '--showliveplot', help='Flag this option to display an animated plot of the last 500 ping '
-                                                 'sequences.', action='store_true')
+    parser.add_argument('-s', '--showliveplot', help='Flag this option to display an animated plot of the last 500 ping'
+                                                     ' sequences.', action='store_true')
 
     parser.add_argument('-sF', '--refreshfrequency', help='Specify a number of milliseconds to wait between refreshes'
                                                           'of the -s plot visualization feature. THe lower the number,'
@@ -349,8 +348,9 @@ if __name__ == '__main__':
                                                      'the better the performance of %s visulization. Handy for '
                                                      '\"potatoes.\"' % buildname)
 
-    parser.add_argument('-pf', '--plotfile', help='Include the path to a previously generated CSV file to generate a '
-                                                  'plot.')
+    parser.add_argument('-t', '--time', help='The time to wait before killing the process in seconds.')
+
+    parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
 
     parsed = parser.parse_args()
 
