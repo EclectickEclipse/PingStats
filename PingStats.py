@@ -357,7 +357,7 @@ if __name__ == '__main__':
     if parsed.version:
         print(versionstr)
     elif parsed.address is not None:
-        if parsed.showplot:  # TODO build animation logic.
+        if parsed.showliveplot:  # TODO build animation logic.
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
                   'Press CNTRL+C to exit...' % parsed.address)
 
