@@ -319,7 +319,8 @@ def showplot_fromfile(csvfilepath, imagename):
 
 if __name__ == '__main__':
     # Define program arguments.
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='%s. This program defines some basic ping statistic visualization'
+                                                 'methods through Python\'s \'matplotlib\'.' % versionstr)
 
     parser.add_argument('-a', '--address', help='The IP address to ping.')
 

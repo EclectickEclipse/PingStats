@@ -22,4 +22,9 @@ echo "Changing executable permissions to a+x and copying to /usr/local/bin"
 sudo chmod a+x ./pingstats
 mv ./pingstats /usr/local/bin/pingstats
 
-pingstats -v
+echo ""
+echo ""
+echo ""
+echo ""
+
+pingstats -h
