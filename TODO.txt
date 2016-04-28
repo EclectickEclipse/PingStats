@@ -11,7 +11,7 @@ TODO MASTER
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
     # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
     # TODO Rename --destination to --path for clarity.
-        if parsed.showplot:  # TODO build animation logic.
+        if parsed.showliveplot:  # TODO build animation logic.
             # TODO Deprecate calls to --pingfrequency
             # TODO Deprecate calls to --pingfrequency
 
