@@ -287,10 +287,8 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
     return ani
 
 
-def showplot_fromfile(csvfilepath):
+def showplot_fromfile(csvfilepath, imagename):
     style.use('fivethirtyeight')
-
-    fig = plt.figure()
 
     table = []
 
@@ -310,7 +308,12 @@ def showplot_fromfile(csvfilepath):
 
     plt.ylabel('Return Time')
     plt.xlabel('ICMP SEQ')
-    plt.show()  # hangs until user closes plot.
+
+    if imagename is not None:
+        plt.savefig('%s.png' % imagename)
+    else:
+        plt.show()  # hangs until user closes plot.
+
 
 # Bootstrap logic.
 
@@ -333,6 +336,10 @@ if __name__ == '__main__':
 
     parser.add_argument('-pf', '--plotfile', help='Include the path to a previously generated CSV file to generate a '
                                                   'plot.')
+
+    parser.add_argument('-gi', '--generateimage', help='Used in conjunction with the -pf option, this option sends a '
+                                                       'name for a \'*.png\' file to save to the current working '
+                                                       'directory.')
 
     parser.add_argument('-n', '--name', help='Flag this option to use a custom name for the CSV output file.')
 
@@ -400,4 +407,4 @@ if __name__ == '__main__':
                 outfile.close()
                 os.remove(outfile.name)
     elif parsed.plotfile is not None:
-        showplot_fromfile(parsed.plotfile)
+        showplot_fromfile(parsed.plotfile, parsed.generateimage)
