@@ -139,6 +139,7 @@ def dataparser(datafile):
 
                 else:  # append data.
                     row.append(val)
+
     else:  # TODO Define parsing logic for lines on NT based ping requests.
         raise (KeyboardInterrupt, 'Software not supported on NT based systems as of V0.08')
 
