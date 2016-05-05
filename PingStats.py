@@ -309,6 +309,12 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
 
 
 def showplot_fromfile(csvfilepath, imagename):
+    """ Generates a plot from a csv file specified by the user. Also generates images of the file by supplying an
+    imagename paramater.
+
+    :param csvfilepath: The path to the file to generate.
+    :param imagename: Optional argument to specify an image to generate.
+    """
     style.use('fivethirtyeight')
 
     table = []
@@ -331,10 +337,10 @@ def showplot_fromfile(csvfilepath, imagename):
     plt.ylabel('Return Time')
     plt.xlabel('ICMP SEQ')
 
-    if imagename is not None:
+    if imagename is not None:  # User flagged -gi, generate an image.
         print('Generating %s.png.' % imagename)
         plt.savefig('%s.png' % imagename)
-    else:
+    else:  # Display plot.
         print('Showing the plot generated from \"%s.\"' % csvfilepath)
         plt.show()  # hangs until user closes plot.
 
@@ -434,3 +440,5 @@ if __name__ == '__main__':
                 os.remove(outfile.name)
     elif parsed.plotfile is not None:
         showplot_fromfile(parsed.plotfile, parsed.generateimage)
+    else:
+        parser.print_usage()
