@@ -37,8 +37,8 @@ except OSError as e:
 # TODO Further document preamble.
 
 buildname = 'PingStats'
-version = '0.09'
-versiondate = 'Thu Apr 28 03:19:45 2016'
+version = '0.09.01'
+versiondate = 'Thu May  5 01:47:15 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
@@ -102,52 +102,61 @@ def dataparser(datafile):
     :param datafile: The position of the log file to read.
     :return: The lines read.
     """
+    tlist = []
 
-    data = datafile.readline()
-    if len(data) is 0:
-        return None  # hang until new line is written.
+    while 1:
+        data = datafile.readline()
+        if len(data) is 0:
+            break  # when no new information is read, break.
 
-    row = [str(time.time())]
+        # TODO Should dataparser instead of breaking and returning upon no new information, check for table validity and
+        # yield the table, then empty it?
 
-    if os.name != 'nt':
-        # Parse data text
-        if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
-            row.append('failed')  # Error line.
-            row.append('failed')
-            row.append('icmp_seq=%s' % data.split()[-1])
-            row.append('ttl=0')
-            row.append('time=-10')
-            sys.stderr.write(data)
-            # row.append(data)
+        row = [str(time.time())]
 
-        elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
-              data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
-            return None  # Exclude line.
+        if os.name != 'nt':
+            # Parse data text
+            if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
+                row.append('failed')  # Error line.
+                row.append('failed')
+                row.append('icmp_seq=%s' % data.split()[-1])
+                row.append('ttl=0')
+                row.append('time=-10')
+                sys.stderr.write(data)
+                # row.append(data)
 
+            elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
+                  data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
+                pass
+
+            else:
+                for val in data.split():  # Split lines by space and iterate.
+
+                    if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
+                                 val.count('\x00') > 0:  # skippable values
+                        pass
+
+                    elif len(row) is 1:  # if this is the first data field.
+                        row.append('size=%s' % val)
+
+                    elif len(row) is 2:  # if this is the second data field.
+                        row.append(val[:-1])
+
+                    else:  # append data.
+                        row.append(val)
+
+        else:  # TODO Define parsing logic for lines on NT based ping requests.
+            raise (KeyboardInterrupt, 'Software not supported on NT based systems as of V0.08')
+
+        if len(row) > 1:  # if data was found, yield row.
+            tlist.append(row)
         else:
-            for val in data.split():  # Split lines by space and iterate.
+            pass  # breaks the loop if no data is found
 
-                if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                             val.count('\x00') > 0:  # skippable values
-                    pass
-
-                elif len(row) is 1:  # if this is the first data field.
-                    row.append('size=%s' % val)
-
-                elif len(row) is 2:  # if this is the second data field.
-                    row.append(val[:-1])
-
-                else:  # append data.
-                    row.append(val)
-
-    else:  # TODO Define parsing logic for lines on NT based ping requests.
-        raise (KeyboardInterrupt, 'Software not supported on NT based systems as of V0.08')
-
-    if len(row) > 1:  # if data was found, yield row.
-        return row
+    if len(tlist) > 0:
+        return tlist
     else:
-        print(row)
-        return None
+        return None  # returns none when no new information to parse.
 
 
 # TODO Remove pingfrequency argument, current build does not use it.
@@ -222,16 +231,22 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
     """
 
     class PlotTable:
+        """ A class to maintain a specified number of objects to plot to matplotlib. """
 
         def __init__(self, tablelength):
             self.x = []
             self.y = []
+
             if tablelength is None:
                 self.tablelength = 200
             else:
                 self.tablelength = int(tablelength)
 
         def appendx(self, a):
+            """ Append a new value to the x value of the table. Maintains specified length of table upon reaching max.
+
+            :param a: The value to append to the table.
+            """
             if len(self.x) < self.tablelength:
                 self.x.append(a)
             else:
@@ -239,16 +254,20 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
                 self.x.append(a)
 
         def appendy(self, a):
+            """ Append a new value to the y value of the table. Maintains specified length of table upon reaching max.
+
+            :param a: The value to append to the table.
+            """
             if len(self.y) < self.tablelength:
                 self.y.append(a)
             else:
                 self.y.pop(0)
                 self.y.append(a)
 
-        def getx(self):
+        def getx(self):  # arbitrary get method
             return self.x
 
-        def gety(self):
+        def gety(self):  # arbitrary get method
             return self.y
 
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
@@ -258,7 +277,7 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
     fig = plt.figure()
     ax1 = fig.add_subplot(1, 1, 1)
 
-    table = PlotTable(tablelength)
+    ptable = PlotTable(tablelength)
 
     def animate(i):
         """ Reads rows from a CSV file and render them to a plot.
@@ -266,19 +285,20 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
         :param i: Arbitrary.
         :return: None
         """
-        d = dataparser(datafile)
-        # print(d)
-        if d is not None:  # implies new information was gotten.
-            writecsv(csvfile, d)
-            table.appendx(d[3].split('=')[1])
-            table.appendy(d[5].split('=')[1])
+        table_generator = dataparser(datafile)
+        if table_generator is not None:  # dataparser() generates None if no new rows were present in the stream.
+            for row in table_generator:  # some code linters may show this as being a NoneType. This is handled....
+                writecsv(csvfile, row)
+                ptable.appendx(row[3].split('=')[1])
+                ptable.appendy(row[5].split('=')[1])
+
         ax1.clear()
-        ax1.plot(table.getx(), table.gety())
+        ax1.plot(ptable.getx(), ptable.gety())
 
     plt.xlabel('ICMP SEQ #.')
     plt.ylabel('Return time.')
-    # DEBUG
-    # sys.stderr.write('Showing plot...\n')
+    print('Showing plot...\n')
+
     if refreshfreq is None:
         ani = animation.FuncAnimation(fig, animate, interval=500)
     else:
@@ -293,6 +313,7 @@ def showplot_fromfile(csvfilepath, imagename):
 
     table = []
 
+    print('Reading ping information from user specified file.')
     with open(csvfilepath) as cf:
         creader = csv.reader(cf)
         for line in creader:
@@ -311,8 +332,10 @@ def showplot_fromfile(csvfilepath, imagename):
     plt.xlabel('ICMP SEQ')
 
     if imagename is not None:
+        print('Generating %s.png.' % imagename)
         plt.savefig('%s.png' % imagename)
     else:
+        print('Showing the plot generated from \"%s.\"' % csvfilepath)
         plt.show()  # hangs until user closes plot.
 
 
@@ -399,9 +422,10 @@ if __name__ == '__main__':
             try:
                 with open(outfile.name) as df:
                     while p.poll() is None:
-                        d = dataparser(df)
-                        if d is not None:
-                            writecsv(csvfile, d)
+                        row_generator = dataparser(df)
+                        if row_generator is not None:
+                            for row in row_generator:  # some code linters may read this as NoneType, this is handled...
+                                writecsv(csvfile, row)
 
             except (KeyboardInterrupt, SystemExit):
                 p.kill()
