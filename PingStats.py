@@ -23,6 +23,8 @@ import csv
 import os
 import argparse
 import sys
+import tempfile
+
 havematplot = False
 
 try:
@@ -53,21 +55,21 @@ def buildfiles(path, name):
         if name is not None:  # If user specified a custom name.
             if path is not None:  # If user specified an output path.
                 csvfile = open('%s%s-%s.csv' % (path, name, time.ctime()), 'w+')
-                outfile = open('%sout.txt' % path, 'w+')
+                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
             else:
                 csvfile = open('%s-%s.csv' % (name, time.ctime()), 'w+')
-                outfile = open('out.txt', 'w+')
+                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
         else:
 
             if path is not None:  # If user specified an output path.
                 csvfile = open('%s%slog-%s.csv' % (path, buildname, time.ctime()), 'w+')
-                outfile = open('%sout.txt' % path, 'w+')
+                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
             else:
                 csvfile = open('%sLog-%s.csv' % (buildname, time.ctime()), 'w+')
-                outfile = open('out.txt', 'w+')
+                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
     except OSError as e:
         print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
@@ -412,8 +414,6 @@ if __name__ == '__main__':
             p.kill()
             csvfile.close()
             outfile.close()
-            os.remove(outfile.name)
-
 
         else:
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
@@ -437,7 +437,6 @@ if __name__ == '__main__':
                 p.kill()
                 csvfile.close()
                 outfile.close()
-                os.remove(outfile.name)
     elif parsed.plotfile is not None:
         showplot_fromfile(parsed.plotfile, parsed.generateimage)
     else:
