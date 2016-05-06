@@ -7,9 +7,10 @@ if [ $? != 0 ]; then
     sudo apt-get install python3.5 &> /dev/null
     if [ $? != 0 ]; then
         echo "Could not get Python3.5!"
-        echo "Exiting!"
+        echo "Exiting!"; exit
     fi
-    pip3.5 install matplotlib
+    pip3.5 install numpy &> /dev/null
+    pip3.5 install matplotlib &> /dev/null
 fi
 
 echo "Building Executable script!"
@@ -23,8 +24,7 @@ sudo chmod a+x ./pingstats
 mv ./pingstats /usr/local/bin/pingstats
 
 echo ""
-echo ""
-echo ""
-echo ""
 
-pingstats -h
+pingstats -v
+echo ""
+pingstats

@@ -40,7 +40,7 @@ except OSError as e:
 
 buildname = 'PingStats'
 version = '0.09.01'
-versiondate = 'Thu May  5 01:47:15 2016'
+versiondate = 'Thu May  5 18:18:25 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
@@ -54,11 +54,11 @@ def buildfiles(path, name):
     try:
         if name is not None:  # If user specified a custom name.
             if path is not None:  # If user specified an output path.
-                csvfile = open('%s%s-%s.csv' % (path, name, time.ctime()), 'w+')
+                csvfile = open('%s%s.csv' % (path, name), 'w+')
                 outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
             else:
-                csvfile = open('%s-%s.csv' % (name, time.ctime()), 'w+')
+                csvfile = open('%s.csv' % name, 'w+')
                 outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
         else:
@@ -84,9 +84,10 @@ def writecsv(file, row):
     :return: The row written by the process.
     """
     # TODO Should writecsv() be handled by dataparser?
+    # TODO Could writecsv be causing the memory leak? Does it read the file every iteration?
     cwriter = csv.writer(file)
     cwriter.writerow(row)
-    print('Wrote row: %s' % row)
+    print('Wrote row: \'%s\' to %s' % (row, file.name))
 
 
 def dataparser(datafile):
@@ -162,12 +163,11 @@ def dataparser(datafile):
 
 
 # TODO Remove pingfrequency argument, current build does not use it.
-def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
+def ping(address, customarg=None, wait=None, outfile=None):
     """ Runs a ping and collects statistics.
     :param address: The address to ping.
     :param customarg: A string with user specified custom arguments.
     :param wait: An integer value specifying how long to wait.
-    :param pingfrequency: The amount of time between spawning new ping processi.
     :param outfile: The file object to write output to.
     """
     # Conversion handlers.
@@ -185,16 +185,6 @@ def ping(address, customarg=None, wait=None,pingfrequency=None, outfile=None):
         except ValueError:
             sys.stderr.write('Please enter numbers only for the -t flag.\n')
             quit()
-
-    # handle pingfrequency argument logic.
-    if pingfrequency is None:
-        pingfrequency = 60
-    elif type(pingfrequency) is str:
-        try:
-            pingfrequency = int(pingfrequency)
-        except ValueError:  # Handle non integer values....
-            sys.stderr.write('Please specify a number with the -f option.\n')
-            exit()  # break
 
     def parsearg(custom_argument):
         """ Creates an argument for the subprocess.Popen object.
@@ -306,7 +296,11 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
     else:
         ani = animation.FuncAnimation(fig, animate, interval=int(refreshfreq))
 
-    plt.show()
+    try:
+        plt.show()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+
     return ani
 
 
@@ -361,11 +355,7 @@ if __name__ == '__main__':
                                                   'try using \'-c \"-c 999999999\"\' to spawn a process with an '
                                                   'extremely long runtime.')
 
-    # TODO Rename --destination to --path for clarity.
-    parser.add_argument('-d', '--destination', help='To supply a specific path to output any files to, include a path.')
-
-    parser.add_argument('-F', '--pingfrequency', help='The frequency with which to ping the host. Defaults to 0.25 '
-                                                      'seconds.')
+    parser.add_argument('-p', '--path', help='To supply a specific path to output any files to, include a path.')
 
     parser.add_argument('-pf', '--plotfile', help='Include the path to a previously generated CSV file to generate a '
                                                   'plot.')
@@ -388,8 +378,6 @@ if __name__ == '__main__':
                                                      'the better the performance of %s visulization. Handy for '
                                                      '\"potatoes.\"' % buildname)
 
-    parser.add_argument('-t', '--time', help='The time to wait before killing the process in seconds.')
-
     parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
 
     parsed = parser.parse_args()
@@ -401,11 +389,10 @@ if __name__ == '__main__':
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
                   'Press CNTRL+C to exit...' % parsed.address)
 
-            csvfile, outfile = buildfiles(parsed.destination, parsed.name)
+            csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
             # TODO Deprecate calls to --pingfrequency
-            p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
-                        outfile=outfile)
+            p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
 
             with open(outfile.name) as df:
                 showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength)
@@ -419,11 +406,10 @@ if __name__ == '__main__':
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
                   'Press CNTRL+C to exit...' % parsed.address)
 
-            csvfile, outfile = buildfiles(parsed.destination, parsed.name)
+            csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
             # TODO Deprecate calls to --pingfrequency
-            p, l = ping(parsed.address, customarg=parsed.customarg, pingfrequency=parsed.pingfrequency,
-                        outfile=outfile)
+            p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
 
             try:
                 with open(outfile.name) as df:
