@@ -12,9 +12,6 @@ TODO MASTER
 # TODO Define a backend for matplotlib that enables bundled usage.
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
     # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
-        if parsed.showliveplot:  # TODO build animation logic.
-            # TODO Deprecate calls to --pingfrequency
-            # TODO Deprecate calls to --pingfrequency
 
 ./makebuild.sh
 cat ./PingStats.py | grep "# TODO" >> "TODO.txt"
