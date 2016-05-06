@@ -385,13 +385,12 @@ if __name__ == '__main__':
     if parsed.version:
         print(versionstr)
     elif parsed.address is not None:
-        if parsed.showliveplot:  # TODO build animation logic.
+        if parsed.showliveplot:
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
                   'Press CNTRL+C to exit...' % parsed.address)
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            # TODO Deprecate calls to --pingfrequency
             p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
 
             with open(outfile.name) as df:
@@ -408,7 +407,6 @@ if __name__ == '__main__':
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            # TODO Deprecate calls to --pingfrequency
             p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
 
             try:

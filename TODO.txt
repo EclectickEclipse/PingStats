@@ -4,6 +4,7 @@ TODO MASTER
 # TODO Build an interactive mode.
 # TODO Further document preamble.
     # TODO Should writecsv() be handled by dataparser?
+    # TODO Could writecsv be causing the memory leak? Does it read the file every iteration?
         # TODO Should dataparser instead of breaking and returning upon no new information, check for table validity and
         else:  # TODO Define parsing logic for lines on NT based ping requests.
 # TODO Remove pingfrequency argument, current build does not use it.
@@ -11,7 +12,6 @@ TODO MASTER
 # TODO Define a backend for matplotlib that enables bundled usage.
     # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
     # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
-    # TODO Rename --destination to --path for clarity.
         if parsed.showliveplot:  # TODO build animation logic.
             # TODO Deprecate calls to --pingfrequency
             # TODO Deprecate calls to --pingfrequency
