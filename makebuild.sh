@@ -2,7 +2,7 @@
 # Requires options BUILDFILE, BUILDNAME, DISTRIBUTE_FLAG
 # BUILDNAME should be the same as the BUILDFILE, without .py...
 
-echo "Updating TODO tags for ./PingStats.py and ./makebuil.sh."
+echo "Updating TODO tags for ./PingStats.py and ./makebuild.sh."
 
 echo "TODO MASTER" &> "TODO.txt"
 echo "" >> "TODO.txt"
@@ -35,14 +35,5 @@ echo "Building $1!"
 
 # COMMENT SAY LINES FOR NON MACOSX SYSTEMS
 say "Performing build!"
-
-#cp $1 ./build/build.py
-## Version Dating string replacement functionality
-#OLD="versiondate = **DEV**"
-#NEW="versiondate = "
-#currdate=$(date)
-#newdate="version date = '$currdate'"
-#echo $newdate
-#sed "s/$OLD/$newdate/g"
 
 zip ./dist/$2.zip ./PingStats.py ./install.sh
