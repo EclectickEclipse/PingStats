@@ -39,8 +39,8 @@ except OSError as e:
 # TODO Further document preamble.
 
 buildname = 'PingStats'
-version = '0.09.02'
-versiondate = 'Thu May  5 18:18:25 2016'
+version = '0.09.03'
+versiondate = 'Thu May 12 18:46:59 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
@@ -55,21 +55,33 @@ def buildfiles(path, name):
         if name is not None:  # If user specified a custom name.
             if path is not None:  # If user specified an output path.
                 csvfile = open('%s%s.csv' % (path, name), 'w+')
-                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
+                if os.name == 'nt':
+                    outfile = open('out.txt', 'w+')
+                else:
+                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
             else:
                 csvfile = open('%s.csv' % name, 'w+')
-                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
+                if os.name == 'nt':
+                    outfile = open('out.txt', 'w+')
+                else:
+                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
         else:
 
             if path is not None:  # If user specified an output path.
                 csvfile = open('%s%slog-%s.csv' % (path, buildname, time.ctime()), 'w+')
-                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
+                if os.name == 'nt':
+                    outfile = open('out.txt', 'w+')
+                else:
+                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
             else:
                 csvfile = open('%sLog-%s.csv' % (buildname, time.ctime()), 'w+')
-                outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
+                if os.name == 'nt':
+                    outfile = open('out.txt', 'w+')
+                else:
+                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
     except OSError as e:
         print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
@@ -91,6 +103,15 @@ def writecsv(file, row):
 
 
 def dataparser(datafile):
+    def winlinecounter():  # Generates a 1 ever iteration.
+        # instead, pass function an initializer, and generate an object for windows parsing that gets passed to
+        # dataparser?
+        # This would imply we move this to its own dataspace outside of dataparser.
+        i = 0  # Resets counter
+        while 1:  # needless hang
+            i += 1
+            yield i  # this obejct generates 1 every iteration.
+
     """Parses through lines of text returned by ping and further refines it. This function creates a generator that can
     be iterated through in a for loop. For example:
 
@@ -108,7 +129,7 @@ def dataparser(datafile):
     tlist = []
 
     while 1:
-        data = datafile.readline()
+        data = datafile.readline()  # Generator function that yields single lines from a for loop?
         if len(data) is 0:
             break  # when no new information is read, break.
 
@@ -149,7 +170,39 @@ def dataparser(datafile):
                         row.append(val)
 
         else:  # TODO Define parsing logic for lines on NT based ping requests.
-            raise (KeyboardInterrupt, 'Software not supported on NT based systems as of V0.08')
+
+            if data.lower().count('Request timed out.') > 1:
+                row.append('failed')
+                row.append('failed')
+                row.append('icmp_seq=%s' % winlinecounter().__next__())
+                row.append('ttl=0')
+                row.append('time-10')
+                sys.stderr.write(row)
+
+            elif data.lower().count('pinging') or data.lower().count('statistics') or data.lower().count('packets') or \
+                data.lower().count('approximate') or data.lower().count('minimum') or data.lower().count('control') or \
+                data.lower().count('^c') > 0:
+                pass
+
+            else:
+                for val in data.split():
+
+                    if val.lower().count('reply') or val.lower().count('from') > 0:
+                        pass
+
+                    elif val.lower().count('bytes') > 0:
+                        row.insert(0, 'size=%s' % val.split('=')[1])
+
+                    elif val.lower().count('time') > 0:
+                        row.append(val)
+
+                    elif val.lower().count('ttl') > 0:
+                        row.insert(-2, val)
+
+                    else:
+                        row.append(val)
+
+                row.insert(2, 'icmp_seq=%s' % winlinecounter().__next__())
 
         if len(row) > 1:  # if data was found, yield row.
             tlist.append(row)
@@ -400,6 +453,8 @@ if __name__ == '__main__':
             p.kill()
             csvfile.close()
             outfile.close()
+            if os.name == 'nt':
+                os.remove(outfile.name)
 
         else:
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
@@ -410,7 +465,7 @@ if __name__ == '__main__':
             p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
 
             try:
-                with open(outfile.name) as df:
+                with open(outfile.name) as df:  # Breaks on windows. Generates a permission denied error.
                     while p.poll() is None:
                         row_generator = dataparser(df)
                         if row_generator is not None:
@@ -421,6 +476,8 @@ if __name__ == '__main__':
                 p.kill()
                 csvfile.close()
                 outfile.close()
+                if os.name == 'nt':
+                    os.remove(outfile.name)
     elif parsed.plotfile is not None:
         showplot_fromfile(parsed.plotfile, parsed.generateimage)
     else:
