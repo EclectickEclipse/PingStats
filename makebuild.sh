@@ -2,7 +2,7 @@
 # Requires options BUILDFILE, BUILDNAME, DISTRIBUTE_FLAG
 # BUILDNAME should be the same as the BUILDFILE, without .py...
 
-echo "Updating TODO tags for ./PingStats.py and ./makebuild.sh."
+echo "Updating TODO tags for ./PingStats.py."
 
 echo "TODO MASTER" &> "TODO.txt"
 echo "" >> "TODO.txt"
@@ -11,17 +11,21 @@ echo "./PingStats.py" >> "TODO.txt"
 cat ./PingStats.py | grep "# TODO" >> "TODO.txt"
 echo "" >> "TODO.txt"
 
-echo "./makebuild.sh" >> "TODO.TXT"
-cat ./makebuild.sh | grep "# TODO" >> "TODO.txt"
-echo "" >> "TODO.txt"
 
-if [ "$(cat $1 | grep -c "# TODO")" != "0" ]; then  # logic changed to reflect usage.
+echo "BUILDNAME '$1' supplied. Is this correct? [y/n]"
+say "Please confirm your build name."
+read checkforargs
+if [ "$checkforargs" == "n" ]; then
+    echo "Exiting!"; exit
+fi
+
+if [ "$(cat ./PingStats.py | grep -c "# TODO")" != "0" ]; then
     echo "There are TODO's that require attention, would you like to review them? [y/n]"
     # COMMENT SAY LINES FOR NON MACOSX SYSTEMS
     say "There are TODO's that require your attention!"
     read checkfortodo
     if [ "$checkfortodo" == "y" ]; then
-        cat $1 | grep "# TODO"
+        cat ./PingStats.py | grep "# TODO"
     fi
 fi
 
@@ -36,4 +40,4 @@ echo "Building $1!"
 # COMMENT SAY LINES FOR NON MACOSX SYSTEMS
 say "Performing build!"
 
-zip ./dist/$2.zip ./PingStats.py ./install.sh
+zip ./dist/$1.zip ./PingStats.py ./install.sh

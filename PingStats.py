@@ -39,8 +39,8 @@ except OSError as e:
 # TODO Further document preamble.
 
 buildname = 'PingStats'
-version = '0.09.03'
-versiondate = 'Thu May 12 18:46:59 2016'
+version = '0.09.04'
+versiondate = 'Sat May 14 18:36:09 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
@@ -70,22 +70,25 @@ def buildfiles(path, name):
         else:
 
             if path is not None:  # If user specified an output path.
-                csvfile = open('%s%slog-%s.csv' % (path, buildname, time.ctime()), 'w+')
+                csvfile = open('%s%slog.csv' % (path, buildname), 'w+')
                 if os.name == 'nt':
                     outfile = open('out.txt', 'w+')
                 else:
                     outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
             else:
-                csvfile = open('%sLog-%s.csv' % (buildname, time.ctime()), 'w+')
+                csvfile = open('%sLog.csv' % buildname, 'w+')
                 if os.name == 'nt':
                     outfile = open('out.txt', 'w+')
                 else:
                     outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
                 return csvfile, outfile
     except OSError as e:
-        print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
-        quit()  # break
+        if e.strerror.count('permission denied') or e.strerror.count('path') > 0:
+            print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
+            quit()  # break
+        else:
+            raise e
 
 
 def writecsv(file, row):
@@ -99,7 +102,10 @@ def writecsv(file, row):
     # TODO Could writecsv be causing the memory leak? Does it read the file every iteration?
     cwriter = csv.writer(file)
     cwriter.writerow(row)
-    print('Wrote row: \'%s\' to %s' % (row, file.name))
+    rowtext = ''
+    for val in row:
+        rowtext += val + ', '
+    print('Wrote row: \'%s\' to %s' % (rowtext, file.name))
 
 
 def dataparser(datafile):
@@ -129,7 +135,7 @@ def dataparser(datafile):
     tlist = []
 
     while 1:
-        data = datafile.readline()  # Generator function that yields single lines from a for loop?
+        data = datafile.readline()
         if len(data) is 0:
             break  # when no new information is read, break.
 
@@ -268,7 +274,7 @@ def ping(address, customarg=None, wait=None, outfile=None):
 
 
 # TODO Define a backend for matplotlib that enables bundled usage.
-def showliveplot(datafile, csvfile, refreshfreq, tablelength):
+def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
     """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
 
     :param datafile: The path of the file to be read.
@@ -333,7 +339,8 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
         table_generator = dataparser(datafile)
         if table_generator is not None:  # dataparser() generates None if no new rows were present in the stream.
             for row in table_generator:  # some code linters may show this as being a NoneType. This is handled....
-                writecsv(csvfile, row)
+                if not nofile:
+                    writecsv(csvfile, row)
                 ptable.appendx(row[3].split('=')[1])
                 ptable.appendy(row[5].split('=')[1])
 
@@ -349,10 +356,7 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength):
     else:
         ani = animation.FuncAnimation(fig, animate, interval=int(refreshfreq))
 
-    try:
-        plt.show()
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    plt.show()  # does not hang.....
 
     return ani
 
@@ -431,6 +435,10 @@ if __name__ == '__main__':
                                                      'the better the performance of %s visulization. Handy for '
                                                      '\"potatoes.\"' % buildname)
 
+    parser.add_argument('-sNF', '--nofile', help='Flag this option to disable outputting ping information to a csv'
+                                                 ' file during live plotting. Helps with memory consumption.',
+                        action='store_true')
+
     parser.add_argument('-v', '--version', help='Flag this option to display software version.', action='store_true')
 
     parsed = parser.parse_args()
@@ -439,16 +447,18 @@ if __name__ == '__main__':
         print(versionstr)
     elif parsed.address is not None:
         if parsed.showliveplot:
-            print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
-                  'Press CNTRL+C to exit...' % parsed.address)
+            print('Pinging %s...\nThe longer that this program runs, the more system resources it will occupy. Please'
+                  'consider using the live plotting feature for shorter run times (i.e a match of online chess).\n'
+                  'Close the plot window to exit the program....' % parsed.address)
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
             p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
 
             with open(outfile.name) as df:
-                showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength)
-                # hangs while showing a plot, when user closes plot, process closes.
+                showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
+                # hangs while showing a plot, when user closes plot, process closes.ile.name)
+
 
             p.kill()
             csvfile.close()
@@ -456,9 +466,13 @@ if __name__ == '__main__':
             if os.name == 'nt':
                 os.remove(outfile.name)
 
+            if parsed.nofile:
+               os.remove(csvfile.name)
+
         else:
-            print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\n'
-                  'Press CNTRL+C to exit...' % parsed.address)
+            print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\nDue to'
+                  ' the way that the program handles the output file, do not open the .csv file created by this '
+                  'application until you are finished gathering pings.\nPress CNTRL+C to exit...' % parsed.address)
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
