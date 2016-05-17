@@ -459,6 +459,8 @@ if __name__ == '__main__':
                 showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
                 # hangs while showing a plot, when user closes plot, process closes.ile.name)
 
+            _ = str(input('Press enter to quit.'))
+
 
             p.kill()
             csvfile.close()
