@@ -31,9 +31,8 @@ try:
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
     from matplotlib import style
-    havematplot = True
 except OSError as e:
-    sys.stderr.write('Could not load matplotlib!\n')
+    raise RuntimeError('Could not load matplotlib!')
 
 # TODO Build an interactive mode.
 # TODO Further document preamble.
@@ -356,7 +355,9 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
     else:
         ani = animation.FuncAnimation(fig, animate, interval=int(refreshfreq))
 
-    plt.show()  # does not hang.....
+    # plt.show()  # does not hang.....
+
+    plt.show()
 
     return ani
 
@@ -459,8 +460,7 @@ if __name__ == '__main__':
                 showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
                 # hangs while showing a plot, when user closes plot, process closes.ile.name)
 
-            _ = str(input('Press enter to quit.'))
-
+            # _ = str(input('Press enter to quit.'))  # Still does not force plot to show, but still nice for the user.
 
             p.kill()
             csvfile.close()
