@@ -39,6 +39,7 @@ terminal, enter `./install.sh`, and hope for the best!
   
     Include the path to a previously generated CSV file to
     generate a plot.
+    
   -gi GENERATEIMAGE, --generateimage GENERATEIMAGE
   
     Used in conjunction with the -pf option, this option
