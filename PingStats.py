@@ -39,8 +39,8 @@ except OSError as e:
 # TODO Further document preamble.
 
 buildname = 'PingStats'
-version = '0.09.04.01'
-versiondate = 'Mon May 16 22:35:38 2016'
+version = '1.0'
+versiondate = 'Thu May 19 21:11:39 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
