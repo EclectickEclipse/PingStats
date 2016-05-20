@@ -44,50 +44,56 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions,
 
 
 def buildfiles(path, name):
-    """ Builds the files used for processing.
+    """ Builds the files used for processing. For unix machines, generates a temporary file for ping output. Due to
+    Temporary File limitations on Windows NT softwares, This function will generate a new folder in the install location
+    of PingStats on the host OS.
 
-    :param path: The path to output the files to.
+    :param path: The path to output the CSV file to.
     :param name: The custom name supplied by the user.
     :return: A tuple containing the csvfile object and the outfile object.
     """
-    try:
-        if name is not None:  # If user specified a custom name.
-            if path is not None:  # If user specified an output path.
-                csvfile = open('%s%s.csv' % (path, name), 'w+')
-                if os.name == 'nt':
-                    outfile = open('out.txt', 'w+')
-                else:
-                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
-                return csvfile, outfile
-            else:
-                csvfile = open('%s.csv' % name, 'w+')
-                if os.name == 'nt':
-                    outfile = open('out.txt', 'w+')
-                else:
-                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
-                return csvfile, outfile
-        else:
 
-            if path is not None:  # If user specified an output path.
-                csvfile = open('%s%slog.csv' % (path, buildname), 'w+')
-                if os.name == 'nt':
-                    outfile = open('out.txt', 'w+')
+    # First, convert args.
+
+    if path is None:
+        path = ''
+    elif name is None:
+        name = ''
+
+    # Apply user arguments.
+
+    dest = path + name
+
+    if len(dest) is 0:  # If user supplied no arguments, generate a file with buildname for a name.
+        dest = '%s.csv' % buildname
+    else:  # else append .csv filetype.
+        dest += '.csv'
+
+    csvfile = open(dest, 'a+')  # actually open the CSV file at destination path.
+
+    if os.name == 'nt':  # Handle windows file creation.
+
+        if os.getenv('LOCALAPPDATA', False):
+
+            if os.access(os.getenv('LOCALAPPDATA'), os.F_OK):
+
+                if not os.access(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'), os.F_OK):
+                    os.mkdir(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'))
+                    dfile = open(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats\\DataOutput.txt'), 'a+')
+
                 else:
-                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
-                return csvfile, outfile
+                    dfile = open(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats\\DataOutput.txt'), 'a+')
+
             else:
-                csvfile = open('%sLog.csv' % buildname, 'w+')
-                if os.name == 'nt':
-                    outfile = open('out.txt', 'w+')
-                else:
-                    outfile = tempfile.NamedTemporaryFile('w+', newline='\n')
-                return csvfile, outfile
-    except OSError as e:
-        if e.strerror.count('permission denied') or e.strerror.count('path') > 0:
-            print('Please ensure you have included a legal path!\n%s, %s' % (e.errno, e.strerror))
-            quit()  # break
+                raise RuntimeError('FATAL ERROR! PINGSTATS COULD NOT ACCESS %LOCALAPPDATA%!!!')
+
         else:
-            raise e
+            raise RuntimeError('FATAL ERROR! PINGSTATS COULD NOT ACCESS %LOCALAPPDATA%!!! \nExiting....\n')
+
+    else:  # Handle *Nix file creation.
+        dfile = tempfile.NamedTemporaryFile('w+')
+
+    return csvfile, dfile  # return built files.
 
 
 def writecsv(file, row):
