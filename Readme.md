@@ -9,26 +9,24 @@ terminal, enter `./install.sh`, and hope for the best!
 
 ## usage: pingstats
 
-    `[-h] [-a ADDRESS] [-c CUSTOMARG] [-p PATH] [-pf PLOTFILE]
-    [-gi GENERATEIMAGE] [-n NAME] [-s] [-sF REFRESHFREQUENCY]
-    [-sL TABLELENGTH] [-sNF] [-v]`
+    [-h] [-a ADDRESS] [-g GURUSETTINGS] [-p PATH]
+    [-pf PLOTFILE] [-gi GENERATEIMAGE] [-n NAME] [-s]
+    [-sF REFRESHFREQUENCY] [-sL TABLELENGTH] [-sNF] [-v]
 
 ## optional arguments:
 
-  -h, --help            
-  
+  -h, --help
+              
     show this help message and exit
-  
+    
   -a ADDRESS, --address ADDRESS
   
     The IP address to ping.
+    
+  -g GURUSETTINGS, --gurusettings GURUSETTINGS
   
-  -c CUSTOMARG, --customarg CUSTOMARG
-  
-    Define your own argument for the ping. If you are
-    experiencing issues with pings ending before
-    intended,try using '-c "-c 999999999"' to spawn a
-    process with an extremely long runtime.
+    For use by gurus: implement a custom argument to pass
+    to the ping process.
     
   -p PATH, --path PATH
     
@@ -51,10 +49,17 @@ terminal, enter `./install.sh`, and hope for the best!
     Flag this option to use a custom name for the CSV
     output file.
     
-  -s, --showliveplot    
-
+  -s, --showliveplot
+      
     Flag this option to display an animated plot of the
     last 500 ping sequences.
+    
+  -sF REFRESHFREQUENCY, --refreshfrequency REFRESHFREQUENCY
+  
+    Specify a number of milliseconds to wait between
+    refreshesof the -s plot visualization feature. THe
+    lower the number,the better the performance of
+    PingStats visualization. Handy for"potatoes"
     
   -sL TABLELENGTH, --tablelength TABLELENGTH
   
@@ -62,12 +67,13 @@ terminal, enter `./install.sh`, and hope for the best!
     the number, the better the performance of PingStats
     visulization. Handy for "potatoes."
     
-  -sNF, --nofile
-          
+  -sNF, --nofile        
+  
     Flag this option to disable outputting ping
     information to a csv file during live plotting. Helps
     with memory consumption.
     
-  -v, --version         
-  
+  -v, --version
+           
     Flag this option to display software version.
+    

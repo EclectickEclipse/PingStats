@@ -18,6 +18,7 @@
 
 import shlex
 import subprocess
+import datetime as dt
 import time
 import csv
 import os
@@ -62,26 +63,24 @@ def buildfiles(path, name):
 
     # Apply user arguments.
 
-    dest = path + name
-
-    if len(dest) is 0:  # If user supplied no arguments, generate a file with buildname for a name.
-        dest = '%s.csv' % buildname
-    else:  # else append .csv filetype.
-        dest += '.csv'
+    try:
+        dest = path + name + '.csv'
+    except TypeError:
+        dest = buildname + 'Log.csv'
 
     csvfile = open(dest, 'a+')  # actually open the CSV file at destination path.
 
     if os.name == 'nt':  # Handle windows file creation.
 
-        if os.getenv('LOCALAPPDATA', False):
+        if os.getenv('LOCALAPPDATA', False):  # Check for localappdata environment variable.
 
-            if os.access(os.getenv('LOCALAPPDATA'), os.F_OK):
+            if os.access(os.getenv('LOCALAPPDATA'), os.F_OK):  # check for access to localappdata location.
 
-                if not os.access(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'), os.F_OK):
-                    os.mkdir(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'))
-                    dfile = open(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats\\DataOutput.txt'), 'a+')
+                if not os.access(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'), os.F_OK):  # If no folder exists
+                    os.mkdir(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'))  # Make new folder,
+                    dfile = open(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats\\DataOutput.txt'), 'a+')  # build
 
-                else:
+                else:  # Implies that the pingstats folder exists.
                     dfile = open(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats\\DataOutput.txt'), 'a+')
 
             else:
@@ -294,7 +293,7 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
             self.y = []
 
             if tablelength is None:
-                self.tablelength = 200
+                self.tablelength = 50
             else:
                 self.tablelength = int(tablelength)
 
@@ -326,8 +325,6 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
         def gety(self):  # arbitrary get method
             return self.y
 
-    # TODO BUG ShowplotDeployment: Currently, using the MacOSx matplotlib backend, this function will not compile.
-    # TODO BUG ShowplotDeployment: Does not render without using the MacOSx backend without further dependencies.
     style.use('fivethirtyeight')
 
     fig = plt.figure()
@@ -346,22 +343,26 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
             for row in table_generator:  # some code linters may show this as being a NoneType. This is handled....
                 if not nofile:
                     writecsv(csvfile, row)
-                ptable.appendx(row[3].split('=')[1])
+                ptable.appendx(dt.datetime.fromtimestamp(float(row[0])))
                 ptable.appendy(row[5].split('=')[1])
 
         ax1.clear()
+        ax1.plot_date(ptable.getx(), ptable.gety(), '-', label='Connection over time')
         ax1.plot(ptable.getx(), ptable.gety())
+        for label in ax1.xaxis.get_ticklabels():
+            label.set_rotation(45)
 
-    plt.xlabel('ICMP SEQ #.')
-    plt.ylabel('Return time.')
+        plt.xlabel('Timestamp')
+        plt.ylabel('Return Time (in milleseconds)')
+        plt.title('Ping Over Time')
+
+    plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
     print('Showing plot...\n')
 
     if refreshfreq is None:
         ani = animation.FuncAnimation(fig, animate, interval=500)
     else:
         ani = animation.FuncAnimation(fig, animate, interval=int(refreshfreq))
-
-    # plt.show()  # does not hang.....
 
     plt.show()
 
@@ -377,6 +378,9 @@ def showplot_fromfile(csvfilepath, imagename):
     """
     style.use('fivethirtyeight')
 
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 1, 1)
+
     table = []
 
     print('Reading ping information from user specified file.')
@@ -389,13 +393,19 @@ def showplot_fromfile(csvfilepath, imagename):
     y = []
 
     for row in table:
-        x.append(row[3].split('=')[1])
+        x.append(dt.datetime.fromtimestamp(float(row[0])))
         y.append(row[5].split('=')[1])
 
-    plt.plot(x, y)
+    ax1.plot(x, y)
 
-    plt.ylabel('Return Time')
-    plt.xlabel('ICMP SEQ')
+    plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
+
+    for label in ax1.xaxis.get_ticklabels():
+            label.set_rotation(45)
+
+    plt.xlabel('Timestamp')
+    plt.ylabel('Return Time (in milleseconds)')
+    plt.title('Ping Over Time')
 
     if imagename is not None:  # User flagged -gi, generate an image.
         print('Generating %s.png.' % imagename)
@@ -414,10 +424,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-a', '--address', help='The IP address to ping.')
 
-    parser.add_argument('-c', '--customarg', help='Define your own argument for the ping.'
-                                                  'If you are experiencing issues with pings ending before intended,'
-                                                  'try using \'-c \"-c 999999999\"\' to spawn a process with an '
-                                                  'extremely long runtime.')
+    parser.add_argument('-g', '--gurusettings', help='For use by gurus: implement a custom argument to pass to the ping'
+                                                     ' process.')
 
     parser.add_argument('-p', '--path', help='To supply a specific path to output any files to, include a path.')
 
@@ -460,7 +468,7 @@ if __name__ == '__main__':
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
+            p, l = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
 
             with open(outfile.name) as df:
                 showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
@@ -484,7 +492,7 @@ if __name__ == '__main__':
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p, l = ping(parsed.address, customarg=parsed.customarg, outfile=outfile)
+            p, l = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
 
             try:
                 with open(outfile.name) as df:  # Breaks on windows. Generates a permission denied error.
