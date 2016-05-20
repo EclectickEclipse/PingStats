@@ -1,11 +1,31 @@
 # Installation
 
-This script is meant to run on a `*NIX` OS, and as such provides a script for easy installation in ./dist/VERSION.zip/
-install.sh. It will automatically install python and matplotlib, and creates an executable file in /usr/local/bin to 
-enable easy use. 
+This utility can be installed on an *`*Nix`* machine by using the included distributable `install.sh`. This utility will
+ autmatically install all the necessary dependencies for this software and copies it to your `/usr/local/bin` directory,
+ enabling easy access to the software.
+ 
+--------
+ 
+On an *`NT`* Machine, you can use the included `install.bat` file in the selected distributable version. This utility 
+ will autmatically copy the application to your `C:\WINDOWS\System32` directory, enabling easy access from the command 
+ line inteface by typing 'pingstats'.
+ 
+    This functionality will be present in V1.0. As of current, *NT* users must manually install the dependencies for 
+    this application.
 
-Unpack the VERSION.zip file that you chose, and open a terminal in the directory you downloaded it to. Then from the 
-terminal, enter `./install.sh`, and hope for the best!
+--------
+    
+### Windows manual build:
+
+To build this application manually on an *`NT`* system, follow these steps:
+
+1. Install `Python3.5.1` or higher,
+2. Install `numpy` (a python package, available through `pip`),
+3. Install `matplotlib` (a python package, available through `pip`),
+4. Download the most recent `PingStats.py` to a local directory, and create a batch file that calls the `Python` 
+interpreter you installed in step 1 and passes the local `PingStats.py` file.
+
+--------
 
 ## usage: pingstats
 
