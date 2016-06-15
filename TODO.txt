@@ -3,5 +3,4 @@ TODO MASTER
 ./PingStats.py
 # TODO Build an interactive mode.
 # TODO Further document preamble.
-    def winlinecounter():  # TODO winlinecounter generates a 1 ever iteration.
 

@@ -318,7 +318,7 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile):
             pass
         else:
             titlestring += ' ' + arg
-    fig.canvas.set_window_title('%s - %s' % (buildname + ' ' + version, titlestring))
+    fig.canvas.set_window_title('%s |%s' % (buildname + ' ' + version, titlestring))
 
     ax1 = fig.add_subplot(1, 1, 1)
 
@@ -332,7 +332,7 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile):
         """
 
         data_generator = dataparser(datafile)
-        if row_generator is not None:
+        if data_generator is not None:
             for newrow in data_generator:  # some code linters may read this as NoneType, this is handled...
                 if not nofile:
                     writecsv(cfile, newrow)
@@ -380,7 +380,7 @@ def showplot_fromfile(csvfilepath, imagename):
             pass
         else:
             titlestring += ' ' + arg
-    fig.canvas.set_window_title('%s - %s' % (buildname + ' ' + version, titlestring))
+    fig.canvas.set_window_title('%s |%s' % (buildname + ' ' + version, titlestring))
 
     ax1 = fig.add_subplot(1, 1, 1)
 
