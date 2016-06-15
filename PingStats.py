@@ -1,4 +1,3 @@
-
 # This software is provided under the MIT Open Source Software License:
 #
 # Copyright (c) 2016, Ariana Giroux (Eclectick Media Solutions)
@@ -38,10 +37,13 @@ except OSError as e:
 # TODO Build an interactive mode.
 # TODO Further document preamble.
 
+# GLOBALS
 buildname = 'PingStats'
-version = '1.0.02'
+version = '1.0.03'
 versiondate = 'Sat Jun 11 03:51:25 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
+
+NT_ICMQSEQNUM = 0  # Used to ensure icmq sequence number consistency on NT based systems.
 
 
 def buildfiles(path, name):
@@ -99,15 +101,15 @@ def buildfiles(path, name):
     return csvfile, dfile  # return built files.
 
 
-def writecsv(file, row):
+def writecsv(file, data):
     """ Writes a row of CSV data.
 
     :param file: The file object to write to.
-    :param row: The row to be saved.
+    :param data: The row to be saved.
     :return: The row written by the process.
     """
     cwriter = csv.writer(file)
-    cwriter.writerow(row)
+    cwriter.writerow(data)
     rowtext = ''
     for val in row:
         rowtext += val + ', '
@@ -122,14 +124,8 @@ def dataparser(datafile):
     :return: A list of valid CSV rows for parsing by csvWriter() or None when no new valid information is found.
     """
 
-    def winlinecounter():  # TODO winlinecounter generates a 1 ever iteration.
-        # Generates ICMP_SEQ lines.
-        i = 0  # Resets counter
-        while 1:  # needless hang
-            i += 1
-            yield i  # this obejct generates 1 every iteration.
-
     datalist = []  # a list of rows read in by dataparser.
+    global NT_ICMQSEQNUM  # obtain icmq sequence counter.
 
     with open(datafile.name) as df:  # open the data file for reading
 
@@ -149,14 +145,14 @@ def dataparser(datafile):
                     # row.append(data)
 
                 elif (d.count('PING') > 0 or d.lower().count('statistics') > 0 or  # break on ping end.
-                      d.lower().count('transmitted') > 0 or d.lower().count('round-trip') > 0):
+                              d.lower().count('transmitted') > 0 or d.lower().count('round-trip') > 0):
                     pass
 
                 else:
                     for val in d.split():  # Split lines by space and iterate.
 
                         if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                                     val.count('\x00') > 0:  # skippable values
+                                        val.count('\x00') > 0:  # skippable values
                             pass
 
                         elif len(datarow) is 1:  # if this is the first data field.
@@ -173,14 +169,15 @@ def dataparser(datafile):
                 if d.lower().count('Request timed out.') > 1:
                     datarow.append('failed')
                     datarow.append('failed')
-                    datarow.append('icmp_seq=%s' % winlinecounter().__next__())
+                    datarow.append('icmp_seq=%s' % NT_ICMQSEQNUM)
+                    NT_ICMQSEQNUM += 1
                     datarow.append('ttl=0')
                     datarow.append('time-10')
                     sys.stderr.write(datarow)
 
                 elif d.lower().count('pinging') or d.lower().count('statistics') or d.lower().count('packets') or \
-                    d.lower().count('approximate') or d.lower().count('minimum') or d.lower().count('control') or \
-                    d.lower().count('^c') > 0:
+                        d.lower().count('approximate') or d.lower().count('minimum') or d.lower().count('control') or \
+                                d.lower().count('^c') > 0:
                     pass
 
                 else:
@@ -201,7 +198,9 @@ def dataparser(datafile):
                         else:
                             datarow.append(val)
 
-                    datarow.insert(2, 'icmp_seq=%s' % winlinecounter().__next__())
+                    datarow.insert(2, 'icmp_seq=%s' % NT_ICMQSEQNUM)
+                    NT_ICMQSEQNUM += 1
+
             # end parse
 
             # Check for row validity and append it to the list of read rows.
@@ -227,12 +226,11 @@ def dataparser(datafile):
         return None
 
 
-def ping(address, customarg=None, outfile=None):
+def ping(address, customarg=None, ofile=None):
     """ Runs a ping and collects statistics.
     :param address: The address to ping.
     :param customarg: A string with user specified custom arguments.
-    :param wait: An integer value specifying how long to wait.
-    :param outfile: The file object to write output to.
+    :param ofile: The file object to write output to.
     """
     # Conversion handlers.
 
@@ -255,34 +253,38 @@ def ping(address, customarg=None, outfile=None):
             else:
                 return ['ping', address]
 
-    return subprocess.Popen(parsearg(customarg), stdout=outfile)
+    return subprocess.Popen(parsearg(customarg), stdout=ofile)
 
 
-def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
+def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile):
     """ Shows a live graph of the last 50 rows of the specified CSV file on an interval of every half second.
 
-    :param datafile: The path of the file to be read.
+    :param datafile: The file object used for data output.
+    :param cfile: The file object used for CSV output
+    :param refreshfreq: The frequency with which the matplotlib.animation.FuncAnimation object refreshes.
+    :param tablelength: The number of objects to maintain on screen.
+    :param nofile: The option to not output to a file.
     :return: The matplotlib.animation.FunAnimation object.
     """
 
     class PlotTable:
         """ A class to maintain a specified number of objects to plot to matplotlib. """
 
-        def __init__(self, tablelength):
+        def __init__(self, length):
             self.x = []
             self.y = []
 
-            if tablelength is None:
-                self.tablelength = 50
+            if length is None:
+                self.length = 50
             else:
-                self.tablelength = int(tablelength)
+                self.length = int(tablelength)
 
         def appendx(self, a):
             """ Append a new value to the x value of the table. Maintains specified length of table upon reaching max.
 
             :param a: The value to append to the table.
             """
-            if len(self.x) < self.tablelength:
+            if len(self.x) < self.length:
                 self.x.append(a)
             else:
                 self.x.pop(0)
@@ -293,7 +295,7 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
 
             :param a: The value to append to the table.
             """
-            if len(self.y) < self.tablelength:
+            if len(self.y) < self.length:
                 self.y.append(a)
             else:
                 self.y.pop(0)
@@ -329,13 +331,13 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
         :return: None
         """
 
-        row_generator = dataparser(datafile)
+        data_generator = dataparser(datafile)
         if row_generator is not None:
-            for row in row_generator:  # some code linters may read this as NoneType, this is handled...
+            for newrow in data_generator:  # some code linters may read this as NoneType, this is handled...
                 if not nofile:
-                    writecsv(csvfile, row)
-                ptable.appendx(dt.datetime.fromtimestamp(float(row[0])))
-                ptable.appendy(row[5].split('=')[1])
+                    writecsv(cfile, newrow)
+                ptable.appendx(dt.datetime.fromtimestamp(float(newrow[0])))
+                ptable.appendy(newrow[5].split('=')[1])
 
         ax1.clear()
         ax1.plot_date(ptable.getx(), ptable.gety(), '-', label='Connection over time')
@@ -393,16 +395,16 @@ def showplot_fromfile(csvfilepath, imagename):
     x = []
     y = []
 
-    for row in table:
-        x.append(dt.datetime.fromtimestamp(float(row[0])))
-        y.append(row[5].split('=')[1])
+    for newrow in table:
+        x.append(dt.datetime.fromtimestamp(float(newrow[0])))
+        y.append(newrow[5].split('=')[1])
 
     ax1.plot(x, y)
 
     plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
 
     for label in ax1.xaxis.get_ticklabels():
-            label.set_rotation(45)
+        label.set_rotation(45)
 
     plt.xlabel('Timestamp')
     plt.ylabel('Return Time (in milleseconds)')
@@ -459,8 +461,6 @@ if __name__ == '__main__':
 
     parsed = parser.parse_args()
 
-
-
     if parsed.version:
         print(versionstr)
     elif parsed.address is not None:
@@ -471,7 +471,7 @@ if __name__ == '__main__':
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
+            p = ping(parsed.address, customarg=parsed.gurusettings, ofile=outfile)
 
             # hangs while showing a plot, when user closes plot, process closes.ile.name)
             showliveplot(outfile, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
@@ -494,7 +494,7 @@ if __name__ == '__main__':
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
+            p = ping(parsed.address, customarg=parsed.gurusettings, ofile=outfile)
 
             try:
                 while p.poll() is None:
