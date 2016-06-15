@@ -39,8 +39,8 @@ except OSError as e:
 # TODO Further document preamble.
 
 buildname = 'PingStats'
-version = '1.0'
-versiondate = 'Thu May 19 21:11:39 2016'
+version = '1.0.02'
+versiondate = 'Sat Jun 11 03:51:25 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 
@@ -66,9 +66,13 @@ def buildfiles(path, name):
     try:
         dest = path + name + '.csv'
     except TypeError:
+        sys.stderr.write('Could not parse specified arguments, defaulting to ./Log.csv\n')
         dest = buildname + 'Log.csv'
 
-    csvfile = open(dest, 'a+')  # actually open the CSV file at destination path.
+    try:
+        csvfile = open(dest, 'a+')  # actually open the CSV file at destination path.
+    except OSError:
+        raise RuntimeError('Please ensure that you use the full legal path to output the CSV file to.')
 
     if os.name == 'nt':  # Handle windows file creation.
 
@@ -102,8 +106,6 @@ def writecsv(file, row):
     :param row: The row to be saved.
     :return: The row written by the process.
     """
-    # TODO Should writecsv() be handled by dataparser?
-    # TODO Could writecsv be causing the memory leak? Does it read the file every iteration?
     cwriter = csv.writer(file)
     cwriter.writerow(row)
     rowtext = ''
@@ -113,120 +115,119 @@ def writecsv(file, row):
 
 
 def dataparser(datafile):
-    def winlinecounter():  # Generates a 1 ever iteration.
-        # instead, pass function an initializer, and generate an object for windows parsing that gets passed to
-        # dataparser?
-        # This would imply we move this to its own dataspace outside of dataparser.
+    """ Reads each line of data file for valid ping information, and once (or if) no new information is read, the
+     function truncates the datafile and returns either a list of valid CSV rows, or None.
+
+    :param datafile: The file to read for ping information.
+    :return: A list of valid CSV rows for parsing by csvWriter() or None when no new valid information is found.
+    """
+
+    def winlinecounter():  # TODO winlinecounter generates a 1 ever iteration.
+        # Generates ICMP_SEQ lines.
         i = 0  # Resets counter
         while 1:  # needless hang
             i += 1
             yield i  # this obejct generates 1 every iteration.
 
-    """Parses through lines of text returned by ping and further refines it. This function creates a generator that can
-    be iterated through in a for loop. For example:
+    datalist = []  # a list of rows read in by dataparser.
 
-    '''
+    with open(datafile.name) as df:  # open the data file for reading
 
-    t = []
+        for d in df:  # read datafile line by line, and parse lines for CSV output.
+            # This is very logic heavy, and is not necessary to read through.
+            datarow = [str(time.time())]
 
-    for data in dataparser(dfile, cfile):
-        table.append(data)
-    '''
-
-    :param datafile: The position of the log file to read.
-    :return: The lines read.
-    """
-    tlist = []
-
-    while 1:
-        data = datafile.readline()
-        if len(data) is 0:
-            break  # when no new information is read, break.
-
-        # TODO Should dataparser instead of breaking and returning upon no new information, check for table validity and
-        # yield the table, then empty it?
-
-        row = [str(time.time())]
-
-        if os.name != 'nt':
             # Parse data text
-            if data.lower().count('cannot resolve') > 0 or data.lower().count('request timeout'):
-                row.append('failed')  # Error line.
-                row.append('failed')
-                row.append('icmp_seq=%s' % data.split()[-1])
-                row.append('ttl=0')
-                row.append('time=-10')
-                sys.stderr.write(data)
-                # row.append(data)
+            if os.name != 'nt':
+                if d.lower().count('cannot resolve') > 0 or d.lower().count('request timeout'):
+                    datarow.append('failed')  # Error line.
+                    datarow.append('failed')
+                    datarow.append('icmp_seq=%s' % d.split()[-1])
+                    datarow.append('ttl=0')
+                    datarow.append('time=-10')
+                    sys.stderr.write(str(datarow))
+                    # row.append(data)
 
-            elif (data.count('PING') > 0 or data.lower().count('statistics') > 0 or  # break on ping end.
-                  data.lower().count('transmitted') > 0 or data.lower().count('round-trip') > 0):
-                pass
+                elif (d.count('PING') > 0 or d.lower().count('statistics') > 0 or  # break on ping end.
+                      d.lower().count('transmitted') > 0 or d.lower().count('round-trip') > 0):
+                    pass
 
-            else:
-                for val in data.split():  # Split lines by space and iterate.
+                else:
+                    for val in d.split():  # Split lines by space and iterate.
 
-                    if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                                 val.count('\x00') > 0:  # skippable values
-                        pass
+                        if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
+                                     val.count('\x00') > 0:  # skippable values
+                            pass
 
-                    elif len(row) is 1:  # if this is the first data field.
-                        row.append('size=%s' % val)
+                        elif len(datarow) is 1:  # if this is the first data field.
+                            datarow.append('size=%s' % val)
 
-                    elif len(row) is 2:  # if this is the second data field.
-                        row.append(val[:-1])
+                        elif len(datarow) is 2:  # if this is the second data field.
+                            datarow.append(val[:-1])
 
-                    else:  # append data.
-                        row.append(val)
-
-        else:  # TODO Define parsing logic for lines on NT based ping requests.
-
-            if data.lower().count('Request timed out.') > 1:
-                row.append('failed')
-                row.append('failed')
-                row.append('icmp_seq=%s' % winlinecounter().__next__())
-                row.append('ttl=0')
-                row.append('time-10')
-                sys.stderr.write(row)
-
-            elif data.lower().count('pinging') or data.lower().count('statistics') or data.lower().count('packets') or \
-                data.lower().count('approximate') or data.lower().count('minimum') or data.lower().count('control') or \
-                data.lower().count('^c') > 0:
-                pass
+                        else:  # append data.
+                            datarow.append(val)
 
             else:
-                for val in data.split():
 
-                    if val.lower().count('reply') or val.lower().count('from') > 0:
-                        pass
+                if d.lower().count('Request timed out.') > 1:
+                    datarow.append('failed')
+                    datarow.append('failed')
+                    datarow.append('icmp_seq=%s' % winlinecounter().__next__())
+                    datarow.append('ttl=0')
+                    datarow.append('time-10')
+                    sys.stderr.write(datarow)
 
-                    elif val.lower().count('bytes') > 0:
-                        row.insert(0, 'size=%s' % val.split('=')[1])
+                elif d.lower().count('pinging') or d.lower().count('statistics') or d.lower().count('packets') or \
+                    d.lower().count('approximate') or d.lower().count('minimum') or d.lower().count('control') or \
+                    d.lower().count('^c') > 0:
+                    pass
 
-                    elif val.lower().count('time') > 0:
-                        row.append(val)
+                else:
+                    for val in d.split():
 
-                    elif val.lower().count('ttl') > 0:
-                        row.insert(-2, val)
+                        if val.lower().count('reply') or val.lower().count('from') > 0:
+                            pass
 
-                    else:
-                        row.append(val)
+                        elif val.lower().count('bytes') > 0:
+                            datarow.insert(0, 'size=%s' % val.split('=')[1])
 
-                row.insert(2, 'icmp_seq=%s' % winlinecounter().__next__())
+                        elif val.lower().count('time') > 0:
+                            datarow.append(val)
 
-        if len(row) > 1:  # if data was found, yield row.
-            tlist.append(row)
-        else:
-            pass  # breaks the loop if no data is found
+                        elif val.lower().count('ttl') > 0:
+                            datarow.insert(-2, val)
 
-    if len(tlist) > 0:
-        return tlist
-    else:
-        return None  # returns none when no new information to parse.
+                        else:
+                            datarow.append(val)
+
+                    datarow.insert(2, 'icmp_seq=%s' % winlinecounter().__next__())
+            # end parse
+
+            # Check for row validity and append it to the list of read rows.
+            if len(datarow) > 1:
+                datalist.append(datarow)
+            else:
+                pass
+
+    # data validity and size checks.
+    if len(datalist) > 0:  # if data was found, return data and reduce filesize.
+        datafile.seek(0)
+        datafile.truncate()
+
+        with open(datafile.name) as f:
+            print(f.read())
+
+        return datalist
+
+    else:  # no data read, reduce filesize, return None.
+        datafile.seek(0)
+        datafile.truncate()
+
+        return None
 
 
-# TODO Remove pingfrequency argument, current build does not use it.
-def ping(address, customarg=None, wait=None, outfile=None):
+def ping(address, customarg=None, outfile=None):
     """ Runs a ping and collects statistics.
     :param address: The address to ping.
     :param customarg: A string with user specified custom arguments.
@@ -234,20 +235,11 @@ def ping(address, customarg=None, wait=None, outfile=None):
     :param outfile: The file object to write output to.
     """
     # Conversion handlers.
-    # TODO Should ping() handle arguments inside functions or inside initial runtime as current?
 
     # Address handler.
     if address is None:  # ensure a host was specified.
         sys.stderr.write('Please include at least one option...\nType -h for help...\n')
         quit()  # Break
-
-    # Wait handler.
-    if type(wait) is str:
-        try:
-            wait = int(wait)
-        except ValueError:
-            sys.stderr.write('Please enter numbers only for the -t flag.\n')
-            quit()
 
     def parsearg(custom_argument):
         """ Creates an argument for the subprocess.Popen object.
@@ -263,23 +255,11 @@ def ping(address, customarg=None, wait=None, outfile=None):
             else:
                 return ['ping', address]
 
-    def ping(argument, file):
-        """ Pings a host.
-
-        :param argument: A mutable list to use for the subprocess.Popen object.
-        :param file: An output file.
-        :return: The process object.
-        """
-        return subprocess.Popen(argument, stdout=file)
-
-    process = ping(parsearg(customarg), outfile)
-
-    return process, outfile.name
+    return subprocess.Popen(parsearg(customarg), stdout=outfile)
 
 
-# TODO Define a backend for matplotlib that enables bundled usage.
 def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
-    """ Shows a live graph of the last 500 rows of the specified CSV file on an interval of 60 seconds.
+    """ Shows a live graph of the last 50 rows of the specified CSV file on an interval of every half second.
 
     :param datafile: The path of the file to be read.
     :return: The matplotlib.animation.FunAnimation object.
@@ -328,6 +308,16 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
     style.use('fivethirtyeight')
 
     fig = plt.figure()
+
+    # build arg string for window titleing
+    titlestring = ''
+    for arg in sys.argv:
+        if sys.argv.index(arg) is 0:
+            pass
+        else:
+            titlestring += ' ' + arg
+    fig.canvas.set_window_title('%s - %s' % (buildname + ' ' + version, titlestring))
+
     ax1 = fig.add_subplot(1, 1, 1)
 
     ptable = PlotTable(tablelength)
@@ -338,9 +328,10 @@ def showliveplot(datafile, csvfile, refreshfreq, tablelength, nofile):
         :param i: Arbitrary.
         :return: None
         """
-        table_generator = dataparser(datafile)
-        if table_generator is not None:  # dataparser() generates None if no new rows were present in the stream.
-            for row in table_generator:  # some code linters may show this as being a NoneType. This is handled....
+
+        row_generator = dataparser(datafile)
+        if row_generator is not None:
+            for row in row_generator:  # some code linters may read this as NoneType, this is handled...
                 if not nofile:
                     writecsv(csvfile, row)
                 ptable.appendx(dt.datetime.fromtimestamp(float(row[0])))
@@ -379,6 +370,16 @@ def showplot_fromfile(csvfilepath, imagename):
     style.use('fivethirtyeight')
 
     fig = plt.figure()
+
+    # build arg string for window titleing
+    titlestring = ''
+    for arg in sys.argv:
+        if sys.argv.index(arg) is 0:
+            pass
+        else:
+            titlestring += ' ' + arg
+    fig.canvas.set_window_title('%s - %s' % (buildname + ' ' + version, titlestring))
+
     ax1 = fig.add_subplot(1, 1, 1)
 
     table = []
@@ -458,6 +459,8 @@ if __name__ == '__main__':
 
     parsed = parser.parse_args()
 
+
+
     if parsed.version:
         print(versionstr)
     elif parsed.address is not None:
@@ -468,11 +471,10 @@ if __name__ == '__main__':
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p, l = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
+            p = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
 
-            with open(outfile.name) as df:
-                showliveplot(df, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
-                # hangs while showing a plot, when user closes plot, process closes.ile.name)
+            # hangs while showing a plot, when user closes plot, process closes.ile.name)
+            showliveplot(outfile, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
 
             # _ = str(input('Press enter to quit.'))  # Still does not force plot to show, but still nice for the user.
 
@@ -483,7 +485,7 @@ if __name__ == '__main__':
                 os.remove(outfile.name)
 
             if parsed.nofile:
-               os.remove(csvfile.name)
+                os.remove(csvfile.name)
 
         else:
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\nDue to'
@@ -492,15 +494,15 @@ if __name__ == '__main__':
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p, l = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
+            p = ping(parsed.address, customarg=parsed.gurusettings, outfile=outfile)
 
             try:
-                with open(outfile.name) as df:  # Breaks on windows. Generates a permission denied error.
-                    while p.poll() is None:
-                        row_generator = dataparser(df)
-                        if row_generator is not None:
-                            for row in row_generator:  # some code linters may read this as NoneType, this is handled...
-                                writecsv(csvfile, row)
+                while p.poll() is None:
+                    row_generator = dataparser(outfile)
+                    if row_generator is not None:
+                        for row in row_generator:  # some code linters may read this as NoneType, this is handled...
+                            writecsv(csvfile, row)
+                    time.sleep(0.5)
 
             except (KeyboardInterrupt, SystemExit):
                 p.kill()
