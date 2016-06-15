@@ -3,11 +3,5 @@ TODO MASTER
 ./PingStats.py
 # TODO Build an interactive mode.
 # TODO Further document preamble.
-    # TODO Should writecsv() be handled by dataparser?
-    # TODO Could writecsv be causing the memory leak? Does it read the file every iteration?
-        # TODO Should dataparser instead of breaking and returning upon no new information, check for table validity and
-        else:  # TODO Define parsing logic for lines on NT based ping requests.
-# TODO Remove pingfrequency argument, current build does not use it.
-    # TODO Should ping() handle arguments inside functions or inside initial runtime as current?
-# TODO Define a backend for matplotlib that enables bundled usage.
+    def winlinecounter():  # TODO winlinecounter generates a 1 ever iteration.
 
