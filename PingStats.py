@@ -25,8 +25,6 @@ import argparse
 import sys
 import tempfile
 
-havematplot = False
-
 try:
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
@@ -34,13 +32,41 @@ try:
 except OSError as e:
     raise RuntimeError('Could not load matplotlib!')
 
+""" Preamble
+
+This software attempts to bring a simple python utility for logging ping results to CSV files, and representing them
+graphically via Python's Matplotlib. The software aims to achieve this in as minimal, "readable," and resource
+effectively as possible.
+
+This software analyzes data recorded into CSV files by itself to either present an interactive plot (provided by the
+Matplotlib package) or generate an image of a plot for specific logs.
+
+This software also has the capability to display ping information as it is recieved, mapping it by time read and return
+time of each packet read. When presenting information as it is recieved, the software does not write data to a CSV log,
+instead relying on the use of the live presentation to present its information. It can however be instructed to output
+information to a log for further usage for very minimal system resorce cost. """
+
+""" Technical Notes
+
+It should be noted that the software inherently uses more system resources while displaying graphics to the screen, as
+this software is intended to be run on as minimal a software as possible.
+
+Due to the variance on OS dependent ping packages, data collection may not work, and may need tweaking. The
+.dataparser() function is intended to be rewritten if possible. Due to this need to be easy to rewrite, the language is
+as simplified as it can be, using only for loop structures and a few if statements. If you find the initially provided
+to be hard to interpret, uncomment the `# DEBUG:' lines to have python slowly iterate through each sequence of data
+and show the results provided."""
+# TODO Create `# DEBUG:' lines in .dataparser()
+
+
 # TODO Build an interactive mode.
-# TODO Further document preamble.
+# TODO Build a module to record an additional field for GPS coordinates
+# TODO Map ping statistics to a physical map, showing where connections were best.
 
 # GLOBALS
 buildname = 'PingStats'
-version = '1.0.03'
-versiondate = 'Sat Jun 11 03:51:25 2016'
+version = '1.0.04.1'
+versiondate = 'Wed Jul 27 23:52:58 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
 NT_ICMQSEQNUM = 0  # Used to ensure icmq sequence number consistency on NT based systems.
@@ -101,19 +127,31 @@ def buildfiles(path, name):
     return csvfile, dfile  # return built files.
 
 
-def writecsv(file, data):
+# TODO Initialize a CSV.writer object before execution of writecsv().
+# This is causing a small amount of data leakage, as more csvwriter objects get created than get deleated.
+""" Currently, writecsv initializes a new CSV.writer object every time it is called. This results in the program
+working extra iterations on automatic garbage collection for the item.
+
+The CSV.writer object only needs to be initialized once to maintain the functionality that we are looking for. The only
+struggle will be getting the object into the runtime safely, without running into issues with threading buffer
+overuns. """
+
+
+def writecsv(file, data, terminaloutput):
     """ Writes a row of CSV data.
 
     :param file: The file object to write to.
     :param data: The row to be saved.
+    :param terminaloutput: Bool value to enable text output to the terminal.
     :return: The row written by the process.
     """
     cwriter = csv.writer(file)
     cwriter.writerow(data)
     rowtext = ''
-    for val in row:
+    for val in data:
         rowtext += val + ', '
-    print('Wrote row: \'%s\' to %s' % (rowtext, file.name))
+    if terminaloutput:
+        print('Wrote row: \'%s\' to %s' % (rowtext, file.name))
 
 
 def dataparser(datafile):
@@ -145,7 +183,7 @@ def dataparser(datafile):
                     # row.append(data)
 
                 elif (d.count('PING') > 0 or d.lower().count('statistics') > 0 or  # break on ping end.
-                              d.lower().count('transmitted') > 0 or d.lower().count('round-trip') > 0):
+                      d.lower().count('transmitted') > 0 or d.lower().count('round-trip') > 0):
                     pass
 
                 else:
@@ -177,7 +215,7 @@ def dataparser(datafile):
 
                 elif d.lower().count('pinging') or d.lower().count('statistics') or d.lower().count('packets') or \
                         d.lower().count('approximate') or d.lower().count('minimum') or d.lower().count('control') or \
-                                d.lower().count('^c') > 0:
+                        d.lower().count('^c') > 0:
                     pass
 
                 else:
@@ -214,8 +252,9 @@ def dataparser(datafile):
         datafile.seek(0)
         datafile.truncate()
 
-        with open(datafile.name) as f:
-            print(f.read())
+        # DEBUG
+        # with open(datafile.name) as f:
+        #     print(f.read())
 
         return datalist
 
@@ -223,7 +262,7 @@ def dataparser(datafile):
         datafile.seek(0)
         datafile.truncate()
 
-        return None
+        return []
 
 
 def ping(address, customarg=None, ofile=None):
@@ -239,11 +278,13 @@ def ping(address, customarg=None, ofile=None):
         sys.stderr.write('Please include at least one option...\nType -h for help...\n')
         quit()  # Break
 
-    def parsearg(custom_argument):
+    # Argument handler.
+    def parsearg(custom_argument):  # TODO Deprecate calls to this function, is inneficient.
         """ Creates an argument for the subprocess.Popen object.
 
         :param custom_argument: The custom argument specified by the user (or None for no custom argument)
         :return: A mutable list containing the argument to use in the subprocess.Popen object.
+        This function is obtuse, and can be handled more efficiently,
         """
         if custom_argument is not None:
             return ['ping', shlex.split(custom_argument), address]
@@ -256,7 +297,7 @@ def ping(address, customarg=None, ofile=None):
     return subprocess.Popen(parsearg(customarg), stdout=ofile)
 
 
-def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile):
+def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutput):
     """ Shows a live graph of the last 50 rows of the specified CSV file on an interval of every half second.
 
     :param datafile: The file object used for data output.
@@ -335,7 +376,9 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile):
         if data_generator is not None:
             for newrow in data_generator:  # some code linters may read this as NoneType, this is handled...
                 if not nofile:
-                    writecsv(cfile, newrow)
+                    writecsv(cfile, newrow, terminaloutput)
+                elif terminaloutput:
+                    print(newrow)
                 ptable.appendx(dt.datetime.fromtimestamp(float(newrow[0])))
                 ptable.appendy(newrow[5].split('=')[1])
 
@@ -357,9 +400,10 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile):
     else:
         ani = animation.FuncAnimation(fig, animate, interval=int(refreshfreq))
 
+    ani.new_frame_seq()
     plt.show()
 
-    return ani
+    return True
 
 
 def showplot_fromfile(csvfilepath, imagename):
@@ -420,6 +464,7 @@ def showplot_fromfile(csvfilepath, imagename):
 
 # Bootstrap logic.
 
+# TODO Parser logic should likely be handled explicitly on module load, instead of on bootstrap routine.
 if __name__ == '__main__':
     # Define program arguments.
     parser = argparse.ArgumentParser(description='%s. This program defines some basic ping statistic visualization'
@@ -429,6 +474,9 @@ if __name__ == '__main__':
 
     parser.add_argument('-g', '--gurusettings', help='For use by gurus: implement a custom argument to pass to the ping'
                                                      ' process.')
+
+    parser.add_argument('-o', '--terminaloutput', help='Flag this option to output ping data to the terminal when they'
+                                                       ' are read from the file.', action='store_true')
 
     parser.add_argument('-p', '--path', help='To supply a specific path to output any files to, include a path.')
 
@@ -474,7 +522,8 @@ if __name__ == '__main__':
             p = ping(parsed.address, customarg=parsed.gurusettings, ofile=outfile)
 
             # hangs while showing a plot, when user closes plot, process closes.ile.name)
-            showliveplot(outfile, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile)
+            showliveplot(outfile, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile,
+                         parsed.terminaloutput)
 
             # _ = str(input('Press enter to quit.'))  # Still does not force plot to show, but still nice for the user.
 
@@ -501,7 +550,7 @@ if __name__ == '__main__':
                     row_generator = dataparser(outfile)
                     if row_generator is not None:
                         for row in row_generator:  # some code linters may read this as NoneType, this is handled...
-                            writecsv(csvfile, row)
+                            writecsv(csvfile, row, terminaloutput=parsed.terminaloutput)
                     time.sleep(0.5)
 
             except (KeyboardInterrupt, SystemExit):
