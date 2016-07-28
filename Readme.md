@@ -1,3 +1,31 @@
+# Preamble
+
+--------
+
+From the app:
+
+This software attempts to bring a simple python utility for logging ping results to CSV files, and representing them
+graphically via Pythons Matplotlib. The software aims to achieve this in as minimal, readable, and resource effectively as possible.                                                                                                 
+
+This software analyzes data recorded into CSV files by itself to either present an interactive plot (provided by the Matplotlib package) or generate an image of a plot for specific logs.                                                    
+
+This software also has the capability to display ping information as it is recieved, mapping it by time read and return
+time of each packet read. When presenting information as it is recieved, the software does not write data to a CSV log,
+instead relying on the use of the live presentation to present its information. It can however be instructed to output
+information to a log for further usage for very minimal system resorce cost.                                         
+
+Technical Notes                                                                                                      
+
+It should be noted that the software inherently uses more system resources while displaying graphics to the screen,
+as this software is intended to be run on as minimal a software as possible.                                                
+
+Due to the variance on OS dependent ping packages, data collection may not work, and may need tweaking. The
+.dataparser() function is intended to be rewritten if possible. Due to this need to be easy to rewrite, the language is
+as simplified as it can be, using only for loop structures and a few if statements. If you find the initially provided
+to be hard to interpret, uncomment the `# DEBUG:` lines to have python slowly iterate through each sequence of data and show the results provided. 
+
+--------
+
 # Installation
 
 This utility can be installed on an *`*Nix`* machine by using the included distributable `install.sh`. This utility will
@@ -95,5 +123,4 @@ interpreter you installed in step 1 and passes the local `PingStats.py` file.
     
   -v, --version
            
-    Flag this option to display software version.
-    
+    Flag this option to display software version.    
