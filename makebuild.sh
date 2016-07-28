@@ -17,9 +17,9 @@ read checkfortodo
 if [ "$checkfortodo" == "y" ]; then
     say "Updating TODO tags for PingStats." &
     if [ "$2" == "v" ]; then
-        todotracker ./ py,sh &> /dev/null
+        todotracker -p ./ -f py,sh -Q
     else
-        todotracker ./ py,sh
+        todotracker -p ./ -f py,sh
     fi
 fi
 

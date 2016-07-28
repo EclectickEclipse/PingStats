@@ -56,6 +56,7 @@ Due to the variance on OS dependent ping packages, data collection may not work,
 as simplified as it can be, using only for loop structures and a few if statements. If you find the initially provided
 to be hard to interpret, uncomment the `# DEBUG:' lines to have python slowly iterate through each sequence of data
 and show the results provided."""
+
 # TODO Create `# DEBUG:' lines in .dataparser()
 
 
@@ -179,7 +180,7 @@ def dataparser(datafile):
                     datarow.append('icmp_seq=%s' % d.split()[-1])
                     datarow.append('ttl=0')
                     datarow.append('time=-10')
-                    sys.stderr.write(str(datarow))
+                    # sys.stderr.write(str(datarow))
                     # row.append(data)
 
                 elif (d.count('PING') > 0 or d.lower().count('statistics') > 0 or  # break on ping end.
@@ -211,7 +212,7 @@ def dataparser(datafile):
                     NT_ICMQSEQNUM += 1
                     datarow.append('ttl=0')
                     datarow.append('time-10')
-                    sys.stderr.write(datarow)
+                    # sys.stderr.write(datarow)
 
                 elif d.lower().count('pinging') or d.lower().count('statistics') or d.lower().count('packets') or \
                         d.lower().count('approximate') or d.lower().count('minimum') or d.lower().count('control') or \
@@ -297,6 +298,9 @@ def ping(address, customarg=None, ofile=None):
     return subprocess.Popen(parsearg(customarg), stdout=ofile)
 
 
+# TODO Refactor .showliveplot() to a class.
+""" .showliveplot() is looking more and more like a class. I feel like it is just prudent to refactor this to a
+class."""
 def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutput):
     """ Shows a live graph of the last 50 rows of the specified CSV file on an interval of every half second.
 
