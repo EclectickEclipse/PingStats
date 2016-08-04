@@ -61,8 +61,25 @@ and show the results provided."""
 
 
 # TODO Build an interactive mode.
-# TODO Build a module to record an additional field for GPS coordinates
-# TODO Map ping statistics to a physical map, showing where connections were best.
+# TODO Record GPS coordinates from www.ipinfo.io requests whilst on non-mobile OS's.
+# TODO Plot a "heat map" of GPS coordinates and how fast/slow their connection was.
+
+""" GPS Functionality Preamble
+This software could be effectively used for mapping connection rate in various locations. This could allow the user
+to map connection speeds throughout their city/region. This would be useful for people who move from location to
+location on a regular basis, and require fast internet connections everywhere they go.
+
+Due to the variance in where this software could be used over time, it should be able to collect data from several
+pingstatslog files and present them to the user overlaid on a map where the faster connections are presented as a red
+"heat zones." """
+
+""" GPS Functionality Technical notes
+This software could use a kivy (see www.kivy.org) application to gather GPS coordinates. This would require a major
+overhaul of the application structure, and should likely be handled in a fork.
+
+The Kivy framework provides GPS functionality with Plyer (https://github.com/kivy/plyer), and provides a convienient
+and well established framework for Multiplatform application developement. Using this framework, the software could
+easily provide a graphical presentation on the vairous options available to this software already."""
 
 # GLOBALS
 buildname = 'PingStats'
@@ -301,6 +318,8 @@ def ping(address, customarg=None, ofile=None):
 # TODO Refactor .showliveplot() to a class.
 """ .showliveplot() is looking more and more like a class. I feel like it is just prudent to refactor this to a
 class."""
+
+
 def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutput):
     """ Shows a live graph of the last 50 rows of the specified CSV file on an interval of every half second.
 
