@@ -116,7 +116,9 @@ def buildfiles(path, name):
     try:
         dest = path + name + '.csv'
     except TypeError:
-        sys.stderr.write('Could not parse specified arguments, defaulting to ./Log.csv\n')
+        if not parsed.nofile:
+            sys.stderr.write('Could not parse specified arguments, defaulting to ./Log.csv\n')
+
         dest = buildname + 'Log.csv'
 
     try:
