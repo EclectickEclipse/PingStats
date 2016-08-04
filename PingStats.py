@@ -32,11 +32,13 @@ try:
 except OSError as e:
     raise RuntimeError('Could not load matplotlib!')
 
+# TODO Build an interactive mode.
+
 """ Preamble
 
 This software attempts to bring a simple python utility for logging ping results to CSV files, and representing them
 graphically via Python's Matplotlib. The software aims to achieve this in as minimal, "readable," and resource
-effectively as possible.
+effective a way as possible.
 
 This software analyzes data recorded into CSV files by itself to either present an interactive plot (provided by the
 Matplotlib package) or generate an image of a plot for specific logs.
@@ -54,13 +56,14 @@ this software is intended to be run on as minimal a software as possible.
 Due to the variance on OS dependent ping packages, data collection may not work, and may need tweaking. The
 .dataparser() function is intended to be rewritten if possible. Due to this need to be easy to rewrite, the language is
 as simplified as it can be, using only for loop structures and a few if statements. If you find the initially provided
-to be hard to interpret, uncomment the `# DEBUG:' lines to have python slowly iterate through each sequence of data
+code to be hard to interpret, uncomment the `# DEBUG:' lines to have python slowly iterate through each sequence of data
 and show the results provided."""
 
 # TODO Create `# DEBUG:' lines in .dataparser()
 
 
-# TODO Build an interactive mode.
+# GPS discussion
+
 # TODO Record GPS coordinates from www.ipinfo.io requests whilst on non-mobile OS's.
 # TODO Plot a "heat map" of GPS coordinates and how fast/slow their connection was.
 
@@ -80,6 +83,7 @@ overhaul of the application structure, and should likely be handled in a fork.
 The Kivy framework provides GPS functionality with Plyer (https://github.com/kivy/plyer), and provides a convienient
 and well established framework for Multiplatform application developement. Using this framework, the software could
 easily provide a graphical presentation on the vairous options available to this software already."""
+
 
 # GLOBALS
 buildname = 'PingStats'
@@ -172,9 +176,12 @@ def writecsv(file, data, terminaloutput):
         print('Wrote row: \'%s\' to %s' % (rowtext, file.name))
 
 
+# TODO dataparser relies on potentially breakable parsing logic.
+
+
 def dataparser(datafile):
     """ Reads each line of data file for valid ping information, and once (or if) no new information is read, the
-     function truncates the datafile and returns either a list of valid CSV rows, or None.
+     function truncates the datafile and returns either a list of valid CSV rows, or an empty list object.
 
     :param datafile: The file to read for ping information.
     :return: A list of valid CSV rows for parsing by csvWriter() or None when no new valid information is found.
@@ -188,17 +195,20 @@ def dataparser(datafile):
         for d in df:  # read datafile line by line, and parse lines for CSV output.
             # This is very logic heavy, and is not necessary to read through.
             datarow = [str(time.time())]
+            # DEBUG: print("appended current system time to this datarow"); time.sleep(1)
 
             # Parse data text
             if os.name != 'nt':
+                # DEBUG: print("Determined a non NT system."); time.sleep(1)
                 if d.lower().count('cannot resolve') > 0 or d.lower().count('request timeout'):
+                    # DEBUG: print('read a line of text that contained \'cannot resolve\', appending data")
+                    # DEBUG: time.sleep(1)
                     datarow.append('failed')  # Error line.
                     datarow.append('failed')
                     datarow.append('icmp_seq=%s' % d.split()[-1])
                     datarow.append('ttl=0')
                     datarow.append('time=-10')
                     # sys.stderr.write(str(datarow))
-                    # row.append(data)
 
                 elif (d.count('PING') > 0 or d.lower().count('statistics') > 0 or  # break on ping end.
                       d.lower().count('transmitted') > 0 or d.lower().count('round-trip') > 0):
