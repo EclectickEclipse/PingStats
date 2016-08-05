@@ -32,8 +32,6 @@ try:
 except OSError as e:
     raise RuntimeError('Could not load matplotlib!')
 
-# TODO Build an interactive mode.
-
 """ Preamble
 
 This software attempts to bring a simple python utility for logging ping results to CSV files, and representing them
@@ -43,10 +41,10 @@ effective a way as possible.
 This software analyzes data recorded into CSV files by itself to either present an interactive plot (provided by the
 Matplotlib package) or generate an image of a plot for specific logs.
 
-This software also has the capability to display ping information as it is recieved, mapping it by time read and return
-time of each packet read. When presenting information as it is recieved, the software does not write data to a CSV log,
+This software also has the capability to display ping information as it is received, mapping it by time read and return
+time of each packet read. When presenting information as it is received, the software does not write data to a CSV log,
 instead relying on the use of the live presentation to present its information. It can however be instructed to output
-information to a log for further usage for very minimal system resorce cost. """
+information to a log for further usage for very minimal system resource cost. """
 
 """ Technical Notes
 
@@ -59,49 +57,47 @@ as simplified as it can be, using only for loop structures and a few if statemen
 code to be hard to interpret, uncomment the `# DEBUG:' lines to have python slowly iterate through each sequence of data
 and show the results provided."""
 
-# TODO Create `# DEBUG:' lines in .dataparser()
-
 
 # GPS discussion
 
-# TODO Record GPS coordinates from www.ipinfo.io requests whilst on non-mobile OS's.
-# TODO Plot a "heat map" of GPS coordinates and how fast/slow their connection was.
+# Record GPS coordinates from www.ipinfo.io requests whilst on non-mobile OS's.
+# Plot a "heat map" of GPS coordinates and how fast/slow their connection was.
 
 """ GPS Functionality Preamble
 This software could be effectively used for mapping connection rate in various locations. This could allow the user
 to map connection speeds throughout their city/region. This would be useful for people who move from location to
-location on a regular basis, and require fast internet connections everywhere they go.
+location on a regular basis, and require fast Internet connections everywhere they go.
 
 Due to the variance in where this software could be used over time, it should be able to collect data from several
-pingstatslog files and present them to the user overlaid on a map where the faster connections are presented as a red
-"heat zones." """
+PingStatsLog.csv files and present them to the user overlaid on a map where the faster connections are presented as a
+red "heat zones." """
 
 """ GPS Functionality Technical notes
 This software could use a kivy (see www.kivy.org) application to gather GPS coordinates. This would require a major
 overhaul of the application structure, and should likely be handled in a fork.
 
 The Kivy framework provides GPS functionality with Plyer (https://github.com/kivy/plyer), and provides a convienient
-and well established framework for Multiplatform application developement. Using this framework, the software could
-easily provide a graphical presentation on the vairous options available to this software already."""
+and well established framework for Multi-platform application development. Using this framework, the software could
+easily provide a graphical presentation on the various options available to this software already."""
 
 
 # GLOBALS
 buildname = 'PingStats'
-version = '1.0.04.1'
-versiondate = 'Wed Jul 27 23:52:58 2016'
+version = '1.0.04.2'
+versiondate = 'Thu Aug  4 00:34:10 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media Solutions, circa %s' % (version, versiondate)
 
-NT_ICMQSEQNUM = 0  # Used to ensure icmq sequence number consistency on NT based systems.
+NT_ICMQSEQNUM = 0  # Used to ensure ICMQ sequence number consistency on NT based systems.
 
 
 def buildfiles(path, name):
-    """ Builds the files used for processing. For unix machines, generates a temporary file for ping output. Due to
+    """ Builds the files used for processing. For UNIX machines, generates a temporary file for ping output. Due to
     Temporary File limitations on Windows NT softwares, This function will generate a new folder in the install location
     of PingStats on the host OS.
 
-    :param path: The path to output the CSV file to.
-    :param name: The custom name supplied by the user.
-    :return: A tuple containing the csvfile object and the outfile object.
+    "path" - The path to output the CSV file to.
+    "name" - The custom name supplied by the user.
+    Returns a tuple containing the csv file object and the outbound data file object.
     """
 
     # First, convert args.
@@ -128,15 +124,15 @@ def buildfiles(path, name):
 
     if os.name == 'nt':  # Handle windows file creation.
 
-        if os.getenv('LOCALAPPDATA', False):  # Check for localappdata environment variable.
+        if os.getenv('LOCALAPPDATA', False):  # Check for LOCALAPPDATA environment variable.
 
-            if os.access(os.getenv('LOCALAPPDATA'), os.F_OK):  # check for access to localappdata location.
+            if os.access(os.getenv('LOCALAPPDATA'), os.F_OK):  # check for access to LOCALAPPDATA location.
 
                 if not os.access(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'), os.F_OK):  # If no folder exists
                     os.mkdir(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'))  # Make new folder,
                     dfile = open(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats\\DataOutput.txt'), 'a+')  # build
 
-                else:  # Implies that the pingstats folder exists.
+                else:  # Implies that the PingStats folder exists.
                     dfile = open(os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats\\DataOutput.txt'), 'a+')
 
             else:
@@ -151,30 +147,29 @@ def buildfiles(path, name):
     return csvfile, dfile  # return built files.
 
 
-# TODO Initialize a CSV.writer object before execution of writecsv().
-# This is causing a small amount of data leakage, as more csvwriter objects get created than get deleated.
-""" Currently, writecsv initializes a new CSV.writer object every time it is called. This results in the program
+# TODO Initialize a CSV.writer object before execution of write_csv_data().
+""" Currently, write_csv_data() initializes a new CSV.writer object every time it is called. This results in the program
 working extra iterations on automatic garbage collection for the item.
 
 The CSV.writer object only needs to be initialized once to maintain the functionality that we are looking for. The only
 struggle will be getting the object into the runtime safely, without running into issues with threading buffer
-overuns. """
+overruns. """
 
 
-def writecsv(file, data, terminaloutput):
+def write_csv_data(file, data, terminal_output):
     """ Writes a row of CSV data.
 
-    :param file: The file object to write to.
-    :param data: The row to be saved.
-    :param terminaloutput: Bool value to enable text output to the terminal.
-    :return: The row written by the process.
+    "file" - The file object to write to.
+    "data" - The row to be saved.
+    "terminal_output" - Boolean value to enable text output to the terminal.
+    Returns the row written by the function.
     """
     cwriter = csv.writer(file)
     cwriter.writerow(data)
     rowtext = ''
     for val in data:
         rowtext += val + ', '
-    if terminaloutput:
+    if terminal_output:
         print('Wrote row: \'%s\' to %s' % (rowtext, file.name))
 
 
@@ -185,19 +180,19 @@ def dataparser(datafile):
     """ Reads each line of data file for valid ping information, and once (or if) no new information is read, the
      function truncates the datafile and returns either a list of valid CSV rows, or an empty list object.
 
-    :param datafile: The file to read for ping information.
-    :return: A list of valid CSV rows for parsing by csvWriter() or None when no new valid information is found.
+    "datafile" - The file to read for ping information.
+    Returns a list of valid CSV rows for parsing by write_csv_data() or None when no new valid information is found.
     """
 
-    datalist = []  # a list of rows read in by dataparser.
-    global NT_ICMQSEQNUM  # obtain icmq sequence counter.
+    datalist = []  # a list of rows read in by data parser.
+    global NT_ICMQSEQNUM  # obtain ICMQ sequence counter.
 
     with open(datafile.name) as df:  # open the data file for reading
 
         for d in df:  # read datafile line by line, and parse lines for CSV output.
             # This is very logic heavy, and is not necessary to read through.
-            datarow = [str(time.time())]
-            # DEBUG: print("appended current system time to this datarow"); time.sleep(1)
+            data_row = [str(time.time())]
+            # DEBUG: print("appended current system time to this data row"); time.sleep(1)
 
             # Parse data text
             if os.name != 'nt':
@@ -205,12 +200,12 @@ def dataparser(datafile):
                 if d.lower().count('cannot resolve') > 0 or d.lower().count('request timeout'):
                     # DEBUG: print('read a line of text that contained \'cannot resolve\', appending data")
                     # DEBUG: time.sleep(1)
-                    datarow.append('failed')  # Error line.
-                    datarow.append('failed')
-                    datarow.append('icmp_seq=%s' % d.split()[-1])
-                    datarow.append('ttl=0')
-                    datarow.append('time=-10')
-                    # sys.stderr.write(str(datarow))
+                    data_row.append('failed')  # Error line.
+                    data_row.append('failed')
+                    data_row.append('ICMQ_seq=%s' % d.split()[-1])
+                    data_row.append('TTL=0')
+                    data_row.append('time=-10')
+                    # sys.stderr.write(str(data_row))
 
                 elif (d.count('PING') > 0 or d.lower().count('statistics') > 0 or  # break on ping end.
                       d.lower().count('transmitted') > 0 or d.lower().count('round-trip') > 0):
@@ -220,28 +215,28 @@ def dataparser(datafile):
                     for val in d.split():  # Split lines by space and iterate.
 
                         if val.count('bytes') > 0 or val.count('from') > 0 or val.count('ms') > 0 or \
-                                        val.count('\x00') > 0:  # skippable values
+                                        val.count('\x00') > 0:  # skip-able values
                             pass
 
-                        elif len(datarow) is 1:  # if this is the first data field.
-                            datarow.append('size=%s' % val)
+                        elif len(data_row) is 1:  # if this is the first data field.
+                            data_row.append('size=%s' % val)
 
-                        elif len(datarow) is 2:  # if this is the second data field.
-                            datarow.append(val[:-1])
+                        elif len(data_row) is 2:  # if this is the second data field.
+                            data_row.append(val[:-1])
 
                         else:  # append data.
-                            datarow.append(val)
+                            data_row.append(val)
 
             else:
 
                 if d.lower().count('Request timed out.') > 1:
-                    datarow.append('failed')
-                    datarow.append('failed')
-                    datarow.append('icmp_seq=%s' % NT_ICMQSEQNUM)
+                    data_row.append('failed')
+                    data_row.append('failed')
+                    data_row.append('ICMQ_seq=%s' % NT_ICMQSEQNUM)
                     NT_ICMQSEQNUM += 1
-                    datarow.append('ttl=0')
-                    datarow.append('time-10')
-                    # sys.stderr.write(datarow)
+                    data_row.append('TTL=0')
+                    data_row.append('time-10')
+                    # sys.stderr.write(data_row)
 
                 elif d.lower().count('pinging') or d.lower().count('statistics') or d.lower().count('packets') or \
                         d.lower().count('approximate') or d.lower().count('minimum') or d.lower().count('control') or \
@@ -255,30 +250,30 @@ def dataparser(datafile):
                             pass
 
                         elif val.lower().count('bytes') > 0:
-                            datarow.insert(0, 'size=%s' % val.split('=')[1])
+                            data_row.insert(0, 'size=%s' % val.split('=')[1])
 
                         elif val.lower().count('time') > 0:
-                            datarow.append(val)
+                            data_row.append(val)
 
-                        elif val.lower().count('ttl') > 0:
-                            datarow.insert(-2, val)
+                        elif val.lower().count('TTL') > 0:
+                            data_row.insert(-2, val)
 
                         else:
-                            datarow.append(val)
+                            data_row.append(val)
 
-                    datarow.insert(2, 'icmp_seq=%s' % NT_ICMQSEQNUM)
+                    data_row.insert(2, 'ICMQ_seq=%s' % NT_ICMQSEQNUM)
                     NT_ICMQSEQNUM += 1
 
             # end parse
 
             # Check for row validity and append it to the list of read rows.
-            if len(datarow) > 1:
-                datalist.append(datarow)
+            if len(data_row) > 1:
+                datalist.append(data_row)
             else:
                 pass
 
     # data validity and size checks.
-    if len(datalist) > 0:  # if data was found, return data and reduce filesize.
+    if len(datalist) > 0:  # if data was found, return data and reduce file size.
         datafile.seek(0)
         datafile.truncate()
 
@@ -288,18 +283,18 @@ def dataparser(datafile):
 
         return datalist
 
-    else:  # no data read, reduce filesize, return None.
+    else:  # no data read, reduce file size, return an empty List object.
         datafile.seek(0)
         datafile.truncate()
 
         return []
 
 
-def ping(address, customarg=None, ofile=None):
+def ping(address, custom_argument=None, out_file=None):
     """ Runs a ping and collects statistics.
-    :param address: The address to ping.
-    :param customarg: A string with user specified custom arguments.
-    :param ofile: The file object to write output to.
+    "address" - The address to ping.
+    "custom_argument" - A string with user specified custom arguments.
+    "out_file" - The file object to write output to.
     """
     # Conversion handlers.
 
@@ -309,12 +304,11 @@ def ping(address, customarg=None, ofile=None):
         quit()  # Break
 
     # Argument handler.
-    def parsearg(custom_argument):  # TODO Deprecate calls to this function, is inneficient.
+    def parsearg(custom_argument):  # TODO Deprecate calls to this function, it is inefficient.
         """ Creates an argument for the subprocess.Popen object.
 
-        :param custom_argument: The custom argument specified by the user (or None for no custom argument)
-        :return: A mutable list containing the argument to use in the subprocess.Popen object.
-        This function is obtuse, and can be handled more efficiently,
+        "custom_argument" - The custom argument specified by the user (or None for no custom argument)
+        Returns a mutable list containing the argument to use in the subprocess.Popen object.
         """
         if custom_argument is not None:
             return ['ping', shlex.split(custom_argument), address]
@@ -324,23 +318,27 @@ def ping(address, customarg=None, ofile=None):
             else:
                 return ['ping', address]
 
-    return subprocess.Popen(parsearg(customarg), stdout=ofile)
+    return subprocess.Popen(parsearg(custom_argument), stdout=out_file)
 
 
 # TODO Refactor .showliveplot() to a class.
 """ .showliveplot() is looking more and more like a class. I feel like it is just prudent to refactor this to a
-class."""
+class. .showliveplot().PlotTable could simply be placed outside of the showliveplot function, and should still be
+accessible by the name space.
+
+For this function to work effectively for Kivy, we should use the matplotlib.garden to get an assigned number of plot
+points from a class upon change to the class contents, like in the .showliveplot().PlotTable() object. """
 
 
-def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutput):
+def showliveplot(data_file, csv_file, refresh_frequency, table_length, no_file, terminaloutput):
     """ Shows a live graph of the last 50 rows of the specified CSV file on an interval of every half second.
 
-    :param datafile: The file object used for data output.
-    :param cfile: The file object used for CSV output
-    :param refreshfreq: The frequency with which the matplotlib.animation.FuncAnimation object refreshes.
-    :param tablelength: The number of objects to maintain on screen.
-    :param nofile: The option to not output to a file.
-    :return: The matplotlib.animation.FunAnimation object.
+    "data_file" - The file object used for data output.
+    "csv_file" - The file object used for CSV output
+    "refresh_frequency" - The frequency with which the matplotlib.animation.FuncAnimation object refreshes.
+    "table_length" - The number of objects to maintain on screen.
+    "no_file" - The option to not output to a file.
+    Returns the matplotlib.animation.FuncAnimation object.
     """
 
     class PlotTable:
@@ -353,12 +351,12 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutp
             if length is None:
                 self.length = 50
             else:
-                self.length = int(tablelength)
+                self.length = int(table_length)
 
         def appendx(self, a):
             """ Append a new value to the x value of the table. Maintains specified length of table upon reaching max.
 
-            :param a: The value to append to the table.
+            "a" - The value to append to the table.
             """
             if len(self.x) < self.length:
                 self.x.append(a)
@@ -369,7 +367,7 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutp
         def appendy(self, a):
             """ Append a new value to the y value of the table. Maintains specified length of table upon reaching max.
 
-            :param a: The value to append to the table.
+            "a" - The value to append to the table.
             """
             if len(self.y) < self.length:
                 self.y.append(a)
@@ -387,31 +385,31 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutp
 
     fig = plt.figure()
 
-    # build arg string for window titleing
-    titlestring = ''
+    # build argument string for window title string
+    title_string = ''
     for arg in sys.argv:
         if sys.argv.index(arg) is 0:
             pass
         else:
-            titlestring += ' ' + arg
-    fig.canvas.set_window_title('%s |%s' % (buildname + ' ' + version, titlestring))
+            title_string += ' ' + arg
+    fig.canvas.set_window_title('%s |%s' % (buildname + ' ' + version, title_string))
 
     ax1 = fig.add_subplot(1, 1, 1)
 
-    ptable = PlotTable(tablelength)
+    ptable = PlotTable(table_length)
 
     def animate(i):
         """ Reads rows from a CSV file and render them to a plot.
 
-        :param i: Arbitrary.
-        :return: None
+        "i" - Required by matplotlib.animation.FuncAnimation
+        Returns None.
         """
 
-        data_generator = dataparser(datafile)
+        data_generator = dataparser(data_file)
         if data_generator is not None:
-            for newrow in data_generator:  # some code linters may read this as NoneType, this is handled...
-                if not nofile:
-                    writecsv(cfile, newrow, terminaloutput)
+            for newrow in data_generator:  # some code linter's may read this as NoneType, this is handled...
+                if not no_file:
+                    write_csv_data(csv_file, newrow, terminaloutput)
                 elif terminaloutput:
                     print(newrow)
                 ptable.appendx(dt.datetime.fromtimestamp(float(newrow[0])))
@@ -423,17 +421,17 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutp
         for label in ax1.xaxis.get_ticklabels():
             label.set_rotation(45)
 
-        plt.xlabel('Timestamp')
-        plt.ylabel('Return Time (in milleseconds)')
+        plt.xlabel('Timestamps')
+        plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
 
     plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
     print('Showing plot...\n')
 
-    if refreshfreq is None:
+    if refresh_frequency is None:
         ani = animation.FuncAnimation(fig, animate, interval=500)
     else:
-        ani = animation.FuncAnimation(fig, animate, interval=int(refreshfreq))
+        ani = animation.FuncAnimation(fig, animate, interval=int(refresh_frequency))
 
     ani.new_frame_seq()
     plt.show()
@@ -441,32 +439,32 @@ def showliveplot(datafile, cfile, refreshfreq, tablelength, nofile, terminaloutp
     return True
 
 
-def showplot_fromfile(csvfilepath, imagename):
+def showplot_fromfile(csv_file_path, image_name):
     """ Generates a plot from a csv file specified by the user. Also generates images of the file by supplying an
-    imagename paramater.
+    image name parameter.
 
-    :param csvfilepath: The path to the file to generate.
-    :param imagename: Optional argument to specify an image to generate.
+    "csv_file_path" - The path to the file to generate.
+    "image_name" - Optional argument to specify an image to generate.
     """
     style.use('fivethirtyeight')
 
     fig = plt.figure()
 
-    # build arg string for window titleing
-    titlestring = ''
+    # build argument string for window title string
+    title_string = ''
     for arg in sys.argv:
         if sys.argv.index(arg) is 0:
             pass
         else:
-            titlestring += ' ' + arg
-    fig.canvas.set_window_title('%s |%s' % (buildname + ' ' + version, titlestring))
+            title_string += ' ' + arg
+    fig.canvas.set_window_title('%s |%s' % (buildname + ' ' + version, title_string))
 
     ax1 = fig.add_subplot(1, 1, 1)
 
     table = []
 
     print('Reading ping information from user specified file.')
-    with open(csvfilepath) as cf:
+    with open(csv_file_path) as cf:
         creader = csv.reader(cf)
         for line in creader:
             table.append(line)
@@ -485,15 +483,15 @@ def showplot_fromfile(csvfilepath, imagename):
     for label in ax1.xaxis.get_ticklabels():
         label.set_rotation(45)
 
-    plt.xlabel('Timestamp')
-    plt.ylabel('Return Time (in milleseconds)')
+    plt.xlabel('Timestamps')
+    plt.ylabel('Return Time (in milliseconds)')
     plt.title('Ping Over Time')
 
-    if imagename is not None:  # User flagged -gi, generate an image.
-        print('Generating %s.png.' % imagename)
-        plt.savefig('%s.png' % imagename)
+    if image_name is not None:  # User flagged -gi, generate an image.
+        print('Generating %s.png.' % image_name)
+        plt.savefig('%s.png' % image_name)
     else:  # Display plot.
-        print('Showing the plot generated from \"%s.\"' % csvfilepath)
+        print('Showing the plot generated from \"%s.\"' % csv_file_path)
         plt.show()  # hangs until user closes plot.
 
 
@@ -528,12 +526,12 @@ if __name__ == '__main__':
                                                      ' sequences.', action='store_true')
 
     parser.add_argument('-sF', '--refreshfrequency', help='Specify a number of milliseconds to wait between refreshes'
-                                                          'of the -s plot visualization feature. THe lower the number,'
+                                                          'of the -s plot visualization feature. The lower the number,'
                                                           'the better the performance of %s visualization. Handy for'
                                                           '\"potatoes\"' % buildname)
 
     parser.add_argument('-sL', '--tablelength', help='The total number of pings to show for -s. The lower the number, '
-                                                     'the better the performance of %s visulization. Handy for '
+                                                     'the better the performance of %s visualization. Handy for '
                                                      '\"potatoes.\"' % buildname)
 
     parser.add_argument('-sNF', '--nofile', help='Flag this option to disable outputting ping information to a csv'
@@ -549,14 +547,14 @@ if __name__ == '__main__':
     elif parsed.address is not None:
         if parsed.showliveplot:
             print('Pinging %s...\nThe longer that this program runs, the more system resources it will occupy. Please'
-                  'consider using the live plotting feature for shorter run times (i.e a match of online chess).\n'
+                  'consider using the live plotting feature for shorter run times (i.e a match of on line chess).\n'
                   'Close the plot window to exit the program....' % parsed.address)
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p = ping(parsed.address, customarg=parsed.gurusettings, ofile=outfile)
+            p = ping(parsed.address, custom_argument=parsed.gurusettings, out_file=outfile)
 
-            # hangs while showing a plot, when user closes plot, process closes.ile.name)
+            # hangs while showing a plot, when user closes plot, process closes.file.name)
             showliveplot(outfile, csvfile, parsed.refreshfrequency, parsed.tablelength, parsed.nofile,
                          parsed.terminaloutput)
 
@@ -574,18 +572,18 @@ if __name__ == '__main__':
         else:
             print('Pinging %s...\nThe longer that this program runs, the larger the resulting CSV file will be.\nDue to'
                   ' the way that the program handles the output file, do not open the .csv file created by this '
-                  'application until you are finished gathering pings.\nPress CNTRL+C to exit...' % parsed.address)
+                  'application until you are finished gathering pings.\nPress CTR+C to exit...' % parsed.address)
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
-            p = ping(parsed.address, customarg=parsed.gurusettings, ofile=outfile)
+            p = ping(parsed.address, custom_argument=parsed.gurusettings, out_file=outfile)
 
             try:
                 while p.poll() is None:
                     row_generator = dataparser(outfile)
                     if row_generator is not None:
-                        for row in row_generator:  # some code linters may read this as NoneType, this is handled...
-                            writecsv(csvfile, row, terminaloutput=parsed.terminaloutput)
+                        for row in row_generator:  # some code linter's may read this as NoneType, this is handled...
+                            write_csv_data(csvfile, row, terminal_output=parsed.terminaloutput)
                     time.sleep(0.5)
 
             except (KeyboardInterrupt, SystemExit):
