@@ -296,7 +296,6 @@ def ping(address, custom_argument=None, out_file=None):
     "custom_argument" - A string with user specified custom arguments.
     "out_file" - The file object to write output to.
     """
-    # Conversion handlers.
 
     # Address handler.
     if address is None:  # ensure a host was specified.
@@ -304,21 +303,15 @@ def ping(address, custom_argument=None, out_file=None):
         quit()  # Break
 
     # Argument handler.
-    def parsearg(custom_argument):  # TODO Deprecate calls to this function, it is inefficient.
-        """ Creates an argument for the subprocess.Popen object.
-
-        "custom_argument" - The custom argument specified by the user (or None for no custom argument)
-        Returns a mutable list containing the argument to use in the subprocess.Popen object.
-        """
-        if custom_argument is not None:
-            return ['ping', shlex.split(custom_argument), address]
+    if custom_argument is not None:
+        safe_argument = ['ping', shlex.split(custom_argument), address]
+    else:
+        if os.name == 'nt':
+            safe_argument = ['ping', '-t', address]
         else:
-            if os.name == 'nt':
-                return ['ping', '-t', address]
-            else:
-                return ['ping', address]
+            safe_argument = ['ping', address]
 
-    return subprocess.Popen(parsearg(custom_argument), stdout=out_file)
+    return subprocess.Popen(safe_argument, stdout=out_file)
 
 
 # TODO Refactor .showliveplot() to a class.
