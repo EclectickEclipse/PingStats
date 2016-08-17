@@ -109,16 +109,17 @@ def buildfiles(path, name):
 
     # Apply user arguments.
 
+    if not parsed.nofile:
+        try:
+            dest = path + name + '.csv'
+        except TypeError:
+                sys.stderr.write('Could not parse specified arguments, defaulting to ./%sLog.csv\n' % buildname)
+
+                dest = buildname + 'Log.csv'
+
     try:
-        dest = path + name + '.csv'
-    except TypeError:
         if not parsed.nofile:
-            sys.stderr.write('Could not parse specified arguments, defaulting to ./Log.csv\n')
-
-        dest = buildname + 'Log.csv'
-
-    try:
-        csvfile = open(dest, 'a+')  # actually open the CSV file at destination path.
+            csvfile = open(dest, 'a+')  # actually open the CSV file at destination path.
     except OSError:
         raise RuntimeError('Please ensure that you use the full legal path to output the CSV file to.')
 
@@ -144,7 +145,10 @@ def buildfiles(path, name):
     else:  # Handle *Nix file creation.
         dfile = tempfile.NamedTemporaryFile('w+')
 
-    return csvfile, dfile  # return built files.
+    if not parsed.nofile:
+        return csvfile, dfile  # return built files.
+    else:
+        return dfile
 
 
 # TODO Initialize a CSV.writer object before execution of write_csv_data().

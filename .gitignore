@@ -5,3 +5,14 @@
 
 # Mac
 .DS_Store
+
+# Personal
+.python-ping/
+.ropeproject
+.updatetodo.sh
+.vim/
+.vimrc
+.virtual_environment
+PingStatsLog.csv
+startvirtualenv.sh
+*.swp
