@@ -178,6 +178,7 @@ def write_csv_data(file, data, terminal_output):
 
 
 # TODO dataparser relies on potentially breakable parsing logic.
+# TODO dataparser seems to be failing the row packing, and sometimes packs a row that is invalid.
 
 
 def dataparser(datafile):
@@ -469,9 +470,13 @@ def showplot_fromfile(csv_file_path, image_name):
     x = []
     y = []
 
-    for newrow in table:
-        x.append(dt.datetime.fromtimestamp(float(newrow[0])))
-        y.append(newrow[5].split('=')[1])
+    for i, newrow in enumerate(table):
+        # print(newrow)  # DEBUG
+        try:
+            x.append(dt.datetime.fromtimestamp(float(newrow[0])))
+            y.append(newrow[5].split('=')[1])
+        except IndexError as e:
+            print('Could not read line #%s %s, python threw $s!' % (i + 1, newrow, e))
 
     ax1.plot(x, y)
 
