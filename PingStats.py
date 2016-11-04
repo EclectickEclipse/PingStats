@@ -375,18 +375,6 @@ def ping(address, custom_argument=None, out_file=None):
     return subprocess.Popen(safe_argument, stdout=out_file)
 
 
-# TODO Refactor .showliveplot() to a class.
-""" .showliveplot() is looking more and more like a class. I feel like it is
-just prudent to refactor this to a class. .showliveplot().PlotTable could
-simply be placed outside of the showliveplot function, and should still be
-accessible by the name space.
-
-For this function to work effectively for Kivy, we should use the
-matplotlib.garden to get an assigned number of plot points from a class upon
-change to the class contents, like in the .showliveplot().PlotTable() object.
-"""
-
-
 # Bootstrap logic.
 
 # TODO Parser logic should likely be handled explicitly on module load
