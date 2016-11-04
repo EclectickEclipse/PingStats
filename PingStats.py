@@ -30,6 +30,8 @@ import argparse
 import sys
 import tempfile
 
+import Plot
+
 try:
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
@@ -393,186 +395,6 @@ change to the class contents, like in the .showliveplot().PlotTable() object.
 """
 
 
-def showliveplot(data_file, csv_file, refresh_frequency, table_length, no_file,
-                 terminaloutput):
-    """ Shows a live graph of the last 50 rows of the specified CSV file on an
-    interval of every half second.
-
-    "data_file" - The file object used for data output.
-    "csv_file" - The file object used for CSV output
-    "refresh_frequency" - The frequency with which the FuncAnimation refreshes.
-    "table_length" - The number of objects to maintain on screen.
-    "no_file" - The option to not output to a file.
-    Returns the matplotlib.animation.FuncAnimation object.
-    """
-
-    class PlotTable:
-        """ A class to maintain a specified number of objects to plot to
-        matplotlib. """
-
-        def __init__(self, length):
-            self.x = []
-            self.y = []
-
-            if length is None:
-                self.length = 50
-            else:
-                self.length = int(table_length)
-
-        def appendx(self, a):
-            """ Append a new value to the x value of the table. Maintains
-            specified length of table upon reaching max.
-
-            "a" - The value to append to the table.
-            """
-            if len(self.x) < self.length:
-                self.x.append(a)
-            else:
-                self.x.pop(0)
-                self.x.append(a)
-
-        def appendy(self, a):
-            """ Append a new value to the y value of the table. Maintains
-            specified length of table upon reaching max.
-
-            "a" - The value to append to the table.
-            """
-            if len(self.y) < self.length:
-                self.y.append(a)
-            else:
-                self.y.pop(0)
-                self.y.append(a)
-
-        def getx(self):  # arbitrary get method
-            return self.x
-
-        def gety(self):  # arbitrary get method
-            return self.y
-
-    style.use('fivethirtyeight')
-
-    fig = plt.figure()
-
-    # build argument string for window title string
-    title_string = ''
-    for arg in sys.argv:
-        if sys.argv.index(arg) is 0:
-            pass
-        else:
-            title_string += ' ' + arg
-    fig.canvas.set_window_title(
-        '%s |%s' % (buildname + ' ' + version, title_string))
-
-    ax1 = fig.add_subplot(1, 1, 1)
-
-    ptable = PlotTable(table_length)
-
-    def animate(i):
-        """ Reads rows from a CSV file and render them to a plot.
-
-        "i" - Required by matplotlib.animation.FuncAnimation
-        Returns None.
-        """
-
-        data_generator = dataparser(data_file)
-        if data_generator is not None:
-            for newrow in data_generator:  # some code linter's may read this as
-                # NoneType, this is handled...
-                if not no_file:
-                    write_csv_data(csv_file, newrow, terminaloutput)
-                elif terminaloutput:
-                    print(newrow)
-                ptable.appendx(dt.datetime.fromtimestamp(float(newrow[0])))
-                ptable.appendy(newrow[5].split('=')[1])
-
-        ax1.clear()
-        ax1.plot_date(ptable.getx(), ptable.gety(), '-',
-                      label='Connection over time')
-        ax1.plot(ptable.getx(), ptable.gety())
-        for label in ax1.xaxis.get_ticklabels():
-            label.set_rotation(45)
-
-        plt.xlabel('Timestamps')
-        plt.ylabel('Return Time (in milliseconds)')
-        plt.title('Ping Over Time')
-
-    plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
-    print('Showing plot...\n')
-
-    if refresh_frequency is None:
-        ani = animation.FuncAnimation(fig, animate, interval=500)
-    else:
-        ani = animation.FuncAnimation(fig, animate,
-                                      interval=int(refresh_frequency))
-
-    ani.new_frame_seq()
-    plt.show()
-
-    return True
-
-
-def showplot_fromfile(csv_file_path, image_name):
-    """ Generates a plot from a csv file specified by the user. Also generates
-    images of the file by supplying an image name parameter.
-
-    "csv_file_path" - The path to the file to generate.
-    "image_name" - Optional argument to specify an image to generate.
-    """
-    style.use('fivethirtyeight')
-
-    fig = plt.figure()
-
-    # build argument string for window title string
-    title_string = ''
-    for arg in sys.argv:
-        if sys.argv.index(arg) is 0:
-            pass
-        else:
-            title_string += ' ' + arg
-    fig.canvas.set_window_title(
-        '%s |%s' % (buildname + ' ' + version, title_string))
-
-    ax1 = fig.add_subplot(1, 1, 1)
-
-    table = []
-
-    print('Reading ping information from user specified file.')
-    with open(csv_file_path) as cf:
-        creader = csv.reader(cf)
-        for line in creader:
-            table.append(line)
-
-    x = []
-    y = []
-
-    for i, newrow in enumerate(table):
-        # print(newrow)  # DEBUG
-        try:
-            x.append(dt.datetime.fromtimestamp(float(newrow[0])))
-            y.append(newrow[5].split('=')[1])
-        except IndexError as e:
-            print('Could not read line #%s %s, python threw $s!' % (
-                i + 1, newrow, e))
-
-    ax1.plot(x, y)
-
-    plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
-
-    for label in ax1.xaxis.get_ticklabels():
-        label.set_rotation(45)
-
-    plt.xlabel('Timestamps')
-    plt.ylabel('Return Time (in milliseconds)')
-    plt.title('Ping Over Time')
-
-    if image_name is not None:  # User flagged -gi, generate an image.
-        print('Generating %s.png.' % image_name)
-        plt.savefig('%s.png' % image_name)
-    else:  # Display plot.
-        print('Showing the plot generated from \"%s.\"' % csv_file_path)
-        plt.show()  # hangs until user closes plot.
-
-
 # Bootstrap logic.
 
 # TODO Parser logic should likely be handled explicitly on module load
@@ -659,9 +481,11 @@ if __name__ == '__main__':
 
             # hangs while showing a plot, when user closes plot, process
             # closes.file.name)
-            showliveplot(outfile, csvfile, parsed.refreshfrequency,
-                         parsed.tablelength, parsed.nofile,
-                         parsed.terminaloutput)
+            Plot.Animate(csvfile, parser=dataparser(outfile),
+                         nofile=parsed.nofile,
+                         verbose=parsed.terminalouput,
+                         table_length=parsed.tablelength,
+                         refresh_freq=parsed.refreshfrequency)
 
             # _ = str(input('Press enter to quit.'))  # Still does not force
             # plot to show, but still nice for the user.
@@ -705,6 +529,6 @@ if __name__ == '__main__':
                 if os.name == 'nt':
                     os.remove(outfile.name)
     elif parsed.plotfile is not None:
-        showplot_fromfile(parsed.plotfile, parsed.generateimage)
+        Plot.PlotFile(parsed.plotfile)
     else:
         parser.print_usage()
