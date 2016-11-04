@@ -1,6 +1,7 @@
 import sys
 from datetime import datetime as dt
 import csv
+from threading import Thread
 
 import PingStats as ping
 
@@ -68,19 +69,14 @@ class Plot:
 
     ax1 = fig.add_subplot(1, 1, 1)
 
-    ptable = _PlotTable
+    ptable = _PlotTable()
 
     nofile = False
 
-    def __init__(self, csv_file, **kwargs):
+    def __init__(self):
 
         self.fig.canvas.set_window_title('%s | %s' % (ping.buildname,
                                                       self.title_str))
-        if csv_file is None:
-            raise RuntimeError('Plot object requires a csv_file!')
-        else:
-            self.csv_file = csv_file
-
         style.use('fivethirtyeight')
 
         plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
@@ -89,29 +85,22 @@ class Plot:
 
     def show_plot(self):
         try:
-            plt.show()
+            plt.show(block=False)
             return True
         except BaseException:
             return False
 
 
 class Animate(Plot):
-    def __init__(self, parser=None, nofile=False, verbose=True,
-                 table_length=None, refresh_freq=None, **kwargs):
-        super(Animate, self).__init__(**kwargs)
+    def __init__(self, table_length=None, refresh_freq=None):
+        super(Animate, self).__init__()
 
-        self.nofile = nofile
-        self.verbose = verbose
         if table_length is not None:
-            self.ptable(table_length)
-        else:
-            self.ptable()
-
-        self.parser = parser
+            self.ptable.length = table_length
 
         if refresh_freq is None:
             self.ani = animation.FuncAnimation(self.fig, self._animate,
-                                               interval=500)
+                                               interval=60)
         else:
             self.ani = animation.FuncAnimation(self.fig, self._animate,
                                                interval=refresh_freq)
@@ -122,19 +111,6 @@ class Animate(Plot):
         "i" - Required by matplotlib.animation.FuncAnimation
         Returns None.
         """
-
-        # GET DATA
-        data_generator = self.parser
-        if data_generator is not None:
-            for newrow in data_generator:  # some code linter's may read this
-                # as NoneType, this is handled...
-                if not self.no_file:
-                    ping.write_csv_data(self.csv_file, newrow, self.verbose)
-                elif self.verbose:
-                    print(newrow)
-                self.ptable.appendx(dt.datetime.fromtimestamp(float(
-                    newrow[0])))
-                self.ptable.appendy(newrow[5].split('=')[1])
 
         # DRAW POINTS
         self.ax1.clear()
@@ -147,19 +123,19 @@ class Animate(Plot):
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
+        plt.draw()
 
     def animate(self):
         self.ani.new_frame_seq()
         return self.show_plot()
 
-
 class PlotFile(Plot):
     table = []
 
-    def __init__(self):
+    def __init__(self, csv_file):
         super(PlotFile, self).__init__()
 
-        with open(self.csv_file) as cf:
+        with open(csv_file) as cf:
             creader = csv.reader(cf)
             for line in creader:
                 self.table.append(line)
@@ -169,8 +145,11 @@ class PlotFile(Plot):
 
         for i, newrow in enumerate(self.table):
             try:
-                self.x.append(dt.fromtimestamp(float(newrow[0])))
-                self.y.append(newrow[5].split('=')[1])
+                self.x.append(str(newrow[0]))
+                if newrow[1] is not None:
+                    self.y.append(str(newrow[1]))
+                else:
+                    self.y.append(str(-10))
             except IndexError as e:
                 print('Could not read line #%s %s, python through %s' % (
                     i + 1, newrow, e))

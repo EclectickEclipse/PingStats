@@ -20,14 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import shlex
-import subprocess
 import time
+import datetime as dt
+import socket
 import csv
-import os
 import argparse
-import sys
-import tempfile
+# from threading import Thread  # Used for live plot generation
 
 import Plot
 from pythonping import ping as pyping
@@ -103,85 +101,16 @@ NT_ICMQSEQNUM = 0  # Used to ensure ICMQ sequence number consistency on NT
 # based systems.
 
 
-def buildfiles(path, name):
-    """ Builds the files used for processing. For UNIX machines, generates a
-    temporary file for ping output. Due to Temporary File limitations on
-    Windows NT softwares, This function will generate a new folder in the
-    install location of PingStats on the host OS.
-
-    "path" - The path to output the CSV file to.
-    "name" - The custom name supplied by the user.
-    Returns a tuple containing the csv file object and the outbound data file.
-    """
-
-    # First, convert args.
-
+def buildfile(path, name):
     if path is None:
         path = ''
-    elif name is None:
-        name = ''
 
-    # Apply user arguments.
-
-    if not parsed.nofile:
-        try:
-            dest = path + name + '.csv'
-        except TypeError:
-            sys.stderr.write(
-                'Could not parse specified arguments, defaulting to ./%sLog.'
-                'csv\n' % buildname)
-
-            dest = buildname + 'Log.csv'
-
-    try:
-        if not parsed.nofile:
-            csvfile = open(dest,
-                           'a+')  # actually open the CSV file at destination
-            # path.
-    except OSError:
-        raise RuntimeError(
-            'Please ensure that you use the full legal path to output the CSV '
-            'file to.')
-
-    if os.name == 'nt':  # Handle windows file creation.
-
-        if os.getenv('LOCALAPPDATA',
-                     False):  # Check for LOCALAPPDATA environment variable.
-
-            if os.access(os.getenv('LOCALAPPDATA'),
-                         os.F_OK):  # check for access to LOCALAPPDATA location
-
-                if not os.access(
-                        os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'),
-                        os.F_OK):  # If no folder exists
-                    os.mkdir(os.path.join(os.getenv('LOCALAPPDATA'),
-                                          'PingStats'))  # Make new folder,
-                    dfile = open(os.path.join(os.getenv('LOCALAPPDATA'),
-                                              'PingStats\\DataOutput.txt'),
-                                 'a+')  # build
-
-                else:  # Implies that the PingStats folder exists.
-                    dfile = open(os.path.join(os.getenv('LOCALAPPDATA'),
-                                              'PingStats\\DataOutput.txt'),
-                                 'a+')
-
-            else:
-                raise RuntimeError(
-                    'FATAL ERROR! PINGSTATS COULD NOT ACCESS %LOCALAPPDATA%!!!'
-                )
-
-        else:
-            raise RuntimeError(
-                'FATAL ERROR! PINGSTATS COULD NOT ACCESS %LOCALAPPDATA%!!! \n'
-                'Exiting....\n')
-
-    else:  # Handle *Nix file creation.
-        dfile = tempfile.NamedTemporaryFile('w+')
-
-    if not parsed.nofile:
-        return csvfile, dfile  # return built files.
+    if name is None:
+        name = buildname + 'Log.csv'
     else:
-        return dfile
+        name += '.csv'
+
+    return open(path + name, 'a+')
 
 
 # TODO Initialize a CSV.writer object before execution of write_csv_data().
@@ -195,7 +124,7 @@ object into the runtime safely, without running into issues with threading
 buffer overruns. """
 
 
-def write_csv_data(file, data, terminal_output):
+def write_csv_data(writer, data):
     """ Writes a row of CSV data.
 
     "file" - The file object to write to.
@@ -203,176 +132,19 @@ def write_csv_data(file, data, terminal_output):
     "terminal_output" - Boolean value to enable text output to the terminal.
     Returns the row written by the function.
     """
-    cwriter = csv.writer(file)
-    cwriter.writerow(data)
-    rowtext = ''
-    for val in data:
-        rowtext += val + ', '
-    if terminal_output:
-        print('Wrote row: \'%s\' to %s' % (rowtext, file.name))
+    writer.writerow(data)
 
 
-# TODO dataparser relies on potentially breakable parsing logic.
-# TODO dataparser seems to be failing the row packing
+def ping(address, timeout=3000, size=64, verbose=True):
+    host_name = socket.gethostname()
 
+    i = 1
+    while 1:
 
-def dataparser(datafile):
-    """ Reads each line of data file for valid ping information, and once (or
-    if) no new information is read, the function truncates the datafile and
-    returns either a list of valid CSV rows, or an empty list object.
-
-    "datafile" - The file to read for ping information.
-    Returns a list of valid CSV rows for parsing by write_csv_data() or None
-    when no new valid information is found.
-    """
-
-    datalist = []  # a list of rows read in by data parser.
-    global NT_ICMQSEQNUM  # obtain ICMQ sequence counter.
-
-    with open(datafile.name) as df:  # open the data file for reading
-
-        for d in df:  # read datafile line by line, and parse lines for CSV
-            # output.
-            # This is very logic heavy, and is not necessary to read through.
-            data_row = [str(time.time())]
-            # DEBUG: print("appended current system time to this data row");
-            # DEBUG: time.sleep(1)
-
-            # Parse data text
-            if os.name != 'nt':
-                # DEBUG: print("Determined a non NT system."); time.sleep(1)
-                if d.lower().count('cannot resolve') > 0 or d.lower().count(
-                        'request timeout'):
-                    # DEBUG: print('read a line of text that contained \'cannot
-                    # resolve\', appending data")
-                    # DEBUG: time.sleep(1)
-                    data_row.append('failed')  # Error line.
-                    data_row.append('failed')
-                    data_row.append('ICMQ_seq=%s' % d.split()[-1])
-                    data_row.append('TTL=0')
-                    data_row.append('time=-10')
-                    # sys.stderr.write(str(data_row))
-
-                elif (d.count('PING') > 0 or d.lower().count(
-                        'statistics') > 0 or  # break on ping end.
-                        d.lower().count(
-                                  'transmitted') > 0 or d.lower().count(
-                        'round-trip') > 0):
-                    pass
-
-                else:
-                    for val in d.split():  # Split lines by space and iterate.
-
-                        if val.count('bytes') > 0 or val.count(
-                                'from') > 0 or val.count('ms') > 0 or \
-                                        val.count(
-                                            '\x00') > 0:  # skip-able values
-                            pass
-
-                        elif len(
-                                data_row) is 1:  # if this is the first data
-                            #  field.
-                            data_row.append('size=%s' % val)
-
-                        elif len(
-                                data_row) is 2:  # if this is the second data
-                            # field.
-                            data_row.append(val[:-1])
-
-                        else:  # append data.
-                            data_row.append(val)
-
-            else:
-
-                if d.lower().count('Request timed out.') > 1:
-                    data_row.append('failed')
-                    data_row.append('failed')
-                    data_row.append('ICMQ_seq=%s' % NT_ICMQSEQNUM)
-                    NT_ICMQSEQNUM += 1
-                    data_row.append('TTL=0')
-                    data_row.append('time-10')
-                    # sys.stderr.write(data_row)
-
-                elif d.lower().count('pinging') or d.lower().count(
-                        'statistics') or d.lower().count('packets') or \
-                        d.lower().count('approximate') or d.lower().count(
-                    'minimum') or d.lower().count('control') or \
-                        d.lower().count('^c') > 0:
-                    pass
-
-                else:
-                    for val in d.split():
-
-                        if val.lower().count('reply') or val.lower().count(
-                                'from') > 0:
-                            pass
-
-                        elif val.lower().count('bytes') > 0:
-                            data_row.insert(0, 'size=%s' % val.split('=')[1])
-
-                        elif val.lower().count('time') > 0:
-                            data_row.append(val)
-
-                        elif val.lower().count('TTL') > 0:
-                            data_row.insert(-2, val)
-
-                        else:
-                            data_row.append(val)
-
-                    data_row.insert(2, 'ICMQ_seq=%s' % NT_ICMQSEQNUM)
-                    NT_ICMQSEQNUM += 1
-
-            # end parse
-
-            # Check for row validity and append it to the list of read rows.
-            if len(data_row) > 1:
-                datalist.append(data_row)
-            else:
-                pass
-
-    # data validity and size checks.
-    if len(
-            datalist) > 0:  # if data was found, return data and reduce file
-        # size.
-        datafile.seek(0)
-        datafile.truncate()
-
-        # DEBUG
-        # with open(datafile.name) as f:
-        #     print(f.read())
-
-        return datalist
-
-    else:  # no data read, reduce file size, return an empty List object.
-        datafile.seek(0)
-        datafile.truncate()
-
-        return []
-
-
-def ping(address, custom_argument=None, out_file=None):
-    """ Runs a ping and collects statistics.
-    "address" - The address to ping.
-    "custom_argument" - A string with user specified custom arguments.
-    "out_file" - The file object to write output to.
-    """
-
-    # Address handler.
-    if address is None:  # ensure a host was specified.
-        sys.stderr.write(
-            'Please include at least one option...\nType -h for help...\n')
-        quit()  # Break
-
-    # Argument handler.
-    if custom_argument is not None:
-        safe_argument = ['ping', shlex.split(custom_argument), address]
-    else:
-        if os.name == 'nt':
-            safe_argument = ['ping', '-t', address]
-        else:
-            safe_argument = ['ping', address]
-
-    return subprocess.Popen(safe_argument, stdout=out_file)
+        yield (time.time(),
+               pyping.single_ping(address, host_name, timeout, i, size),
+               timeout, size, address)
+        i += 1
 
 
 # Bootstrap logic.
@@ -387,18 +159,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-a', '--address', help='The IP address to ping.')
 
-    parser.add_argument('-g', '--gurusettings',
-                        help='For use by gurus: implement a custom argument to'
-                             ' pass to the ping process.')
-
-    parser.add_argument('-o', '--terminaloutput',
-                        help='Flag this option to output ping data to the '
-                             'terminal when they are read from the file.',
-                        action='store_true')
-
     parser.add_argument('-p', '--path',
-                        help='To supply a specific path to output any files to'
-                             ', include a path.')
+                        help='The path to output csv files to')
 
     parser.add_argument('-pf', '--plotfile',
                         help='Include the path to a previously generated CSV'
@@ -413,7 +175,7 @@ if __name__ == '__main__':
                         help='Flag this option to use a custom name for the'
                              ' CSV output file.')
 
-    parser.add_argument('-s', '--show live plot',
+    parser.add_argument('-s', '--showliveplot',
                         help='Flag this option to display an animated plot of'
                              'the last 500 ping sequences.',
                         action='store_true')
@@ -454,30 +216,23 @@ if __name__ == '__main__':
                 'on line chess).\n Close the plot window to exit the'
                 ' program....' % parsed.address)
 
-            csvfile, outfile = buildfiles(parsed.path, parsed.name)
+            if not parsed.nofile:
+                cwriter = csv.writer(buildfile(parsed.path, parsed.name))
 
-            p = ping(parsed.address, custom_argument=parsed.gurusettings,
-                     out_file=outfile)
+            p = ping(parsed.address)
+            plot = Plot.Animate()
 
-            # hangs while showing a plot, when user closes plot, process
-            # closes.file.name)
-            Plot.Animate(csvfile, parser=dataparser(outfile),
-                         nofile=parsed.nofile,
-                         verbose=parsed.terminalouput,
-                         table_length=parsed.tablelength,
-                         refresh_freq=parsed.refreshfrequency)
+            plot.animate()
 
-            # _ = str(input('Press enter to quit.'))  # Still does not force
-            # plot to show, but still nice for the user.
-
-            p.kill()
-            csvfile.close()
-            outfile.close()
-            if os.name == 'nt':
-                os.remove(outfile.name)
-
-            if parsed.nofile:
-                os.remove(csvfile.name)
+            for return_tuple in p:
+                if not parsed.nofile:
+                        write_csv_data(cwriter, return_tuple)
+                plot.ptable.appendx(dt.datetime.fromtimestamp(float(
+                    return_tuple[0])))
+                if return_tuple[1] is not None:
+                    plot.ptable.appendy(return_tuple[1])
+                else:
+                    plot.ptable.appendy(-10)
 
         else:
             print(
@@ -487,27 +242,13 @@ if __name__ == '__main__':
                 'created by this application until you are finished gathering '
                 'pings.\nPress CTR+C to exit...' % parsed.address)
 
-            csvfile, outfile = buildfiles(parsed.path, parsed.name)
+            if not parsed.nofile:
+                cwriter = csv.writer(buildfile(parsed.path, parsed.name))
 
-            p = ping(parsed.address, custom_argument=parsed.gurusettings,
-                     out_file=outfile)
+            for return_tuple in ping(parsed.address):
+                if not parsed.nofile:
+                    write_csv_data(cwriter, return_tuple)
 
-            try:
-                while p.poll() is None:
-                    row_generator = dataparser(outfile)
-                    if row_generator is not None:
-                        for row in row_generator:  # some code linter's may
-                            #  read this as NoneType, this is handled...
-                            write_csv_data(csvfile, row,
-                                           terminal_output=parsed.terminaloutput)
-                    time.sleep(0.5)
-
-            except (KeyboardInterrupt, SystemExit):
-                p.kill()
-                csvfile.close()
-                outfile.close()
-                if os.name == 'nt':
-                    os.remove(outfile.name)
     elif parsed.plotfile is not None:
         Plot.PlotFile(parsed.plotfile)
     else:
