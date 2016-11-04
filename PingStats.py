@@ -22,7 +22,6 @@
 
 import shlex
 import subprocess
-import datetime as dt
 import time
 import csv
 import os
@@ -31,24 +30,18 @@ import sys
 import tempfile
 
 import Plot
-
-try:
-    import matplotlib.pyplot as plt
-    import matplotlib.animation as animation
-    from matplotlib import style
-except OSError as e:
-    raise RuntimeError('Could not load matplotlib!')
+from pythonping import ping as pyping
 
 """ Preamble
 
-This software attempts to bring a simple python utility for logging ping results
-to CSV files, and representing them graphically via Python's Matplotlib. The
-software aims to achieve this in as minimal, "readable," and resource effective
-a way as possible.
+This software attempts to bring a simple python utility for logging ping
+results to CSV files, and representing them graphically via Python's
+Matplotlib. The software aims to achieve this in as minimal, "readable," and
+resource effective a way as possible.
 
 This software analyzes data recorded into CSV files by itself to either present
-an interactive plot (provided by the Matplotlib package) or generate an image of
-a plot for specific logs.
+an interactive plot (provided by the Matplotlib package) or generate an image
+of a plot for specific logs.
 
 This software also has the capability to display ping information as it is
 received, mapping it by time read and return time of each packet read. When
@@ -59,17 +52,17 @@ further usage for very minimal system resource cost. """
 
 """ Technical Notes
 
-It should be noted that the software inherently uses more system resources while
-displaying graphics to the screen, as this software is intended to be run on as
-minimal a software as possible.
+It should be noted that the software inherently uses more system resources
+while displaying graphics to the screen, as this software is intended to be
+run on as minimal a software as possible.
 
-Due to the variance on OS dependent ping packages, data collection may not work,
-and may need tweaking. The .dataparser() function is intended to be rewritten if
-possible. Due to this need to be easy to rewrite, the language is as simplified
-as it can be, using only for loop structures and a few if statements. If you
-find the initially provided code to be hard to interpret, uncomment the
-`# DEBUG:' lines to have python slowly iterate through each sequence of data
-and show the results provided."""
+Due to the variance on OS dependent ping packages, data collection may not
+work, and may need tweaking. The .dataparser() function is intended to be
+rewritten if possible. Due to this need to be easy to rewrite, the language is
+as simplified as it can be, using only for loop structures and a few if
+statements. If you find the initially provided code to be hard to interpret,
+uncomment the `# DEBUG:' lines to have python slowly iterate through each
+sequence of data and show the results provided."""
 
 # GPS discussion
 
@@ -82,9 +75,9 @@ locations. This could allow the user to map connection speeds throughout their
 city/region. This would be useful for people who move from location to location
 on a regular basis, and require fast Internet connections everywhere they go.
 
-Due to the variance in where this software could be used over time, it should be
-able to collect data from several PingStatsLog.csv files and present them to the
-user overlaid on a map where the faster connections are presented as a red
+Due to the variance in where this software could be used over time, it should
+be able to collect data from several PingStatsLog.csv files and present them to
+the user overlaid on a map where the faster connections are presented as a red
 "heat zones." """
 
 """ GPS Functionality Technical notes
@@ -93,10 +86,10 @@ coordinates. This would require a major overhaul of the application structure,
 and should likely be handled in a fork.
 
 The Kivy framework provides GPS functionality with Plyer
-(https://github.com/kivy/plyer), and provides a convienient and well established
-framework for Multi-platform application development. Using this framework, the
-software could easily provide a graphical presentation on the various options
-available to this software already."""
+(https://github.com/kivy/plyer), and provides a convienient and well
+established framework for Multi-platform application development. Using this
+framework, the software could easily provide a graphical presentation on the
+various options available to this software already."""
 
 # GLOBALS
 buildname = 'PingStats'
@@ -106,17 +99,15 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
              'Solutions. circa %s' % (
                  version, versiondate)
 
-NT_ICMQSEQNUM = 0  # Used to ensure ICMQ sequence number consistency on NT based
-
-
-# systems.
+NT_ICMQSEQNUM = 0  # Used to ensure ICMQ sequence number consistency on NT
+# based systems.
 
 
 def buildfiles(path, name):
     """ Builds the files used for processing. For UNIX machines, generates a
-    temporary file for ping output. Due to Temporary File limitations on Windows
-    NT softwares, This function will generate a new folder in the install
-    location of PingStats on the host OS.
+    temporary file for ping output. Due to Temporary File limitations on
+    Windows NT softwares, This function will generate a new folder in the
+    install location of PingStats on the host OS.
 
     "path" - The path to output the CSV file to.
     "name" - The custom name supplied by the user.
@@ -158,7 +149,7 @@ def buildfiles(path, name):
                      False):  # Check for LOCALAPPDATA environment variable.
 
             if os.access(os.getenv('LOCALAPPDATA'),
-                         os.F_OK):  # check for access to LOCALAPPDATA location.
+                         os.F_OK):  # check for access to LOCALAPPDATA location
 
                 if not os.access(
                         os.path.join(os.getenv('LOCALAPPDATA'), 'PingStats'),
@@ -176,7 +167,8 @@ def buildfiles(path, name):
 
             else:
                 raise RuntimeError(
-                    'FATAL ERROR! PINGSTATS COULD NOT ACCESS %LOCALAPPDATA%!!!')
+                    'FATAL ERROR! PINGSTATS COULD NOT ACCESS %LOCALAPPDATA%!!!'
+                )
 
         else:
             raise RuntimeError(
@@ -263,7 +255,7 @@ def dataparser(datafile):
 
                 elif (d.count('PING') > 0 or d.lower().count(
                         'statistics') > 0 or  # break on ping end.
-                              d.lower().count(
+                        d.lower().count(
                                   'transmitted') > 0 or d.lower().count(
                         'round-trip') > 0):
                     pass
@@ -305,7 +297,7 @@ def dataparser(datafile):
                         'statistics') or d.lower().count('packets') or \
                         d.lower().count('approximate') or d.lower().count(
                     'minimum') or d.lower().count('control') or \
-                                d.lower().count('^c') > 0:
+                        d.lower().count('^c') > 0:
                     pass
 
                 else:
@@ -385,9 +377,9 @@ def ping(address, custom_argument=None, out_file=None):
 
 # TODO Refactor .showliveplot() to a class.
 """ .showliveplot() is looking more and more like a class. I feel like it is
-just prudent to refactor this to a class. .showliveplot().PlotTable could simply
-be placed outside of the showliveplot function, and should still be accessible
-by the name space.
+just prudent to refactor this to a class. .showliveplot().PlotTable could
+simply be placed outside of the showliveplot function, and should still be
+accessible by the name space.
 
 For this function to work effectively for Kivy, we should use the
 matplotlib.garden to get an assigned number of plot points from a class upon
@@ -408,8 +400,8 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--address', help='The IP address to ping.')
 
     parser.add_argument('-g', '--gurusettings',
-                        help='For use by gurus: implement a custom argument to '
-                             'pass to the ping process.')
+                        help='For use by gurus: implement a custom argument to'
+                             ' pass to the ping process.')
 
     parser.add_argument('-o', '--terminaloutput',
                         help='Flag this option to output ping data to the '
@@ -417,8 +409,8 @@ if __name__ == '__main__':
                         action='store_true')
 
     parser.add_argument('-p', '--path',
-                        help='To supply a specific path to output any files to,'
-                             'include a path.')
+                        help='To supply a specific path to output any files to'
+                             ', include a path.')
 
     parser.add_argument('-pf', '--plotfile',
                         help='Include the path to a previously generated CSV'
@@ -426,14 +418,14 @@ if __name__ == '__main__':
 
     parser.add_argument('-gi', '--generateimage',
                         help='Used in conjunction with the -pf option, this '
-                             'option sends a name for a \'*.png\' file to save '
-                             'to the current working directory.')
+                             'option sends a name for a \'*.png\' file to save'
+                             ' to the current working directory.')
 
     parser.add_argument('-n', '--name',
-                        help='Flag this option to use a custom name for the CSV'
-                             'output file.')
+                        help='Flag this option to use a custom name for the'
+                             ' CSV output file.')
 
-    parser.add_argument('-s', '--showliveplot',
+    parser.add_argument('-s', '--show live plot',
                         help='Flag this option to display an animated plot of'
                              'the last 500 ping sequences.',
                         action='store_true')
@@ -453,8 +445,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-sNF', '--nofile',
                         help='Flag this option to disable outputting ping '
-                             'information to a csv  file during live plotting. '
-                             'Helps with memory consumption.',
+                             'information to a csv  file during live plotting.'
+                             ' Helps with memory consumption.',
                         action='store_true')
 
     parser.add_argument('-v', '--version',
@@ -470,9 +462,9 @@ if __name__ == '__main__':
             print(
                 'Pinging %s...\nThe longer that this program runs, the more '
                 'system resources it will occupy. Please consider using the '
-                'live plotting feature for shorter run times (i.e a match of on'
-                ' line chess).\n Close the plot window to exit the program....'
-                % parsed.address)
+                'live plotting feature for shorter run times (i.e a match of '
+                'on line chess).\n Close the plot window to exit the'
+                ' program....' % parsed.address)
 
             csvfile, outfile = buildfiles(parsed.path, parsed.name)
 
