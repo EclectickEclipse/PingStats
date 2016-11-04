@@ -1,0 +1,80 @@
+== python-ping ==
+A pure python ping implementation using raw sockets.
+ * Compatible with Python2 & Python3
+ * Note that ICMP messages can only be sent from processes running as root
+   (in Windows, you must run this script as 'Administrator').
+
+== Original Version ==
+* [[ftp://ftp.visi.com/users/mdc/ping.py|Matthew Dixon Cowles]]
+* copyleft 1989-2016 by the python-ping team, see [[https://github.com/l4m3rx/python-ping/blob/master/AUTHORS|AUTHORS]] for more details.
+* license: GNU GPL v2, see [[https://github.com/l4m3rx/python-ping/blob/master/LICENSE|LICENSE]] for more details.
+
+=== Usage ===
+
+{{{
+$ sudo python3 ping.py -h
+usage: python-ping [-h] [-t TIMEOUT] [-c REQUEST_COUNT] [-i] [-I]
+                   [-s PACKET_SIZE] [-T]
+                   address
+
+A pure python implementation of the ping protocol. *REQUIRES ROOT*
+
+positional arguments:
+  address               The address to attempt to ping.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t TIMEOUT, --timeout TIMEOUT
+                        The maximum amount of time to wait until ping timeout.
+  -c REQUEST_COUNT, --request_count REQUEST_COUNT
+                        The number of attempts to make. See --infinite to
+                        attempt requests until stopped.
+  -i, --infinite        Flag to continuously ping a host until stopped.
+  -I, --ipv6            Flag to use IPv6.
+  -s PACKET_SIZE, --packet_size PACKET_SIZE
+                        Designate the amount of data to send per packet.
+  -T, --test_case       Flag to run the default test case suite.
+}}}
+
+
+=== Using as lib ===
+{{{
+Python 2.7.11 (default, Mar  3 2016, 13:35:30) 
+[GCC 5.3.0] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import ping
+>>> ping.verbose_ping('google.com', timeout=3000, count=5, numDataBytes=1300)
+
+PYTHON PING google.com (216.58.209.14): 1300 data bytes
+72 bytes from 216.58.209.14: icmp_seq=0 ttl=59 time=4.53 ms
+72 bytes from 216.58.209.14: icmp_seq=1 ttl=59 time=4.37 ms
+72 bytes from 216.58.209.14: icmp_seq=2 ttl=59 time=4.31 ms
+72 bytes from 216.58.209.14: icmp_seq=3 ttl=59 time=4.47 ms
+72 bytes from 216.58.209.14: icmp_seq=4 ttl=59 time=4.42 ms
+
+----216.58.209.14 PYTHON PING Statistics----
+5 packets transmitted, 5 packets received, 0.0% packet loss
+round-trip (ms)  min/avg/max = 4/4.4/4
+()
+False
+>>> ping.quiet_ping('google.com', timeout=3000, count=5, numDataBytes=1300)
+(4.718780517578125, 4.3621063232421875, 4.553556442260742, 0)
+>>> 
+
+}}}
+
+== TODOs ==
+  * Make delay between sending packets as input parm.
+
+== contribute ==
+
+[[http://help.github.com/fork-a-repo/|Fork this repo]] on [[https://github.com/l4m3rx/python-ping/|GitHub]] and [[http://help.github.com/send-pull-requests/|send pull requests]]. Thank you.
+
+
+== Revision history ==
+[[https://github.com/l4m3rx/python-ping/blob/master/ChangeLog.creole|ChangeLog / Revision history]]
+
+
+== Links ==
+
+| Sourcecode at GitHub | https://github.com/l4m3rx/python-ping |
