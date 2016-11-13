@@ -1,3 +1,17 @@
+# Preamble and Technical Notes
+
+This software aims to provide efficient ping visulaization via Python's
+`matplotlib` via pure python implementations of the Ping protocol via
+[python-ping](https://github.com/l4m3rx/python-ping).
+
+Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of raw
+sockets, the software requires `sudo` permissions to generate ping packets. For
+more detail please see the afore mentioned repository.
+
+It can be used after the ping data has been collected without `sudo`.
+
+--- 
+
 ### USAGE
 
 ---
