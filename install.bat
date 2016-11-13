@@ -1,1 +1,0 @@
-rem Installs PingStats.py
