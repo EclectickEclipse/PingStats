@@ -72,11 +72,18 @@ def ping(address, timeout=3000, size=64, verbose=True):
     i = 1
     while 1:
 
+        # TODO The current version of python-ping breaks PingStats.ping
+        # The current implementation is several commits behind python-ping's
+        # master. If the code is installed via the master, we need to add a
+        # statement to handle the two return values (one of which we do not
+        # need) by including a `[0]` to the end of the `pyping.single_ping`
+        # call.
         yield (dt.datetime.fromtimestamp(time.time()),
                pyping.single_ping(address, host_name, timeout, i, size),
                timeout, size, address)
+
         i += 1
-        time.sleep(0.5)
+        time.sleep(0.22)
 
 
 # Bootstrap logic.
@@ -141,7 +148,7 @@ if __name__ == '__main__':
         print(versionstr)
     elif parsed.address is not None:
         if parsed.showliveplot:
-            print(
+            print(  # TODO Update output on program start.
                 'Pinging %s...\nThe longer that this program runs, the more '
                 'system resources it will occupy. Please consider using the '
                 'live plotting feature for shorter run times (i.e a match of '
@@ -152,13 +159,16 @@ if __name__ == '__main__':
             if not parsed.nofile:
                 cwriter = csv.writer(buildfile(parsed.path, parsed.name))
 
+            # TODO When showing a live plot, no information is logged via csv
+
             p = ping(parsed.address)
+
             plot = Plot.Animate(p, parsed.tablelength, parsed.refreshfrequency)
             plot.animate()
 
-            atexit.register(plot.close_thread)
-            # plot.ptable.appendx(dt.datetime.fromtimestamp(float(
-            # return_tuple[0])))
+            atexit.register(plot.close_thread)  # TODO Fix exit logic.
+            # Matplotlib and the `plot.get_pings` objects don't play nicely
+            # with  user exit.
 
         else:
             print(
@@ -174,8 +184,6 @@ if __name__ == '__main__':
             for return_tuple in ping(parsed.address):
                 if not parsed.nofile:
                     write_csv_data(cwriter, return_tuple)
-
-                time.sleep(0.5)
 
     elif parsed.plotfile is not None:
         Plot.PlotFile(parsed.plotfile)

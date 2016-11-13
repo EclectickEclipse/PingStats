@@ -77,7 +77,8 @@ class _Plot:
 
         self.fig.canvas.set_window_title('%s | %s' % (ping.buildname,
                                                       self.title_str))
-        style.use('ggplot')
+        # style.use('ggplot')
+        style.use('seaborn-darkgrid')
 
         plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
         for label in self.ax1.xaxis.get_ticklabels():
@@ -117,7 +118,11 @@ class Animate(_Plot):
     def get_pings(self, obj):
         for val in obj:
             self.ptable.appendx(val[0])
-            self.ptable.appendy(val[1])
+
+            if val[1] is None:
+                self.ptable.appendy(-100)
+            else:
+                self.ptable.appendy(val[1])
 
     def __init__(self, ping_obj, table_length=None, refresh_freq=None):
         super(Animate, self).__init__()
@@ -143,7 +148,7 @@ class Animate(_Plot):
         self.t.join()
 
 
-class PlotFile(_Plot):
+class PlotFile(_Plot):  # TODO Fix static plot generation
     table = []
 
     def __init__(self, csv_file):
@@ -151,28 +156,23 @@ class PlotFile(_Plot):
 
         with open(csv_file) as cf:
             creader = csv.reader(cf)
-            for line in creader:
-                self.table.append(line)
 
-        self.x = []
-        self.y = []
+            x, y = [], []
 
-        for i, newrow in enumerate(self.table):
-            try:
-                self.x.append(str(newrow[0]))
-                if newrow[1] is not None:
-                    self.y.append(str(newrow[1]))
+            for row in creader:
+                x.append(row[0])
+                if row[1] is None:
+                    y.append(-100)
                 else:
-                    self.y.append(str(-10))
-            except IndexError as e:
-                print('Could not read line #%s %s, python through %s' % (
-                    i + 1, newrow, e))
+                    y.append(row[1])
 
-        self.ax1.plot(self.x, self.y)
+        self.ax1.plot_date(x, y)  # TODO `ax1.plot_date` wont accept dates
 
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
+
+        plt.show()
 
 
 def run_test():
