@@ -21,73 +21,15 @@
 # SOFTWARE.
 
 import time
-import datetime as dt
 import socket
 import csv
 import argparse
-# from threading import Thread  # Used for live plot generation
+import datetime as dt
+import atexit
 
 import Plot
 from pythonping import ping as pyping
 
-""" Preamble
-
-This software attempts to bring a simple python utility for logging ping
-results to CSV files, and representing them graphically via Python's
-Matplotlib. The software aims to achieve this in as minimal, "readable," and
-resource effective a way as possible.
-
-This software analyzes data recorded into CSV files by itself to either present
-an interactive plot (provided by the Matplotlib package) or generate an image
-of a plot for specific logs.
-
-This software also has the capability to display ping information as it is
-received, mapping it by time read and return time of each packet read. When
-presenting information as it is received, the software does not write data to a
-CSV log, instead relying on the use of the live presentation to present its
-information. It can however be instructed to output information to a log for
-further usage for very minimal system resource cost. """
-
-""" Technical Notes
-
-It should be noted that the software inherently uses more system resources
-while displaying graphics to the screen, as this software is intended to be
-run on as minimal a software as possible.
-
-Due to the variance on OS dependent ping packages, data collection may not
-work, and may need tweaking. The .dataparser() function is intended to be
-rewritten if possible. Due to this need to be easy to rewrite, the language is
-as simplified as it can be, using only for loop structures and a few if
-statements. If you find the initially provided code to be hard to interpret,
-uncomment the `# DEBUG:' lines to have python slowly iterate through each
-sequence of data and show the results provided."""
-
-# GPS discussion
-
-# Record GPS coordinates from www.ipinfo.io requests whilst on non-mobile OS's.
-# Plot a "heat map" of GPS coordinates and how fast/slow their connection was.
-
-""" GPS Functionality Preamble
-This software could be effectively used for mapping connection rate in various
-locations. This could allow the user to map connection speeds throughout their
-city/region. This would be useful for people who move from location to location
-on a regular basis, and require fast Internet connections everywhere they go.
-
-Due to the variance in where this software could be used over time, it should
-be able to collect data from several PingStatsLog.csv files and present them to
-the user overlaid on a map where the faster connections are presented as a red
-"heat zones." """
-
-""" GPS Functionality Technical notes
-This software could use a kivy (see www.kivy.org) application to gather GPS
-coordinates. This would require a major overhaul of the application structure,
-and should likely be handled in a fork.
-
-The Kivy framework provides GPS functionality with Plyer
-(https://github.com/kivy/plyer), and provides a convienient and well
-established framework for Multi-platform application development. Using this
-framework, the software could easily provide a graphical presentation on the
-various options available to this software already."""
 
 # GLOBALS
 buildname = 'PingStats'
@@ -113,17 +55,6 @@ def buildfile(path, name):
     return open(path + name, 'a+')
 
 
-# TODO Initialize a CSV.writer object before execution of write_csv_data().
-""" Currently, write_csv_data() initializes a new CSV.writer object every time
-it is called. This results in the program working extra iterations on automatic
-garbage collection for the item.
-
-The CSV.writer object only needs to be initialized once to maintain the
-functionality that we are looking for. The only struggle will be getting the
-object into the runtime safely, without running into issues with threading
-buffer overruns. """
-
-
 def write_csv_data(writer, data):
     """ Writes a row of CSV data.
 
@@ -141,10 +72,11 @@ def ping(address, timeout=3000, size=64, verbose=True):
     i = 1
     while 1:
 
-        yield (time.time(),
+        yield (dt.datetime.fromtimestamp(time.time()),
                pyping.single_ping(address, host_name, timeout, i, size),
                timeout, size, address)
         i += 1
+        time.sleep(0.5)
 
 
 # Bootstrap logic.
@@ -216,23 +148,17 @@ if __name__ == '__main__':
                 'on line chess).\n Close the plot window to exit the'
                 ' program....' % parsed.address)
 
+            cwriter = None
             if not parsed.nofile:
                 cwriter = csv.writer(buildfile(parsed.path, parsed.name))
 
             p = ping(parsed.address)
-            plot = Plot.Animate()
-
+            plot = Plot.Animate(p, parsed.tablelength, parsed.refreshfrequency)
             plot.animate()
 
-            for return_tuple in p:
-                if not parsed.nofile:
-                        write_csv_data(cwriter, return_tuple)
-                plot.ptable.appendx(dt.datetime.fromtimestamp(float(
-                    return_tuple[0])))
-                if return_tuple[1] is not None:
-                    plot.ptable.appendy(return_tuple[1])
-                else:
-                    plot.ptable.appendy(-10)
+            atexit.register(plot.close_thread)
+            # plot.ptable.appendx(dt.datetime.fromtimestamp(float(
+            # return_tuple[0])))
 
         else:
             print(
@@ -248,6 +174,8 @@ if __name__ == '__main__':
             for return_tuple in ping(parsed.address):
                 if not parsed.nofile:
                     write_csv_data(cwriter, return_tuple)
+
+                time.sleep(0.5)
 
     elif parsed.plotfile is not None:
         Plot.PlotFile(parsed.plotfile)

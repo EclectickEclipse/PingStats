@@ -1,9 +1,9 @@
 import sys
-from datetime import datetime as dt
 import csv
-from threading import Thread
+import threading
 
 import PingStats as ping
+
 
 try:
     import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ class _PlotTable:
             self.y = []
 
             if length is None:
-                self.length = 50
+                self.length = 250
             else:
                 self.length = int(length)
 
@@ -57,7 +57,7 @@ class _PlotTable:
             return self.y
 
 
-class Plot:
+class _Plot:
     fig = plt.figure()
 
     title_str = ''
@@ -67,7 +67,7 @@ class Plot:
         else:
             title_str += ' ' + arg
 
-    ax1 = fig.add_subplot(1, 1, 1)
+    ax1 = plt.axes()
 
     ptable = _PlotTable()
 
@@ -77,22 +77,49 @@ class Plot:
 
         self.fig.canvas.set_window_title('%s | %s' % (ping.buildname,
                                                       self.title_str))
-        style.use('fivethirtyeight')
+        style.use('ggplot')
 
         plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
         for label in self.ax1.xaxis.get_ticklabels():
             label.set_rotation(45)
 
     def show_plot(self):
-        try:
-            plt.show(block=False)
-            return True
-        except BaseException:
-            return False
+        # plt.show(block=False)
+        plt.show()
 
 
-class Animate(Plot):
-    def __init__(self, table_length=None, refresh_freq=None):
+class Animate(_Plot):
+    def _animate(self, i, ptable):
+        """ Reads rows from a CSV file and render them to a plot.
+
+        "i" - Required by matplotlib.animation.FuncAnimation
+        Returns None.
+        """
+        self.ax1.clear()
+
+        plt.xlabel('Timestamps')
+        plt.ylabel('Return Time (in milliseconds)')
+        plt.title('Ping Over Time')
+
+        # DRAW POINTS
+        self.ax1.plot_date(ptable.getx(), ptable.gety(), 'r-')
+        for label in self.ax1.xaxis.get_ticklabels():
+            label.set_rotation(45)
+
+    def animate(self):
+        self.t.start()
+        return self.show_plot()
+
+    def close_thread(self, *args):
+        self.t.join()
+        exit()
+
+    def get_pings(self, obj):
+        for val in obj:
+            self.ptable.appendx(val[0])
+            self.ptable.appendy(val[1])
+
+    def __init__(self, ping_obj, table_length=None, refresh_freq=None):
         super(Animate, self).__init__()
 
         if table_length is not None:
@@ -100,36 +127,23 @@ class Animate(Plot):
 
         if refresh_freq is None:
             self.ani = animation.FuncAnimation(self.fig, self._animate,
-                                               interval=60)
+                                               fargs=(
+                                                   self.ptable,))
         else:
             self.ani = animation.FuncAnimation(self.fig, self._animate,
-                                               interval=refresh_freq)
+                                               interval=refresh_freq, fargs=(
+                                                    self.ptable,))
 
-    def _animate(self, i):
-        """ Reads rows from a CSV file and render them to a plot.
+        self.fig.canvas.mpl_connect('close_event', self.close_thread)
 
-        "i" - Required by matplotlib.animation.FuncAnimation
-        Returns None.
-        """
+        # self.ani.new_frame_seq()
+        self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
 
-        # DRAW POINTS
-        self.ax1.clear()
-        self.ax1.plot_date(self.ptable.getx(), self.ptable.gety(), '-',
-                           label='Connection over time')
-        self.ax1.plot(self.ptable.getx(), self.ptable.gety())
-        for label in self.ax1.xaxis.get_ticklabels():
-            label.set_rotation(45)
+    def __del__(self, *args):
+        self.t.join()
 
-        plt.xlabel('Timestamps')
-        plt.ylabel('Return Time (in milliseconds)')
-        plt.title('Ping Over Time')
-        plt.draw()
 
-    def animate(self):
-        self.ani.new_frame_seq()
-        return self.show_plot()
-
-class PlotFile(Plot):
+class PlotFile(_Plot):
     table = []
 
     def __init__(self, csv_file):
@@ -159,3 +173,12 @@ class PlotFile(Plot):
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
+
+
+def run_test():
+    Animate(ping.ping('google.ca'), 250).animate()
+    try:
+        while 1:
+            pass
+    except KeyboardInterrupt:
+        exit()
