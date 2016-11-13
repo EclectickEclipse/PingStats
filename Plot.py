@@ -173,12 +173,3 @@ class PlotFile(_Plot):  # TODO Fix static plot generation
         plt.title('Ping Over Time')
 
         plt.show()
-
-
-def run_test():
-    Animate(ping.ping('google.ca'), 250).animate()
-    try:
-        while 1:
-            pass
-    except KeyboardInterrupt:
-        exit()

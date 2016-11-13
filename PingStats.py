@@ -33,14 +33,11 @@ from pythonping import ping as pyping
 
 # GLOBALS
 buildname = 'PingStats'
-version = '1.0.04.2'
-versiondate = 'Thu Aug  4 00:34:10 2016'
+version = '2.0.0'
+versiondate = 'Sun Nov 13 06:39:04 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
              'Solutions. circa %s' % (
                  version, versiondate)
-
-NT_ICMQSEQNUM = 0  # Used to ensure ICMQ sequence number consistency on NT
-# based systems.
 
 
 def buildfile(path, name):
