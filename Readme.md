@@ -14,13 +14,17 @@ visualization methods through Python's 'matplotlib'.
 
 Optional arguments:
 
-  -h, --help            show this help message and exit
+  -h, --help            
+
+			show this help message and exit
 
   -a ADDRESS, --address ADDRESS
 
                         The IP address to ping.
 
-  -p PATH, --path PATH  The path to output csv files to
+  -p PATH, --path PATH  
+
+			The path to output csv files to
 
   -pf PLOTFILE, --plotfile PLOTFILE
 
@@ -33,13 +37,18 @@ Optional arguments:
                         sends a name for a '*.png' file to save to the current
                         working directory.
 
-  -n NAME, --name NAME  Flag this option to use a custom name for the CSV
+  -n NAME, --name NAME 
+
+			Flag this option to use a custom name for the CSV
                         output file.
 
-  -s, --showliveplot    Flag this option to display an animated plot ofthe
+  -s, --showliveplot    
+
+			Flag this option to display an animated plot ofthe
                         last 500 ping sequences.
 
   -sF REFRESHFREQUENCY, --refreshfrequency REFRESHFREQUENCY
+
                         Specify a number of milliseconds to wait
                         betweenrefreshes of the -s plot visualization
                         feature.The lower the number, the better the
@@ -47,15 +56,20 @@ Optional arguments:
                         "potatoes"
 
   -sL TABLELENGTH, --tablelength TABLELENGTH
+
                         The total number of pings to show for -s. Thelower the
                         number, the better the performance of PingStats
                         visualization. Handy for "potatoes."
 
-  -sNF, --nofile        Flag this option to disable outputting ping
+  -sNF, --nofile        
+
+			Flag this option to disable outputting ping
                         information to a csv file during live plotting. Helps
                         with memory consumption.
 
-  -v, --version         Flag this option to display software version.
+  -v, --version         
+
+			Flag this option to display software version.
 
 ---
 
