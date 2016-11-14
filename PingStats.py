@@ -76,7 +76,7 @@ def ping(address, timeout=3000, size=64, verbose=True):
         # need) by including a `[0]` to the end of the `pyping.single_ping`
         # call.
         yield (dt.datetime.fromtimestamp(time.time()),
-               pyping.single_ping(address, host_name, timeout, i, size),
+               pyping.single_ping(address, host_name, timeout, i, size)[0],
                timeout, size, address)
 
         i += 1
