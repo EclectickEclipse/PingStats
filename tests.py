@@ -7,6 +7,7 @@ import os
 import csv
 import PingStats
 import sys
+import platform
 from tempfile import NamedTemporaryFile
 
 
@@ -50,6 +51,9 @@ class TestCore(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    print(PingStats.version)
-    print(sys.version)
+    print('os.name: %s' % os.name)
+    print('platform.system: %s' % platform.system())
+    print('platform.release: %s' % platform.release())
+    print('PingStats version: %s' % PingStats.version)
+    print('Python version (via sys.version): %s\n\n' % sys.version)
     unittest.main()
