@@ -10,6 +10,12 @@ more detail please see the afore mentioned repository.
 
 It can be used after the ping data has been collected without `sudo`.
 
+## Installation of python-ping
+
+Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of a `-`
+character in the package title, you need to install the software without the
+`-` included in the folder title. 
+
 --- 
 
 ### USAGE
