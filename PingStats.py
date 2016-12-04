@@ -26,6 +26,10 @@ import csv
 import argparse
 import datetime as dt
 import atexit
+# EXIT HANDLING
+import signal
+import sys
+import threading
 
 import Plot
 from pythonping import ping as pyping
@@ -33,11 +37,24 @@ from pythonping import ping as pyping
 
 # GLOBALS
 buildname = 'PingStats'
-version = '2.0.01'
-versiondate = 'Sun Nov 13 06:39:04 2016'
+version = '2.0.02'
+versiondate = 'Sun Dec  4 05:03:21 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
              'Solutions. circa %s' % (
                  version, versiondate)
+
+
+def signal_handler(signal, frame):
+        print('You pressed Ctrl+C!')
+        # sys.exit(0)
+        for thread in threading.enumerate():
+            try:
+                thread.join()
+            except RuntimeError:
+                pass
+        sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 def buildfile(path, name):
@@ -61,6 +78,7 @@ def write_csv_data(writer, data):
     Returns the row written by the function.
     """
     writer.writerow(data)
+    return data
 
 
 def ping(address, timeout=3000, size=64, verbose=True):
@@ -68,16 +86,14 @@ def ping(address, timeout=3000, size=64, verbose=True):
 
     i = 1
     while 1:
-
-        # TODO The current version of python-ping breaks PingStats.ping
-        # The current implementation is several commits behind python-ping's
-        # master. If the code is installed via the master, we need to add a
-        # statement to handle the two return values (one of which we do not
-        # need) by including a `[0]` to the end of the `pyping.single_ping`
-        # call.
-        yield (dt.datetime.fromtimestamp(time.time()),
-               pyping.single_ping(address, host_name, timeout, i, size)[0],
-               timeout, size, address)
+        try:
+            yield (dt.datetime.fromtimestamp(time.time()),
+                   pyping.single_ping(address, host_name, timeout, i, size,
+                                      verbose=verbose)[0],
+                   timeout, size, address)
+        except TypeError:
+            yield (dt.datetime.fromtimestamp(time.time()),
+                   None, timeout, size, address)
 
         i += 1
         time.sleep(0.22)
