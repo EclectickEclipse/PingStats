@@ -7,6 +7,7 @@ import os
 import csv
 import PingStats
 import sys
+from tempfile import NamedTemporaryFile
 
 
 class TestCore(unittest.TestCase):
@@ -27,8 +28,8 @@ class TestCore(unittest.TestCase):
             print('TestCore.test_build_files caught OS non legal file path: '
                   '%s%s' % (path, name))
 
-    @given(st.just(csv.writer(open('test.csv', 'w+'))), st.lists(st.integers(),
-                                                                 min_size=2))
+    @given(st.just(csv.writer(NamedTemporaryFile('w+'))),
+           st.lists(st.integers(), min_size=2))
     def test_write_csv_data(self, writer, data):
         self.assertEqual(PingStats.write_csv_data(writer, data), data)
 
@@ -49,6 +50,6 @@ class TestCore(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
     print(PingStats.version)
     print(sys.version)
+    unittest.main()
