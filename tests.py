@@ -6,6 +6,7 @@ from io import TextIOWrapper
 import os
 import csv
 import PingStats
+import sys
 
 
 class TestCore(unittest.TestCase):
@@ -49,3 +50,5 @@ class TestCore(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    print(PingStats.version)
+    print(sys.version)
