@@ -16,6 +16,15 @@ Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of a `-`
 character in the package title, you need to install the software without the
 `-` included in the folder title. 
 
+---
+
+# Running tests
+
+The included `tests.py` module can be run for automatic testing of the
+software run by [python's
+hypothesis](https://github.com/HypothesisWorks/hypothesis-python). Follow the
+instructions provided to install the software.
+
 --- 
 
 ### USAGE
