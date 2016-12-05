@@ -5,13 +5,14 @@ from hypothesis import strategies as st
 from io import TextIOWrapper
 import os
 import csv
-import PingStats
-import Plot
 import sys
 import platform
 import subprocess
 from tempfile import NamedTemporaryFile
 import time
+
+import PingStats
+import Plot
 
 
 class TestCore(unittest.TestCase):
@@ -37,7 +38,7 @@ class TestCore(unittest.TestCase):
     def test_write_csv_data(self, writer, data):
         self.assertEqual(PingStats.write_csv_data(writer, data), data)
 
-    @given(st.sampled_from(['google.ca', 'www.facebook.ca', '8.8.8.8']))
+    @given(st.just('127.0.0.1'))
     def test_active_connections(self, address):
         try:
             self.assertIsInstance(PingStats.ping(address,
@@ -112,6 +113,34 @@ class PlotTable_test(unittest.TestCase):
             ptable.appendy(i)
 
         self.assertEqual(len(ptable.y), integer)
+
+
+class BasePlot_test(unittest.TestCase):
+    # TODO Test `Plot._Plot.show_plot`
+    @given(st.one_of(st.tuples(st.integers(), st.integers()),
+                     st.booleans(), st.integers()))
+    def test_instantiate_catch_invalid_title_string(self, data):
+        with self.assertRaises(TypeError):
+            plot = Plot._Plot
+            plot.title_str = data
+
+            plot()
+
+    @given(st.just('\x00'))
+    def test_instantiate_catch_null_byte_title_string(self, data):
+        with self.assertRaises(TypeError):
+            plot = Plot._Plot
+            plot.title_str = data
+            plot()
+
+        plot.title_str = ''  # reset state to default
+
+    @given(st.booleans())
+    def test_instantiate_nofile(self, boolean):
+        plot = Plot._Plot
+        plot.nofile = boolean
+        self.assertIsInstance(plot(), Plot._Plot)
+        plot.nofile = False  # reset state to default
 
 
 if __name__ == '__main__':
