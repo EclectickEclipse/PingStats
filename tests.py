@@ -8,7 +8,9 @@ import csv
 import PingStats
 import sys
 import platform
+import subprocess
 from tempfile import NamedTemporaryFile
+import time
 
 
 class TestCore(unittest.TestCase):
@@ -51,9 +53,16 @@ class TestCore(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    print(time.ctime())
     print('os.name: %s' % os.name)
     print('platform.system: %s' % platform.system())
     print('platform.release: %s' % platform.release())
     print('PingStats version: %s' % PingStats.version)
-    print('Python version (via sys.version): %s\n\n' % sys.version)
+    print('Python version (via sys.version): %s' % sys.version)
+    pipe = subprocess.PIPE
+    p = subprocess.Popen(['git', 'log', '--oneline', '-n 1'], stdout=pipe,
+                         stderr=pipe)
+    stdout, stderr = p.communicate()
+    p.kill()
+    print('stdout: \n%s\nstderr:\n%s\n\n' % (stdout, stderr))
     unittest.main()
