@@ -157,4 +157,4 @@ if __name__ == '__main__':
     p.kill()
     print('stdout: \n%s\nstderr:\n%s\n\n' % (stdout, stderr))
 
-    unittest.main()
+    unittest.main(buffer=True)
