@@ -6,6 +6,7 @@ from io import TextIOWrapper
 import os
 import csv
 import PingStats
+import Plot
 import sys
 import platform
 import subprocess
@@ -52,6 +53,67 @@ class TestCore(unittest.TestCase):
                          None)
 
 
+class PlotTable_test(unittest.TestCase):
+    def test_instantiate(self):
+        self.assertIsInstance(Plot._PlotTable(), Plot._PlotTable)
+
+    def test_instantiate_catch_zero_length(self):
+        with self.assertRaises(ValueError):
+            Plot._PlotTable(0)
+
+    @given(st.integers(min_value=1))
+    def test_instantiate_with_length_as_int(self, length):
+        self.assertIsInstance(Plot._PlotTable(length), Plot._PlotTable)
+
+    @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
+                     st.booleans()))
+    def test_instantiate_catch_invalid_data(self, data):
+        with self.assertRaises(TypeError):
+            Plot._PlotTable(data)
+
+    @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
+                     st.booleans()))
+    def test_appendx_invalid_data_catch(self, data):
+        with self.assertRaises(TypeError):
+            Plot._PlotTable().appendx(data)
+
+    @given(st.integers())
+    def test_appendx_data_addition(self, data):
+        ptable = Plot._PlotTable()
+        ptable.appendx(data)
+
+        self.assertTrue(ptable.x.count(data))
+
+    @given(st.integers(min_value=1, max_value=5000))
+    def test_appendx_flood(self, integer):
+        ptable = Plot._PlotTable(integer)
+        for i in range(integer + 1):
+            ptable.appendx(i)
+
+        self.assertEqual(len(ptable.x), integer)
+
+    @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
+                     st.booleans()))
+    def test_appendy_invalid_data_catch(self, data):
+        with self.assertRaises(TypeError):
+            Plot._PlotTable().appendy(data)
+
+    @given(st.integers())
+    def test_appendy_data_addition(self, data):
+        ptable = Plot._PlotTable()
+        ptable.appendy(data)
+
+        self.assertTrue(ptable.y.count(data))
+
+    @given(st.integers(min_value=1, max_value=5000))
+    def test_appendy_flood(self, integer):
+        ptable = Plot._PlotTable(integer)
+        for i in range(integer + 1):
+            ptable.appendy(i)
+
+        self.assertEqual(len(ptable.y), integer)
+
+
 if __name__ == '__main__':
     print(time.ctime())
     print('os.name: %s' % os.name)
@@ -65,4 +127,5 @@ if __name__ == '__main__':
     stdout, stderr = p.communicate()
     p.kill()
     print('stdout: \n%s\nstderr:\n%s\n\n' % (stdout, stderr))
+
     unittest.main()
