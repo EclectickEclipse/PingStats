@@ -21,8 +21,13 @@ class _PlotTable:
             self.x = []
             self.y = []
 
+            if length is not None and type(length) is not int:
+                raise TypeError('length must be int or None')
+
             if length is None:
                 self.length = 250
+            elif length == 0:
+                raise ValueError('Requires a table length of at least 1')
             else:
                 self.length = int(length)
 
@@ -32,6 +37,9 @@ class _PlotTable:
 
             "a" - The value to append to the table.
             """
+            if type(a) is not int:
+                raise TypeError('Requires int')
+
             if len(self.x) < self.length:
                 self.x.append(a)
             else:
@@ -44,6 +52,9 @@ class _PlotTable:
 
             "a" - The value to append to the table.
             """
+            if type(a) is not int:
+                raise TypeError('Requires int')
+
             if len(self.y) < self.length:
                 self.y.append(a)
             else:
@@ -74,6 +85,8 @@ class _Plot:
     nofile = False
 
     def __init__(self):
+        if type(self.title_str) is not str or not self.title_str.isalnum():
+            raise TypeError('Plot title_str requires alphanumeric text')
 
         self.fig.canvas.set_window_title('%s | %s' % (ping.buildname,
                                                       self.title_str))
