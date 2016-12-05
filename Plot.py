@@ -85,8 +85,8 @@ class _Plot:
     nofile = False
 
     def __init__(self):
-        if type(self.title_str) is not str or not self.title_str.isalnum():
-            raise TypeError('Plot title_str requires alphanumeric text')
+        if type(self.title_str) is not str:
+            raise TypeError('Plot title_str requires a string object')
 
         self.fig.canvas.set_window_title('%s | %s' % (ping.buildname,
                                                       self.title_str))
@@ -99,7 +99,7 @@ class _Plot:
 
     def show_plot(self):
         # plt.show(block=False)
-        plt.show()
+        return plt.show()
 
 
 class Animate(_Plot):
