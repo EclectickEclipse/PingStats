@@ -73,13 +73,7 @@ def buildfile(path, name):
 
 
 def write_csv_data(writer, data):
-    """ Writes a row of CSV data.
-
-    "file" - The file object to write to.
-    "data" - The row to be saved.
-    "terminal_output" - Boolean value to enable text output to the terminal.
-    Returns the row written by the function.
-    """
+    """ Writes a row of CSV data and returns the data that was read. """
     writer.writerow(data)
     return data
 
