@@ -33,6 +33,11 @@ class TestCore(unittest.TestCase):
             print('TestCore.test_build_files caught OS non legal file path: '
                   '%s%s' % (path, name))
 
+    @given(st.just('.'), st.just('*'))
+    def test_build_files_fail_on_invalid_character(self, path, name):
+        with self.assertRaises(ValueError):
+            PingStats.buildfile(path, name)
+
     @given(st.just(csv.writer(NamedTemporaryFile('w+'))),
            st.lists(st.integers(), min_size=2))
     def test_write_csv_data(self, writer, data):
@@ -48,7 +53,7 @@ class TestCore(unittest.TestCase):
             if e.errno == 1:
                 print('Run tests as sudo')
 
-    @given(st.text())
+    @given(st.just('0.0.0.0'))
     def test_failed_connections(self, address):
         self.assertEqual(PingStats.ping(address, verbose=False).__next__()[1],
                          None)
