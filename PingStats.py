@@ -61,11 +61,12 @@ def buildfile(path, name):
     if path is None:
         path = ''
 
+    if name.count('*'):
+        raise ValueError('Illegal file name %s' % name)
+
     if name is None:
         name = buildname + 'Log.csv'
     else:
-        if name == '*':
-            raise ValueError('Illegal file name %s' % name)
 
         name += '.csv'
 
