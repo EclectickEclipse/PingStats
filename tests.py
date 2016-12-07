@@ -27,8 +27,11 @@ class TestCore(unittest.TestCase):
         except ValueError as e:
             if str(e) == 'embedded null byte':
                 print('Caught embedded null byte error in test_build_files')
+            elif str(e).count('Illegal file name'):
+                print('Caught illegal file name exception')
             else:
                 raise
+
         except FileNotFoundError:
             print('TestCore.test_build_files caught OS non legal file path: '
                   '%s%s' % (path, name))
@@ -133,10 +136,13 @@ class BasePlot_test(unittest.TestCase):
 
     @given(st.just('\x00'))
     def test_instantiate_catch_null_byte_title_string(self, data):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError) as e:
             plot = Plot._Plot
             plot.title_str = data
             plot()
+            self.failIf(str(e).count('Title String must not have null bytes'),
+                        'Did not catch the right exception. Caught: %s' %
+                        str(e))
 
         plot.title_str = ''  # reset state to default
 
