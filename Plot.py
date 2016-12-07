@@ -88,6 +88,9 @@ class _Plot:
         if type(self.title_str) is not str:
             raise TypeError('Plot title_str requires a string object')
 
+        if self.title_str.count('\x00'):
+            raise(ValueError('Title String must not have null bytes'))
+
         self.fig.canvas.set_window_title('%s | %s' % (ping.buildname,
                                                       self.title_str))
         # style.use('ggplot')
