@@ -37,8 +37,6 @@ class _PlotTable:
 
             "a" - The value to append to the table.
             """
-            if type(a) is not int:
-                raise TypeError('Requires int')
 
             if len(self.x) < self.length:
                 self.x.append(a)
@@ -52,8 +50,6 @@ class _PlotTable:
 
             "a" - The value to append to the table.
             """
-            if type(a) is not int:
-                raise TypeError('Requires int')
 
             if len(self.y) < self.length:
                 self.y.append(a)
