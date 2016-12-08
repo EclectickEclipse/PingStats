@@ -155,6 +155,16 @@ class BasePlot_test(unittest.TestCase):
         plot.nofile = False  # reset state to default
 
 
+class AnimatePlot_test(unittest.TestCase):
+    pass
+    # @given(st.just(c.ping('127.0.0.1')))
+    # def test_get_pings(self, ping_object):
+        # ani = Plot.Animate()
+        # x = ani.ptable.x
+        # y = ani.ptable.y
+        # ani.get_pings(ping_object)
+
+
 if __name__ == '__main__':
     print(time.ctime())
     print('os.name: %s' % os.name)

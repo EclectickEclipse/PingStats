@@ -1,6 +1,5 @@
 import sys
 import csv
-import threading
 import datetime as dt
 
 import core as c
@@ -105,7 +104,7 @@ class _Plot:
             label.set_rotation(45)
 
     def show_plot(self):
-        # plt.show(block=False)
+        # return plt.show(block=False)
         return plt.show()
 
 
@@ -127,16 +126,14 @@ class Animate(_Plot):
         for label in self.ax1.xaxis.get_ticklabels():
             label.set_rotation(45)
 
+        next(self.get_pings(self.pobj))
+
     def animate(self):
-        self.t.start()
+        # self.t.start()
         return self.show_plot()
 
     def close_thread(self, *args):
-        self.t.join()
-        if self.t.isAlive():
-            raise RuntimeError('Could not join ping thread').with_traceback()
         exit()
-        plt.close('all')
 
     def get_pings(self, obj):
         for val in obj:
@@ -146,6 +143,8 @@ class Animate(_Plot):
                 self.ptable.appendy(-100.0)
             else:
                 self.ptable.appendy(val[1])
+
+            yield
 
     def __init__(self, ping_obj, table_length=None, refresh_freq=None):
         super(Animate, self).__init__()
@@ -162,12 +161,11 @@ class Animate(_Plot):
                                                interval=refresh_freq, fargs=(
                                                     self.ptable,))
 
+        self.pobj = ping_obj
+
         self.fig.canvas.mpl_connect('close_event', self.close_thread)
 
-        self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
-
-    def __del__(self, *args):
-        self.t.join()
+        # self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
 
 
 class PlotFile(_Plot):  # TODO Fix static plot generation
