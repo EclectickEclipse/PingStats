@@ -22,12 +22,9 @@
 
 import time
 import socket
-import csv
-import argparse
 import datetime as dt
-import atexit
+import csv
 
-import Plot
 from pythonping import ping as pyping
 
 
@@ -40,54 +37,68 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
                  version, versiondate)
 
 
-def buildfile(path, name):
-    if path is None:
-        path = ''
+class Core:
+    @staticmethod
+    def buildfile(path, name):
+        if path is None:
+            path = ''
 
-    if name is not None and name.count('*'):
-        raise ValueError('Illegal file name %s' % name)
+        if name is not None and name.count('*'):
+            raise ValueError('Illegal file name %s' % name)
 
-    if name is None:
-        name = buildname + 'Log.csv'
-    else:
+        if name is None:
+            name = buildname + 'Log.csv'
+        else:
 
-        name += '.csv'
+            name += '.csv'
 
-    try:
-        return open(path + name, 'a+')
-    except OSError:
-        print('Failed to open \'%s\', defaulting to \'%sLog.csv\'.' % (
-            (path + name), buildname))
-        return open('%sLog.csv' % buildname)
-
-
-def write_csv_data(writer, data):
-    """ Writes a row of CSV data and returns the data that was read. """
-    writer.writerow(data)
-    return data
-
-
-def ping(address, timeout=3000, size=64, verbose=True):
-    host_name = socket.gethostname()
-
-    i = 1
-    while 1:
         try:
-            yield (dt.datetime.fromtimestamp(time.time()),
-                   pyping.single_ping(address, host_name, timeout, i, size,
-                                      verbose=verbose)[0],
-                   timeout, size, address)
-        except TypeError:
-            yield (dt.datetime.fromtimestamp(time.time()),
-                   -100.00, timeout, size, address)
+            return open(path + name, 'a+')
+        except OSError:
+            print('Failed to open \'%s\', defaulting to \'%sLog.csv\'.' % (
+                (path + name), buildname))
+            return open('%sLog.csv' % buildname)
 
-        i += 1
-        time.sleep(0.22)
+    @staticmethod
+    def write_csv_data(writer, data):
+        """ Writes a row of CSV data and returns the data that was read. """
+        writer.writerow(data)
+        return data
+
+    @staticmethod
+    def ping(address, timeout=3000, size=64, verbose=True):
+        host_name = socket.gethostname()
+
+        i = 1
+        while 1:
+            try:
+                yield (dt.datetime.fromtimestamp(time.time()),
+                       pyping.single_ping(address, host_name, timeout, i, size,
+                       verbose=verbose)[0], timeout, size, address)
+            except TypeError:
+                yield (dt.datetime.fromtimestamp(time.time()),
+                       -100.00, timeout, size, address)
+
+            i += 1
+            time.sleep(0.22)
+
+    def __init__(self, address, file_path=None, file_name=None, nofile=False,
+                 *args, **kwargs):
+        # core.Core.ping
+        if address is None:
+            raise RuntimeError('core.Core requires address')
+        self.address = address
+        self.ping_generator = self.ping(self.address)
+
+        # core.Core.build files
+        self.file_path = file_path  # validated in self.build file
+        self.file_name = file_name  # validated in self.build file
+        self.nofile = nofile
+        if not self.nofile:
+            self.cwriter = csv.writer(self.buildfile(self.file_path,
+                                                     self.file_name))
 
 
-# Bootstrap logic.
-
-# TODO Parser logic should likely be handled explicitly on module load
 if __name__ == '__main__':
     raise DeprecationWarning('Direct execution of PingStats has been '
                              'deprecated, please use main.py')
