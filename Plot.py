@@ -87,7 +87,8 @@ class _Plot:
 
     nofile = False
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(_Plot, self).__init__(*args, **kwargs)
         if type(self.title_str) is not str:
             raise TypeError('Plot title_str requires a string object')
 
@@ -108,7 +109,7 @@ class _Plot:
         return plt.show()
 
 
-class Animate(_Plot):
+class Animate(_Plot, c.Core):
     def _animate(self, i, ptable):
         """ Reads rows from a CSV file and render them to a plot.
 
@@ -126,14 +127,11 @@ class Animate(_Plot):
         for label in self.ax1.xaxis.get_ticklabels():
             label.set_rotation(45)
 
-        next(self.get_pings(self.pobj))
+        next(self.get_pings(self.ping_generator))
 
     def animate(self):
         # self.t.start()
         return self.show_plot()
-
-    def close_thread(self, *args):
-        exit()
 
     def get_pings(self, obj):
         for val in obj:
@@ -144,10 +142,16 @@ class Animate(_Plot):
             else:
                 self.ptable.appendy(val[1])
 
+            if not self.nofile:
+                self.write_csv_data(self.cwriter, val)
+
             yield
 
-    def __init__(self, ping_obj, table_length=None, refresh_freq=None):
-        super(Animate, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(Animate, self).__init__(*args, **kwargs)
+
+        table_length = kwargs['table_length']
+        refresh_freq = kwargs['table_length']
 
         if table_length is not None:
             self.ptable.length = table_length
@@ -160,10 +164,6 @@ class Animate(_Plot):
             self.ani = animation.FuncAnimation(self.fig, self._animate,
                                                interval=refresh_freq, fargs=(
                                                     self.ptable,))
-
-        self.pobj = ping_obj
-
-        self.fig.canvas.mpl_connect('close_event', self.close_thread)
 
         # self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
 
