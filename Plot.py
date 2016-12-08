@@ -56,6 +56,16 @@ class _PlotTable:
             "a" - The value to append to the table.
             """
 
+            if type(a) is str:
+                try:
+                    float(a)
+                except ValueError as e:
+                    raise TypeError('PlotTable.appendy could not convert data '
+                                    'to float.')
+
+            else:
+                raise TypeError('PlotTable.appendy requires string type data.')
+
             if len(self.y) < self.length:
                 self.y.append(a)
             else:

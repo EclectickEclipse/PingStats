@@ -81,7 +81,7 @@ class PlotTable_test(unittest.TestCase):
             Plot._PlotTable(data)
 
     @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
-                     st.booleans()))
+                     st.booleans(), st.floats(), st.text()))
     def test_appendx_invalid_data_catch(self, data):
         with self.assertRaises(TypeError):
             Plot._PlotTable().appendx(data)
@@ -102,25 +102,25 @@ class PlotTable_test(unittest.TestCase):
 
         self.assertEqual(len(ptable.x), length_value)
 
-    @unittest.skip('Plot._PlotTable.appendy does not catch data')
-    @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
-                     st.booleans()))
+    @given(st.one_of(st.tuples(st.integers(), st.integers()), st.integers(),
+                     st.booleans(), st.floats()))
     def test_appendy_invalid_data_catch(self, data):
         with self.assertRaises(TypeError):
             Plot._PlotTable().appendy(data)
 
-    @given(st.integers())
+    @given(st.floats().map(lambda x: str(x)))
     def test_appendy_data_addition(self, data):
         ptable = Plot._PlotTable()
         ptable.appendy(data)
 
         self.assertTrue(ptable.y.count(data))
 
-    @given(st.integers(min_value=1, max_value=5000))
-    def test_appendy_flood(self, integer):
+    @given(st.integers(min_value=1, max_value=5000), st.floats().map(
+        lambda x: str(x)))
+    def test_appendy_flood(self, integer, data):
         ptable = Plot._PlotTable(integer)
         for i in range(integer + 1):
-            ptable.appendy(i)
+            ptable.appendy(data)
 
         self.assertEqual(len(ptable.y), integer)
 
