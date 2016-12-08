@@ -10,6 +10,7 @@ import platform
 import subprocess
 from tempfile import NamedTemporaryFile
 import time
+import datetime as dt
 
 import core as c
 import Plot
@@ -49,8 +50,7 @@ class TestCore(unittest.TestCase):
     @given(st.just('127.0.0.1'))
     def test_active_connections(self, address):
         try:
-            self.assertIsInstance(c.ping(address,
-                                                 verbose=False).__next__()[1],
+            self.assertIsInstance(c.ping(address, verbose=False).__next__()[1],
                                   float)
         except PermissionError as e:
             if e.errno == 1:
@@ -80,27 +80,27 @@ class PlotTable_test(unittest.TestCase):
         with self.assertRaises(TypeError):
             Plot._PlotTable(data)
 
-    @unittest.skip('Plot._PlotTable.appendx does not catch data')
     @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
                      st.booleans()))
     def test_appendx_invalid_data_catch(self, data):
         with self.assertRaises(TypeError):
             Plot._PlotTable().appendx(data)
 
-    @given(st.integers())
+    @given(st.just(dt.datetime.fromtimestamp(time.time())))
     def test_appendx_data_addition(self, data):
         ptable = Plot._PlotTable()
         ptable.appendx(data)
 
         self.assertTrue(ptable.x.count(data))
 
-    @given(st.integers(min_value=1, max_value=5000))
-    def test_appendx_flood(self, integer):
-        ptable = Plot._PlotTable(integer)
-        for i in range(integer + 1):
-            ptable.appendx(i)
+    @given(st.integers(min_value=1, max_value=5000), st.just(
+        dt.datetime.fromtimestamp(time.time())))
+    def test_appendx_flood(self, length_value, data):
+        ptable = Plot._PlotTable(length_value)
+        for i in range(length_value + 1):
+            ptable.appendx(data)
 
-        self.assertEqual(len(ptable.x), integer)
+        self.assertEqual(len(ptable.x), length_value)
 
     @unittest.skip('Plot._PlotTable.appendy does not catch data')
     @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),

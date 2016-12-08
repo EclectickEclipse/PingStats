@@ -1,6 +1,7 @@
 import sys
 import csv
 import threading
+import datetime as dt
 
 import core as c
 
@@ -37,6 +38,10 @@ class _PlotTable:
 
             "a" - The value to append to the table.
             """
+
+            if type(a) is not dt.datetime:
+                raise TypeError('Requires a datetime.datetime.fromtimestamp '
+                                'object')
 
             if len(self.x) < self.length:
                 self.x.append(a)
