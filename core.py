@@ -79,7 +79,7 @@ def ping(address, timeout=3000, size=64, verbose=True):
                    timeout, size, address)
         except TypeError:
             yield (dt.datetime.fromtimestamp(time.time()),
-                   None, timeout, size, address)
+                   -100.00, timeout, size, address)
 
         i += 1
         time.sleep(0.22)

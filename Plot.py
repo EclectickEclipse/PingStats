@@ -56,15 +56,8 @@ class _PlotTable:
             "a" - The value to append to the table.
             """
 
-            if type(a) is str:
-                try:
-                    float(a)
-                except ValueError as e:
-                    raise TypeError('PlotTable.appendy could not convert data '
-                                    'to float.')
-
-            else:
-                raise TypeError('PlotTable.appendy requires string type data.')
+            if type(a) is not float:
+                raise TypeError('PlotTable.appendy requires float type data.')
 
             if len(self.y) < self.length:
                 self.y.append(a)
@@ -140,14 +133,17 @@ class Animate(_Plot):
 
     def close_thread(self, *args):
         self.t.join()
+        if self.t.isAlive():
+            raise RuntimeError('Could not join ping thread').with_traceback()
         exit()
+        plt.close('all')
 
     def get_pings(self, obj):
         for val in obj:
             self.ptable.appendx(val[0])
 
             if val[1] is None:
-                self.ptable.appendy(-100)
+                self.ptable.appendy(-100.0)
             else:
                 self.ptable.appendy(val[1])
 
@@ -168,7 +164,6 @@ class Animate(_Plot):
 
         self.fig.canvas.mpl_connect('close_event', self.close_thread)
 
-        # self.ani.new_frame_seq()
         self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
 
     def __del__(self, *args):

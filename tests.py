@@ -103,20 +103,19 @@ class PlotTable_test(unittest.TestCase):
         self.assertEqual(len(ptable.x), length_value)
 
     @given(st.one_of(st.tuples(st.integers(), st.integers()), st.integers(),
-                     st.booleans(), st.floats()))
+                     st.booleans(), st.text()))
     def test_appendy_invalid_data_catch(self, data):
         with self.assertRaises(TypeError):
             Plot._PlotTable().appendy(data)
 
-    @given(st.floats().map(lambda x: str(x)))
+    @given(st.floats())
     def test_appendy_data_addition(self, data):
         ptable = Plot._PlotTable()
         ptable.appendy(data)
 
         self.assertTrue(ptable.y.count(data))
 
-    @given(st.integers(min_value=1, max_value=5000), st.floats().map(
-        lambda x: str(x)))
+    @given(st.integers(min_value=1, max_value=5000), st.floats())
     def test_appendy_flood(self, integer, data):
         ptable = Plot._PlotTable(integer)
         for i in range(integer + 1):
