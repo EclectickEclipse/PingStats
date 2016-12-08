@@ -80,4 +80,4 @@ elif parsed.address is not None:
 elif parsed.plotfile is not None:
     Plot.PlotFile(parsed.plotfile)
 else:
-    parser.print_useage()
+    parser.print_help()
