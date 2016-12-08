@@ -33,7 +33,7 @@ from pythonping import ping as pyping
 
 # GLOBALS
 buildname = 'PingStats'
-version = '2.0.02'
+version = '2.1'
 versiondate = 'Sun Dec  4 05:03:21 2016'
 versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
              'Solutions. circa %s' % (
