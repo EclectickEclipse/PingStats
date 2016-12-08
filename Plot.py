@@ -2,7 +2,7 @@ import sys
 import csv
 import threading
 
-import PingStats as ping
+import core as c
 
 
 try:
@@ -87,7 +87,7 @@ class _Plot:
         if self.title_str.count('\x00'):
             raise(ValueError('Title String must not have null bytes'))
 
-        self.fig.canvas.set_window_title('%s | %s' % (ping.buildname,
+        self.fig.canvas.set_window_title('%s | %s' % (c.buildname,
                                                       self.title_str))
         # style.use('ggplot')
         style.use('seaborn-darkgrid')

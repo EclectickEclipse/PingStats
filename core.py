@@ -84,6 +84,8 @@ def ping(address, timeout=3000, size=64, verbose=True):
 
 # TODO Parser logic should likely be handled explicitly on module load
 if __name__ == '__main__':
+    raise DeprecationWarning('Direct execution of PingStats has been '
+                             'deprecated, please use main.py')
     # Define program arguments.
     parser = argparse.ArgumentParser(
         description='%s. This program defines some basic ping statistic '
