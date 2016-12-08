@@ -26,10 +26,6 @@ import csv
 import argparse
 import datetime as dt
 import atexit
-# EXIT HANDLING
-import signal
-import sys
-import threading
 
 import Plot
 from pythonping import ping as pyping
@@ -44,24 +40,11 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
                  version, versiondate)
 
 
-def signal_handler(signal, frame):
-        print('You pressed Ctrl+C!')
-        # sys.exit(0)
-        for thread in threading.enumerate():
-            try:
-                thread.join()
-            except RuntimeError:
-                pass
-        sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
-
-
 def buildfile(path, name):
     if path is None:
         path = ''
 
-    if name.count('*'):
+    if name is not None and name.count('*'):
         raise ValueError('Illegal file name %s' % name)
 
     if name is None:
