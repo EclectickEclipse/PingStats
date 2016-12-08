@@ -53,7 +53,12 @@ def buildfile(path, name):
 
         name += '.csv'
 
-    return open(path + name, 'a+')
+    try:
+        return open(path + name, 'a+')
+    except OSError:
+        print('Failed to open \'%s\', defaulting to \'%sLog.csv\'.' % (
+            (path + name), buildname))
+        return open('%sLog.csv' % buildname)
 
 
 def write_csv_data(writer, data):
