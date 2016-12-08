@@ -1,8 +1,6 @@
 import core
 import Plot
 import argparse
-import csv
-import atexit
 
 parser = argparse.ArgumentParser(
     description='%s. This program defines some basic ping statistic '
@@ -57,25 +55,24 @@ parsed = parser.parse_args()
 
 if parsed.version:
     print(core.versionstr)
+
 elif parsed.address is not None:
+
     if parsed.showliveplot:
-        cwriter = None
-
-        if not parsed.nofile:
-            cwriter = csv.writer(core.buildfile(parsed.path, parsed.name))
-
-        p = core.ping(parsed.address)
-        plot = Plot.Animate(p, parsed.tablelength, parsed.refreshfrequency)
+        plot = Plot.Animate(parsed.address, file_path=parsed.path,
+                            file_name=parsed.name,
+                            nofile=parsed.nofile,
+                            refresh_frequency=parsed.refreshfrequency,
+                            table_length=parsed.tablelength)
         plot.animate()
 
-        atexit.register(plot.close_thread)
     else:
-        if not parsed.nofile:
-            cwriter = csv.writer(core.buildfile(parsed.path, parsed.name))
+        c = core.Core(parsed.address, parsed.path, parsed.name,
+                      parsed.nofile)
 
-        for return_tuple in core.ping(parsed.address):
-            if not parsed.nofile:
-                core.write_csv_data(cwriter, return_tuple)
+        for return_data in c.ping_generator:
+            if not c.nofile:
+                c.write_csv_data(c.cwriter, return_data)
 
 elif parsed.plotfile is not None:
     Plot.PlotFile(parsed.plotfile)
