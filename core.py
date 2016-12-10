@@ -95,9 +95,11 @@ class Core:
         self.file_name = file_name  # validated in self.build file
         self.nofile = nofile
         if not self.nofile:
-            self.cwriter = csv.writer(self.buildfile(self.file_path,
-                                                     self.file_name))
+            self.built_file = self.buildfile(self.file_path, self.file_name)
+            self.cwriter = csv.writer(self.built_file)
 
+    def __del__(self):
+        self.built_file.close()
 
 if __name__ == '__main__':
     raise DeprecationWarning('Direct execution of PingStats has been '

@@ -62,6 +62,16 @@ class TestCore(unittest.TestCase):
         self.assertEqual(c.Core.ping(address, verbose=False).__next__()[1],
                          None)
 
+    @given(st.just('127.0.0.1'), st.just(os.curdir), st.text(), st.booleans())
+    def test_init(self, address, file_path, file_name, nofile):
+        core_object = c.Core(address, file_path, file_name, nofile)
+
+        self.assertIsInstance(core_object, c.Core)
+
+        if not nofile:
+            core_object.built_file.close()
+            os.remove(core_object.built_file.name)
+
 
 class PlotTable_test(unittest.TestCase):
     def test_instantiate(self):
