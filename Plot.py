@@ -205,8 +205,10 @@ class PlotFile(_Plot):
 
             yield x, y
 
-    def __init__(self, csv_file, *args, **kwargs):
+    def __init__(self, csv_file, image_path=None, *args, **kwargs):
         super(PlotFile, self).__init__(*args, **kwargs)
+
+        self.image_path = image_path
 
         self.creader = self.generate_reader(csv_file)
 
@@ -224,3 +226,9 @@ class PlotFile(_Plot):
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
+
+    def show_plot(self):
+        if self.image_path is not None:
+            plt.savefig(self.image_path)
+        else:
+            super(PlotFile, self).show_plot()

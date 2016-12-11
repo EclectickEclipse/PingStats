@@ -16,7 +16,7 @@ parser.add_argument('-d', '--delay', help='The interval of time (in seconds'
 parser.add_argument('-gi', '--generateimage',
                     help='Used in conjunction with the -pf option, this '
                     'option sends a name for a \'*.png\' file to save'
-                    ' to the current working directory.', action='store_true')
+                    ' to the current working directory.')
 
 parser.add_argument('-n', '--name',
                     help='Flag this option to use a custom name for the'
@@ -84,7 +84,7 @@ elif parsed.address is not None:
                 c.write_csv_data(c.cwriter, return_data)
 
 elif parsed.plotfile is not None:
-    pf = Plot.PlotFile(parsed.plotfile)
+    pf = Plot.PlotFile(parsed.plotfile, parsed.generateimage)
     pf.show_plot()
 else:
     parser.print_help()
