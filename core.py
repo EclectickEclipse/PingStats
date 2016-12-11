@@ -87,17 +87,21 @@ class Core:
         host_name = socket.gethostname()
 
         i = 1
+        last_ping = time.time() - delay
         while 1:
-            try:
-                yield (time.time(),
-                       pyping.single_ping(address, host_name, timeout, i, size,
-                       verbose=verbose)[0], timeout, size, address)
-            except TypeError:
-                yield (dt.datetime.fromtimestamp(time.time()),
-                       -100.00, timeout, size, address)
+            if (time.time() - last_ping) > delay:
+                try:
+                    yield (time.time(),
+                           pyping.single_ping(address, host_name, timeout, i,
+                           size, verbose=verbose)[0],
+                           timeout, size, address)
 
-            i += 1
-            time.sleep(delay)
+                except TypeError:
+                    yield (dt.datetime.fromtimestamp(time.time()),
+                           -100.00, timeout, size, address)
+
+                i += 1
+                last_ping = time.time()
 
     def __init__(self, address, file_path=None, file_name=None, nofile=False,
                  quiet=False, delay=0.22, *args, **kwargs):
