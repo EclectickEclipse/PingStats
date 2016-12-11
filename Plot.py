@@ -155,7 +155,7 @@ class Animate(_Plot, c.Core):
         super(Animate, self).__init__(*args, **kwargs)
 
         table_length = kwargs['table_length']
-        refresh_freq = kwargs['table_length']
+        refresh_freq = kwargs['refresh_freq']
 
         if table_length is not None:
             self.ptable.length = table_length
@@ -173,7 +173,6 @@ class Animate(_Plot, c.Core):
 
 
 class PlotFile(_Plot):
-    # TODO GENERATE AN IMAGE! THIS FUNCTIONALITY IS BROKEN!
     @staticmethod
     def generate_reader(csv_path):
         if not os.access(csv_path, os.F_OK):
