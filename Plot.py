@@ -180,7 +180,7 @@ class PlotFile(_Plot):
 
     @staticmethod
     def generate_datetime(timestamp):
-        if timestamp is not float:
+        if type(timestamp) is not float:
             raise TypeError('timestamp must be float')
 
         return dt.datetime.fromtimestamp(timestamp)
