@@ -89,7 +89,7 @@ class Core:
         i = 1
         while 1:
             try:
-                yield (dt.datetime.fromtimestamp(time.time()),
+                yield (time.time(),
                        pyping.single_ping(address, host_name, timeout, i, size,
                        verbose=verbose)[0], timeout, size, address)
             except TypeError:

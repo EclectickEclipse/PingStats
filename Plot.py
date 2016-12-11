@@ -1,6 +1,7 @@
 import sys
 import csv
 import datetime as dt
+import os
 
 import core as c
 
@@ -135,14 +136,14 @@ class Animate(_Plot, c.Core):
 
     def get_pings(self, obj):
         for val in obj:
-            self.ptable.appendx(val[0])
+            self.ptable.appendx(dt.datetime.fromtimestamp(val[0]))
 
             if val[1] is None:
                 self.ptable.appendy(-100.0)
             else:
                 self.ptable.appendy(val[1])
 
-            if not self.nofile:
+            if not self.nofile:  # TODO needs use case testing.
                 self.write_csv_data(self.cwriter, val)
 
             yield
@@ -168,28 +169,52 @@ class Animate(_Plot, c.Core):
         # self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
 
 
-class PlotFile(_Plot):  # TODO Fix static plot generation
-    table = []
+class PlotFile(_Plot):
+    # TODO GENERATE AN IMAGE! THIS FUNCTIONALITY IS BROKEN!
+    def generate_reader(self, csv_path):
+        if not os.access(csv_path, os.F_OK):
+            raise RuntimeError('Cannot access %s!' % csv_path)
 
-    def __init__(self, csv_file):
-        super(PlotFile, self).__init__()
+        return csv.reader(open(csv_path))
 
-        with open(csv_file) as cf:
-            creader = csv.reader(cf)
+    def generate_datetime(self, timestamp):
+        if timestamp is not float:
+            raise TypeError('timestamp must be float')
 
-            x, y = [], []
+        return dt.datetime.fromtimestamp(timestamp)
 
-            for row in creader:
-                x.append(row[0])
-                if row[1] is None:
-                    y.append(-100)
-                else:
-                    y.append(row[1])
+    def yield_points(self, reader):
+        for row in reader:
+            x = dt.datetime.fromtimestamp(float(row[0]))
 
-        self.ax1.plot_date(x, y)  # TODO `ax1.plot_date` wont accept dates
+            if row[1] == '':  # none
+                y = -100.0
+
+            else:
+                try:
+                    y = float(row[1])
+                except ValueError as e:
+                    raise e('Could not handle second data point in row %s' %
+                            row)
+
+            yield x, y
+
+    def __init__(self, csv_file, *args, **kwargs):
+        super(PlotFile, self).__init__(*args, **kwargs)
+
+        self.creader = self.generate_reader(csv_file)
+
+        self.points_generator = self.yield_points(self.creader)
+
+        self.x = []
+        self.y = []
+
+        for i, c in self.points_generator:
+            self.x.append(i)
+            self.y.append(c)
+
+        self.ax1.plot_date(self.x, self.y, 'r-')  # TODO `ax1.plot_date` wont accept dates
 
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
-
-        plt.show()
