@@ -48,15 +48,12 @@ The software requires the following additional `Python` packages:
 
 ### USAGE
 
----
-
 Usage: PingStats.py [-h] [-a ADDRESS] [-p PATH] [-pf PLOTFILE]
                     [-gi GENERATEIMAGE] [-n NAME] [-s] [-sF REFRESHFREQUENCY]
                     [-sL TABLELENGTH] [-sNF] [-v]
 
 
-PingStats Version 2.0.01 (C) Ariana Giroux, Eclectick Media Solutions. circa
-Sun Nov 13 06:39:04 2016. This program defines some basic ping statistic
+PingStats Version 2.1 (C) Ariana Giroux, Eclectick Media Solutions. circa Sun Dec  4 05:03:21 2016. This program defines some basic ping statistic
 visualization methods through Python's 'matplotlib'.
 
 
