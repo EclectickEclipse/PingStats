@@ -21,6 +21,9 @@ parser.add_argument('-gi', '--generateimage',
                     'option sends a name for a \'*.png\' file to save'
                     ' to the current working directory.')
 
+parser.add_argument('-q', '--quiet', help='Flag this for quiet operation.',
+                    action='store_true')
+
 parser.add_argument('-n', '--name',
                     help='Flag this option to use a custom name for the'
                     ' CSV output file.')
@@ -63,12 +66,13 @@ elif parsed.address is not None:
                             file_name=parsed.name,
                             nofile=parsed.nofile,
                             refresh_frequency=parsed.refreshfrequency,
-                            table_length=parsed.tablelength)
+                            table_length=parsed.tablelength,
+                            quiet=parsed.quiet)
         plot.animate()
 
     else:
         c = core.Core(parsed.address, parsed.path, parsed.name,
-                      parsed.nofile)
+                      parsed.nofile, parsed.quiet)
 
         for return_data in c.ping_generator:
             if not c.nofile:

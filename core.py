@@ -100,12 +100,14 @@ class Core:
             time.sleep(0.22)
 
     def __init__(self, address, file_path=None, file_name=None, nofile=False,
-                 *args, **kwargs):
+                 quiet=False, *args, **kwargs):
+
+        self.quiet = not quiet  # flip bool
         # core.Core.ping
         if address is None:
             raise RuntimeError('core.Core requires address')
         self.address = address
-        self.ping_generator = self.ping(self.address)
+        self.ping_generator = self.ping(self.address, verbose=self.quiet)
 
         # core.Core.build files
         self.file_path = file_path  # validated in self.build file
