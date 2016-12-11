@@ -1,6 +1,7 @@
 import core
 import Plot
 import argparse
+import time
 
 parser = argparse.ArgumentParser(
     description='%s. This program defines some basic ping statistic '
@@ -77,11 +78,13 @@ elif parsed.address is not None:
 
     else:
         c = core.Core(parsed.address, parsed.path, parsed.name,
-                      parsed.nofile, parsed.quiet, parsed.delay)
+                      parsed.nofile, parsed.quiet)
 
         for return_data in c.ping_generator:
             if not c.nofile:
                 c.write_csv_data(c.cwriter, return_data)
+
+            time.sleep(parsed.delay)
 
 elif parsed.plotfile is not None:
     pf = Plot.PlotFile(parsed.plotfile, parsed.generateimage)
