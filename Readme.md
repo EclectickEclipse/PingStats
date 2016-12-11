@@ -16,9 +16,19 @@ Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of a `-`
 character in the package title, you need to install the software without the
 `-` included in the folder title. 
 
+This repository looks first for [python-ping](https://github.com/l4m3rx/python-ping) as a folder within the software's parent directory. For example:
+
+```
+-PingStats
+|-pythonping/
+|-pingstats repo files
+```
+
+This can be achieved by running `git clone` in the `PingStats` directory, and then renaming the resulting folder from `python-ping` to `pythonping`. 
+
 ---
 
-# Running tests
+## Running tests
 
 The included `tests.py` module can be run for automatic testing of the
 software run by [python's
@@ -26,6 +36,15 @@ hypothesis](https://github.com/HypothesisWorks/hypothesis-python). Follow the
 instructions provided to install the software.
 
 --- 
+
+## Python Dependencies:
+
+The software requires the following additional `Python` packages:
+1. [matplotlib](http://matplotlib.org/) - installable via `pip install matplotlib` (pip install handles all requirements)
+2. [python-ping](https://github.com/l4m3rx/python-ping) installed via above method.
+3. [hypothesis](https://github.com/HypothesisWorks/hypothesis-python) installable via `pip install hypothesis` (used for `tests.py`)
+
+---
 
 ### USAGE
 
