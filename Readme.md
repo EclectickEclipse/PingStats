@@ -52,48 +52,53 @@ The software requires the following additional `Python` packages:
 
 ### USAGE
 
-Usage: PingStats.py [-h] [-a ADDRESS] [-p PATH] [-pf PLOTFILE]
-                    [-gi GENERATEIMAGE] [-n NAME] [-s] [-sF REFRESHFREQUENCY]
-                    [-sL TABLELENGTH] [-sNF] [-v]
 
+usage: main.py
+	       [-h] [-a ADDRESS] [-d DELAY] [-gi] [-n NAME] [-p PATH]
 
-PingStats Version 2.1 (C) Ariana Giroux, Eclectick Media Solutions. circa Sun Dec  4 05:03:21 2016. This program defines some basic ping statistic
+               [-pf PLOTFILE] [-q] [-s] [-sF REFRESHFREQUENCY]
+
+               [-sL TABLELENGTH] [-sNF] [-v]
+
+PingStats Version 2.2 (C) Ariana Giroux, Eclectick Media Solutions. circa Sun
+Dec 4 05:03:21 2016. This program defines some basic ping statistic
 visualization methods through Python's 'matplotlib'.
 
-
 Optional arguments:
-
-  -h, --help            
-
-			show this help message and exit
+  -h, --help            show this help message and exit
 
   -a ADDRESS, --address ADDRESS
 
                         The IP address to ping.
 
-  -p PATH, --path PATH  
+  -d DELAY, --delay DELAY
 
-			The path to output csv files to
+                        The interval of time (in seconds) to wait between ping
+                        requests.
+
+  -gi, --generateimage 
+
+			Used in conjunction with the -pf option, this option
+                        sends a name for a '*.png' file to save to the current
+                        working directory.
+
+  -n NAME, --name NAME  
+
+			Flag this option to use a custom name for the CSV
+                        output file.
+
+  -p PATH, --path PATH  The path to output csv files to
 
   -pf PLOTFILE, --plotfile PLOTFILE
 
                         Include the path to a previously generated CSVfile to
                         generate a plot.
 
-  -gi GENERATEIMAGE, --generateimage GENERATEIMAGE
-
-                        Used in conjunction with the -pf option, this option
-                        sends a name for a '*.png' file to save to the current
-                        working directory.
-
-  -n NAME, --name NAME 
-
-			Flag this option to use a custom name for the CSV
-                        output file.
+  -q, --quiet           Flag this for quiet operation.
 
   -s, --showliveplot    
 
-			Flag this option to display an animated plot ofthe
+			Flag this option to display an animated plot of the
                         last 500 ping sequences.
 
   -sF REFRESHFREQUENCY, --refreshfrequency REFRESHFREQUENCY
@@ -116,9 +121,8 @@ Optional arguments:
                         information to a csv file during live plotting. Helps
                         with memory consumption.
 
-  -v, --version         
+  -v, --version         Flag this option to display software version.
 
-			Flag this option to display software version.
 
 ---
 
