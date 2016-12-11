@@ -135,14 +135,14 @@ class Animate(_Plot, c.Core):
 
     def get_pings(self, obj):
         for val in obj:
-            self.ptable.appendx(val[0])
+            self.ptable.appendx(dt.datetime.fromtimestamp(val[0]))
 
             if val[1] is None:
                 self.ptable.appendy(-100.0)
             else:
                 self.ptable.appendy(val[1])
 
-            if not self.nofile:
+            if not self.nofile:  # TODO needs use case testing.
                 self.write_csv_data(self.cwriter, val)
 
             yield
@@ -168,11 +168,12 @@ class Animate(_Plot, c.Core):
         # self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
 
 
-class PlotFile(_Plot):  # TODO Fix static plot generation
+class PlotFile(_Plot):
+    # TODO GENERATE AN IMAGE! THIS FUNCTIONALITY IS BROKEN!
     table = []
 
-    def __init__(self, csv_file):
-        super(PlotFile, self).__init__()
+    def __init__(self, csv_file, *args, **kwargs):
+        super(PlotFile, self).__init__(*args, **kwargs)
 
         with open(csv_file) as cf:
             creader = csv.reader(cf)
@@ -180,13 +181,18 @@ class PlotFile(_Plot):  # TODO Fix static plot generation
             x, y = [], []
 
             for row in creader:
-                x.append(row[0])
+                # TODO Validate row
+
+                x.append(dt.datetime.fromtimestamp(float(row[0])))
+                # TODO validate row[0] as time
+
                 if row[1] is None:
                     y.append(-100)
+
                 else:
                     y.append(row[1])
 
-        self.ax1.plot_date(x, y)  # TODO `ax1.plot_date` wont accept dates
+        self.ax1.plot_date(x, y, 'r-')  # TODO `ax1.plot_date` wont accept dates
 
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
