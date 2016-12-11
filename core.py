@@ -37,14 +37,31 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
                  version, versiondate)
 
 
+def validate_string(text):
+    invalid_characters = ['*', '\x00', '\x80']
+    for character in invalid_characters:
+        if character == '*':
+            if text.startswith(character):
+                return False
+        elif text.count(character):
+            return False
+
+    return True
+
+
 class Core:
     @staticmethod
     def buildfile(path, name):
+        if path is not None:
+            if not validate_string(path):
+                raise ValueError('Illegal path!')
+
         if path is None:
             path = ''
 
-        if name is not None and name.count('*'):
-            raise ValueError('Illegal file name %s' % name)
+        if name is not None:
+            if not validate_string(name):
+                raise ValueError('Illegal file name!')
 
         if name is None:
             name = buildname + 'Log.csv'

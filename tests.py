@@ -64,13 +64,23 @@ class TestCore(unittest.TestCase):
 
     @given(st.just('127.0.0.1'), st.just(os.curdir), st.text(), st.booleans())
     def test_init(self, address, file_path, file_name, nofile):
-        core_object = c.Core(address, file_path, file_name, nofile)
+        try:
+            core_object = c.Core(address, file_path, file_name, nofile)
+            self.assertIsInstance(core_object, c.Core)
 
-        self.assertIsInstance(core_object, c.Core)
+            if not nofile:
+                core_object.built_file.close()
+                os.remove(core_object.built_file.name)
+        except ValueError:
+            pass
 
-        if not nofile:
-            core_object.built_file.close()
-            os.remove(core_object.built_file.name)
+    @given(st.one_of(st.just('*'), st.just('\x80'), st.just('\x00')))
+    def test_fail_string_validation(self, string):
+        self.assertFalse(c.validate_string(string))
+
+    @given(st.just('test string'))
+    def test_complete_string_validation(self, string):
+        self.assertTrue(c.validate_string(string))
 
 
 class PlotTable_test(unittest.TestCase):
