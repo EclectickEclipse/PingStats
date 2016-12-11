@@ -193,6 +193,15 @@ class Plotfile_test(unittest.TestCase):
 
         self.assertIsInstance(obj, Plot.PlotFile)
 
+    @given(st.just('./test_data/PingStatsLog.csv'))
+    def test_generate_reader(self, path):
+        fileobj = open(path)
+        reader = csv.reader(fileobj)
+
+        self.assertIsInstance(Plot.PlotFile.generate_reader(path),
+                              type(reader))
+
+        fileobj.close()
 
 if __name__ == '__main__':
     print(time.ctime())
