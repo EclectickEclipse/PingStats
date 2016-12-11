@@ -50,6 +50,10 @@ parser.add_argument('-sNF', '--nofile',
                     'information to a csv  file during live plotting.'
                     ' Helps with memory consumption.', action='store_true')
 
+parser.add_argument('-d', '--delay', help='The interval of time (in seconds'
+                    ') to wait between ping requests.', type=float,
+                    default=0.22)
+
 parser.add_argument('-v', '--version',
                     help='Flag this option to display software version.',
                     action='store_true')
@@ -65,6 +69,7 @@ elif parsed.address is not None:
         plot = Plot.Animate(parsed.address, file_path=parsed.path,
                             file_name=parsed.name,
                             nofile=parsed.nofile,
+                            delay=parsed.delay,
                             refresh_frequency=parsed.refreshfrequency,
                             table_length=parsed.tablelength,
                             quiet=parsed.quiet)
@@ -72,7 +77,7 @@ elif parsed.address is not None:
 
     else:
         c = core.Core(parsed.address, parsed.path, parsed.name,
-                      parsed.nofile, parsed.quiet)
+                      parsed.nofile, parsed.quiet, parsed.delay)
 
         for return_data in c.ping_generator:
             if not c.nofile:

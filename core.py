@@ -83,7 +83,7 @@ class Core:
         return data
 
     @staticmethod
-    def ping(address, timeout=3000, size=64, verbose=True):
+    def ping(address, timeout=3000, size=64, verbose=True, delay=0.22):
         host_name = socket.gethostname()
 
         i = 1
@@ -97,17 +97,19 @@ class Core:
                        -100.00, timeout, size, address)
 
             i += 1
-            time.sleep(0.22)
+            time.sleep(delay)
 
     def __init__(self, address, file_path=None, file_name=None, nofile=False,
-                 quiet=False, *args, **kwargs):
+                 quiet=False, delay=0.22, *args, **kwargs):
 
         self.quiet = not quiet  # flip bool
+        self.delay = delay
         # core.Core.ping
         if address is None:
             raise RuntimeError('core.Core requires address')
         self.address = address
-        self.ping_generator = self.ping(self.address, verbose=self.quiet)
+        self.ping_generator = self.ping(self.address, verbose=self.quiet,
+                                        delay=self.delay)
 
         # core.Core.build files
         self.file_path = file_path  # validated in self.build file
