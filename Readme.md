@@ -40,9 +40,13 @@ instructions provided to install the software.
 ## Python Dependencies:
 
 The software requires the following additional `Python` packages:
+
 1. [matplotlib](http://matplotlib.org/) - installable via `pip install matplotlib` (pip install handles all requirements)
+
 2. [python-ping](https://github.com/l4m3rx/python-ping) installed via above method.
+
 3. [hypothesis](https://github.com/HypothesisWorks/hypothesis-python) installable via `pip install hypothesis` (used for `tests.py`)
+
 
 ---
 
