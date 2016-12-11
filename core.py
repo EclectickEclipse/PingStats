@@ -79,8 +79,11 @@ class Core:
     @staticmethod
     def write_csv_data(writer, data):
         """ Writes a row of CSV data and returns the data that was read. """
-        writer.writerow(data)
-        return data
+        if data is None:
+            return data
+        else:
+            writer.writerow(data)
+            return data
 
     @staticmethod
     def ping(address, timeout=3000, size=64, verbose=True, delay=0.22):
@@ -102,6 +105,8 @@ class Core:
 
                 i += 1
                 last_ping = time.time()
+            else:
+                yield
 
     def __init__(self, address, file_path=None, file_name=None, nofile=False,
                  quiet=False, delay=0.22, *args, **kwargs):

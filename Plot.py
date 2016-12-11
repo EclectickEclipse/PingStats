@@ -136,17 +136,20 @@ class Animate(_Plot, c.Core):
 
     def get_pings(self, obj):
         for val in obj:
-            self.ptable.appendx(dt.datetime.fromtimestamp(val[0]))
-
-            if val[1] is None:
-                self.ptable.appendy(-100.0)
+            if val is None:
+                yield
             else:
-                self.ptable.appendy(val[1])
+                self.ptable.appendx(dt.datetime.fromtimestamp(val[0]))
 
-            if not self.nofile:  # TODO needs use case testing.
-                self.write_csv_data(self.cwriter, val)
+                if val[1] is None:
+                    self.ptable.appendy(-100.0)
+                else:
+                    self.ptable.appendy(val[1])
 
-            yield
+                if not self.nofile:  # TODO needs use case testing.
+                    self.write_csv_data(self.cwriter, val)
+
+                yield
 
     def __init__(self, *args, **kwargs):
         super(Animate, self).__init__(*args, **kwargs)
