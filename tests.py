@@ -176,14 +176,8 @@ class BasePlot_test(unittest.TestCase):
         plot.nofile = False  # reset state to default
 
 
-class AnimatePlot_test(unittest.TestCase):
+class AnimatePlot_test(unittest.TestCase):  # TODO write tests
     pass
-    # @given(st.just(c.ping('127.0.0.1')))
-    # def test_get_pings(self, ping_object):
-        # ani = Plot.Animate()
-        # x = ani.ptable.x
-        # y = ani.ptable.y
-        # ani.get_pings(ping_object)
 
 
 class Plotfile_test(unittest.TestCase):
@@ -192,6 +186,28 @@ class Plotfile_test(unittest.TestCase):
         obj = Plot.PlotFile(path)
 
         self.assertIsInstance(obj, Plot.PlotFile)
+
+    @given(st.just('./test_data/PingStatsLog.csv'))
+    def test_generate_reader(self, path):
+        fileobj = open(path)
+        reader = csv.reader(fileobj)
+
+        self.assertIsInstance(Plot.PlotFile.generate_reader(path),
+                              type(reader))
+
+        fileobj.close()
+
+    @given(st.just(time.time()))
+    def test_generate_datetime(self, timestamp):
+        self.assertIsInstance(Plot.PlotFile.generate_datetime(timestamp),
+                              type(dt.datetime.fromtimestamp(timestamp)))
+
+    def test_yield_points(self):
+        with open('./test_data/PingStatsLog.csv') as f:
+            reader = csv.reader(f)
+            for x, y in Plot.PlotFile.yield_points(reader):
+                self.assertIsInstance(x, dt.datetime)
+                self.assertIsInstance(y, float)
 
 
 if __name__ == '__main__':
