@@ -57,7 +57,7 @@ class Core:
         except OSError:
             print('Failed to open \'%s\', defaulting to \'%sLog.csv\'.' % (
                 (path + name), buildname))
-            return open('%sLog.csv' % buildname)
+            return open('%sLog.csv' % buildname, 'a+')
 
     @staticmethod
     def write_csv_data(writer, data):
