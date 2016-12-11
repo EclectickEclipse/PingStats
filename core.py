@@ -95,8 +95,8 @@ class Core:
         self.file_name = file_name  # validated in self.build file
         self.nofile = nofile
         if not self.nofile:
-            self.cwriter = csv.writer(self.buildfile(self.file_path,
-                                                     self.file_name))
+            self.built_file = self.buildfile(self.file_path, self.file_name)
+            self.cwriter = csv.writer(self.built_file)
 
 
 if __name__ == '__main__':
