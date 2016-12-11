@@ -22,12 +22,9 @@
 
 import time
 import socket
-import csv
-import argparse
 import datetime as dt
-import atexit
+import csv
 
-import Plot
 from pythonping import ping as pyping
 
 
@@ -40,153 +37,68 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
                  version, versiondate)
 
 
-def buildfile(path, name):
-    if path is None:
-        path = ''
+class Core:
+    @staticmethod
+    def buildfile(path, name):
+        if path is None:
+            path = ''
 
-    if name is not None and name.count('*'):
-        raise ValueError('Illegal file name %s' % name)
+        if name is not None and name.count('*'):
+            raise ValueError('Illegal file name %s' % name)
 
-    if name is None:
-        name = buildname + 'Log.csv'
-    else:
+        if name is None:
+            name = buildname + 'Log.csv'
+        else:
 
-        name += '.csv'
+            name += '.csv'
 
-    try:
-        return open(path + name, 'a+')
-    except OSError:
-        print('Failed to open \'%s\', defaulting to \'%sLog.csv\'.' % (
-            (path + name), buildname))
-        return open('%sLog.csv' % buildname)
-
-
-def write_csv_data(writer, data):
-    """ Writes a row of CSV data and returns the data that was read. """
-    writer.writerow(data)
-    return data
-
-
-def ping(address, timeout=3000, size=64, verbose=True):
-    host_name = socket.gethostname()
-
-    i = 1
-    while 1:
         try:
-            yield (dt.datetime.fromtimestamp(time.time()),
-                   pyping.single_ping(address, host_name, timeout, i, size,
-                                      verbose=verbose)[0],
-                   timeout, size, address)
-        except TypeError:
-            yield (dt.datetime.fromtimestamp(time.time()),
-                   -100.00, timeout, size, address)
+            return open(path + name, 'a+')
+        except OSError:
+            print('Failed to open \'%s\', defaulting to \'%sLog.csv\'.' % (
+                (path + name), buildname))
+            return open('%sLog.csv' % buildname)
 
-        i += 1
-        time.sleep(0.22)
+    @staticmethod
+    def write_csv_data(writer, data):
+        """ Writes a row of CSV data and returns the data that was read. """
+        writer.writerow(data)
+        return data
+
+    @staticmethod
+    def ping(address, timeout=3000, size=64, verbose=True):
+        host_name = socket.gethostname()
+
+        i = 1
+        while 1:
+            try:
+                yield (dt.datetime.fromtimestamp(time.time()),
+                       pyping.single_ping(address, host_name, timeout, i, size,
+                       verbose=verbose)[0], timeout, size, address)
+            except TypeError:
+                yield (dt.datetime.fromtimestamp(time.time()),
+                       -100.00, timeout, size, address)
+
+            i += 1
+            time.sleep(0.22)
+
+    def __init__(self, address, file_path=None, file_name=None, nofile=False,
+                 *args, **kwargs):
+        # core.Core.ping
+        if address is None:
+            raise RuntimeError('core.Core requires address')
+        self.address = address
+        self.ping_generator = self.ping(self.address)
+
+        # core.Core.build files
+        self.file_path = file_path  # validated in self.build file
+        self.file_name = file_name  # validated in self.build file
+        self.nofile = nofile
+        if not self.nofile:
+            self.cwriter = csv.writer(self.buildfile(self.file_path,
+                                                     self.file_name))
 
 
-# Bootstrap logic.
-
-# TODO Parser logic should likely be handled explicitly on module load
 if __name__ == '__main__':
     raise DeprecationWarning('Direct execution of PingStats has been '
                              'deprecated, please use main.py')
-    # Define program arguments.
-    parser = argparse.ArgumentParser(
-        description='%s. This program defines some basic ping statistic '
-                    'visualizationmethods through Python\'s \'matplotlib\'.'
-                    % versionstr)
-
-    parser.add_argument('-a', '--address', help='The IP address to ping.')
-
-    parser.add_argument('-p', '--path',
-                        help='The path to output csv files to')
-
-    parser.add_argument('-pf', '--plotfile',
-                        help='Include the path to a previously generated CSV'
-                             'file to generate a plot.')
-
-    parser.add_argument('-gi', '--generateimage',
-                        help='Used in conjunction with the -pf option, this '
-                             'option sends a name for a \'*.png\' file to save'
-                             ' to the current working directory.')
-
-    parser.add_argument('-n', '--name',
-                        help='Flag this option to use a custom name for the'
-                             ' CSV output file.')
-
-    parser.add_argument('-s', '--showliveplot',
-                        help='Flag this option to display an animated plot of'
-                             'the last 500 ping sequences.',
-                        action='store_true')
-
-    parser.add_argument('-sF', '--refreshfrequency',
-                        help='Specify a number of milliseconds to wait between'
-                             'refreshes of the -s plot visualization feature.'
-                             'The lower the number, the better the performance'
-                             'of %s visualization. Handy for \"potatoes\"'
-                             % buildname)
-
-    parser.add_argument('-sL', '--tablelength',
-                        help='The total number of pings to show for -s. The'
-                             'lower the number, the better the performance of '
-                             '%s visualization. Handy for \"potatoes.\"'
-                             % buildname)
-
-    parser.add_argument('-sNF', '--nofile',
-                        help='Flag this option to disable outputting ping '
-                             'information to a csv  file during live plotting.'
-                             ' Helps with memory consumption.',
-                        action='store_true')
-
-    parser.add_argument('-v', '--version',
-                        help='Flag this option to display software version.',
-                        action='store_true')
-
-    parsed = parser.parse_args()
-
-    if parsed.version:
-        print(versionstr)
-    elif parsed.address is not None:
-        if parsed.showliveplot:
-            print(  # TODO Update output on program start.
-                'Pinging %s...\nThe longer that this program runs, the more '
-                'system resources it will occupy. Please consider using the '
-                'live plotting feature for shorter run times (i.e a match of '
-                'on line chess).\n Close the plot window to exit the'
-                ' program....' % parsed.address)
-
-            cwriter = None
-            if not parsed.nofile:
-                cwriter = csv.writer(buildfile(parsed.path, parsed.name))
-
-            # TODO When showing a live plot, no information is logged via csv
-
-            p = ping(parsed.address)
-
-            plot = Plot.Animate(p, parsed.tablelength, parsed.refreshfrequency)
-            plot.animate()
-
-            atexit.register(plot.close_thread)  # TODO Fix exit logic.
-            # Matplotlib and the `plot.get_pings` objects don't play nicely
-            # with  user exit.
-
-        else:
-            print(
-                'Pinging %s...\nThe longer that this program runs, the larger '
-                'the resulting CSV file will be.\nDue to  the way that the '
-                'program handles the output file, do not open the .csv file '
-                'created by this application until you are finished gathering '
-                'pings.\nPress CTR+C to exit...' % parsed.address)
-
-            if not parsed.nofile:
-                cwriter = csv.writer(buildfile(parsed.path, parsed.name))
-
-            for return_tuple in ping(parsed.address):
-                if not parsed.nofile:
-                    write_csv_data(cwriter, return_tuple)
-
-    elif parsed.plotfile is not None:
-        Plot.PlotFile(parsed.plotfile)
-    else:
-        parser.print_usage()

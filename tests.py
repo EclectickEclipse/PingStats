@@ -21,7 +21,7 @@ class TestCore(unittest.TestCase):
     @given(st.just(os.curdir), st.text())
     def test_build_files(self, path, name):
         try:
-            test_file = c.buildfile(path, name)
+            test_file = c.Core.buildfile(path, name)
             self.assertIsInstance(test_file, TextIOWrapper)
             test_file.close()
             os.remove(test_file.name)
@@ -40,17 +40,18 @@ class TestCore(unittest.TestCase):
     @given(st.just('.'), st.just('*'))
     def test_build_files_fail_on_invalid_character(self, path, name):
         with self.assertRaises(ValueError):
-            c.buildfile(path, name)
+            c.Core.buildfile(path, name)
 
     @given(st.just(csv.writer(NamedTemporaryFile('w+'))),
            st.lists(st.integers(), min_size=2))
     def test_write_csv_data(self, writer, data):
-        self.assertEqual(c.write_csv_data(writer, data), data)
+        self.assertEqual(c.Core.write_csv_data(writer, data), data)
 
     @given(st.just('127.0.0.1'))
     def test_active_connections(self, address):
         try:
-            self.assertIsInstance(c.ping(address, verbose=False).__next__()[1],
+            self.assertIsInstance(c.Core.ping(address,
+                                              verbose=False).__next__()[1],
                                   float)
         except PermissionError as e:
             if e.errno == 1:
@@ -58,7 +59,7 @@ class TestCore(unittest.TestCase):
 
     @given(st.just('0.0.0.0'))
     def test_failed_connections(self, address):
-        self.assertEqual(c.ping(address, verbose=False).__next__()[1],
+        self.assertEqual(c.Core.ping(address, verbose=False).__next__()[1],
                          None)
 
 
