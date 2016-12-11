@@ -65,7 +65,7 @@ Dec 4 05:03:21 2016. This program defines some basic ping statistic
 visualization methods through Python's 'matplotlib'.
 
 Optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help            `show this help message and exit`
 
   -a ADDRESS, --address ADDRESS
 
@@ -87,14 +87,14 @@ Optional arguments:
 			Flag this option to use a custom name for the CSV
                         output file.
 
-  -p PATH, --path PATH  The path to output csv files to
+  -p PATH, --path PATH  `The path to output csv files to`
 
   -pf PLOTFILE, --plotfile PLOTFILE
 
                         Include the path to a previously generated CSVfile to
                         generate a plot.
 
-  -q, --quiet           Flag this for quiet operation.
+  -q, --quiet           `Flag this for quiet operation.`
 
   -s, --showliveplot    
 
@@ -121,7 +121,7 @@ Optional arguments:
                         information to a csv file during live plotting. Helps
                         with memory consumption.
 
-  -v, --version         Flag this option to display software version.
+  -v, --version         `Flag this option to display software version.`
 
 
 ---
