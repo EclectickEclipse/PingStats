@@ -75,6 +75,7 @@ elif parsed.address is not None:
                 c.write_csv_data(c.cwriter, return_data)
 
 elif parsed.plotfile is not None:
-    Plot.PlotFile(parsed.plotfile)
+    pf = Plot.PlotFile(parsed.plotfile)
+    pf.show_plot()
 else:
     parser.print_help()

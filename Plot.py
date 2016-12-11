@@ -1,6 +1,7 @@
 import sys
 import csv
 import datetime as dt
+import os
 
 import core as c
 
@@ -170,32 +171,50 @@ class Animate(_Plot, c.Core):
 
 class PlotFile(_Plot):
     # TODO GENERATE AN IMAGE! THIS FUNCTIONALITY IS BROKEN!
-    table = []
+    def generate_reader(self, csv_path):
+        if not os.access(csv_path, os.F_OK):
+            raise RuntimeError('Cannot access %s!' % csv_path)
+
+        return csv.reader(open(csv_path))
+
+    def generate_datetime(self, timestamp):
+        if timestamp is not float:
+            raise TypeError('timestamp must be float')
+
+        return dt.datetime.fromtimestamp(timestamp)
+
+    def yield_points(self, reader):
+        for row in reader:
+            x = dt.datetime.fromtimestamp(float(row[0]))
+
+            if row[1] == '':  # none
+                y = -100.0
+
+            else:
+                try:
+                    y = float(row[1])
+                except ValueError as e:
+                    raise e('Could not handle second data point in row %s' %
+                            row)
+
+            yield x, y
 
     def __init__(self, csv_file, *args, **kwargs):
         super(PlotFile, self).__init__(*args, **kwargs)
 
-        with open(csv_file) as cf:
-            creader = csv.reader(cf)
+        self.creader = self.generate_reader(csv_file)
 
-            x, y = [], []
+        self.points_generator = self.yield_points(self.creader)
 
-            for row in creader:
-                # TODO Validate row
+        self.x = []
+        self.y = []
 
-                x.append(dt.datetime.fromtimestamp(float(row[0])))
-                # TODO validate row[0] as time
+        for i, c in self.points_generator:
+            self.x.append(i)
+            self.y.append(c)
 
-                if row[1] is None:
-                    y.append(-100)
-
-                else:
-                    y.append(row[1])
-
-        self.ax1.plot_date(x, y, 'r-')  # TODO `ax1.plot_date` wont accept dates
+        self.ax1.plot_date(self.x, self.y, 'r-')  # TODO `ax1.plot_date` wont accept dates
 
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
-
-        plt.show()

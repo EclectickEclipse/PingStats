@@ -186,6 +186,14 @@ class AnimatePlot_test(unittest.TestCase):
         # ani.get_pings(ping_object)
 
 
+class Plotfile_test(unittest.TestCase):
+    @given(st.just('./test_data/PingStatsLog.csv'))
+    def test_init(self, path):
+        obj = Plot.PlotFile(path)
+
+        self.assertIsInstance(obj, Plot.PlotFile)
+
+
 if __name__ == '__main__':
     print(time.ctime())
     print('os.name: %s' % os.name)
