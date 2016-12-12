@@ -154,8 +154,21 @@ class Animate(_Plot, c.Core):
     def __init__(self, *args, **kwargs):
         super(Animate, self).__init__(*args, **kwargs)
 
-        table_length = kwargs['table_length']
-        refresh_freq = kwargs['refresh_freq']
+        try:
+            table_length = kwargs['table_length']
+        except KeyError:
+            table_length = None
+
+        if table_length is not None and type(table_length) is not int:
+            raise TypeError('table_length is not None or int')
+
+        try:
+            refresh_freq = kwargs['refresh_freq']
+        except KeyError:
+            refresh_freq = None
+
+        if refresh_freq is not None and type(refresh_freq) is not int:
+            raise TypeError('refresh_freq is not None or int')
 
         if table_length is not None:
             self.ptable.length = table_length

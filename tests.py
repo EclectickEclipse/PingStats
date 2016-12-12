@@ -176,8 +176,61 @@ class BasePlot_test(unittest.TestCase):
         plot.nofile = False  # reset state to default
 
 
-class AnimatePlot_test(unittest.TestCase):  # TODO write tests
-    pass
+class AnimatePlot_test(unittest.TestCase):
+    @given(st.just('127.0.0.1'),
+           st.one_of(st.just(None), st.integers()),
+           st.one_of(st.just(None), st.integers()))
+    def test_instantiate_with_good_ip(self, address, table_length,
+                                      refresh_freq):
+        self.assertIsInstance(Plot.Animate(address,
+                                           table_length=table_length,
+                                           refresh_freq=refresh_freq),
+                              Plot.Animate)
+
+        self.can_init = True
+
+    @given(st.just('127.0.0.1'),
+           st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
+                     st.booleans()),
+           st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
+                     st.booleans()))
+    def test_instantiate_catch_bad_kwargs(self, address, table_length,
+                                          refresh_freq):
+        with self.assertRaises(TypeError) as e:
+            Plot.Animate(address,
+                         table_length=table_length,
+                         refresh_freq=refresh_freq)
+
+            if not e.count('table_length is not None or int') or e.count(
+                    'refresh_freq is not None or int'):
+
+                self.fail('Did not raise the right exception with \'%s\' and '
+                          '\'%s\'.' % (str(table_length), str(refresh_freq)))
+
+    def test_get_pings_with_good_ip(self):
+        obj = Plot.Animate('127.0.0.1')
+        gp = obj.get_pings(obj.ping_generator)
+
+        time_now = time.time()
+        for result in gp:
+            if time.time() - time_now > 0.22:
+                break
+
+        print(obj.ptable.getx())
+        self.assertGreaterEqual(len(obj.ptable.getx()), 1)
+        self.assertGreaterEqual(len(obj.ptable.gety()), 1)
+
+    def test_get_pings_with_bad_ip(self):
+        obj = Plot.Animate('0.0.0.0')
+        gp = obj.get_pings(obj.ping_generator)
+
+        time_now = time.time()
+        for result in gp:
+            if time.time() - time_now > 0.2:
+                break
+
+        self.assertGreaterEqual(len(obj.ptable.getx()), 1)
+        self.assertGreaterEqual(len(obj.ptable.gety()), 1)
 
 
 class Plotfile_test(unittest.TestCase):
