@@ -86,12 +86,27 @@ class TestCore(unittest.TestCase):
         backup = sys.stdout
         fileobj = NamedTemporaryFile('w+')
         sys.stdout = fileobj
-        c_obj = c.Core.ping('127.0.0.1')
+        c_obj = c.Core.ping('127.0.0.1', verbose=False)
         next(c_obj)
         sys.stdout = backup
 
         with open(fileobj.name) as f:
             self.assertEqual(f.read(), '')
+
+    @unittest.skip('Skipping for now, there is an issue in the ping function')
+    @given(st.integers(min_value=1, max_value=2))
+    def test_ping_delay(self, delay_timer):
+        obj = c.Core.ping('127.0.0.1', delay=delay_timer)
+        time_now = time.time()
+        results = []
+
+        for result in obj:
+            results.append(result)
+
+            if time.time() - time_now >= delay_timer:
+                break
+
+        self.assertEqual(len(results), 1)
 
 
 class PlotTable_test(unittest.TestCase):
