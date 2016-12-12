@@ -82,6 +82,17 @@ class TestCore(unittest.TestCase):
     def test_complete_string_validation(self, string):
         self.assertTrue(c.validate_string(string))
 
+    def test_quiet_output(self):
+        backup = sys.stdout
+        fileobj = NamedTemporaryFile('w+')
+        sys.stdout = fileobj
+        c_obj = c.Core.ping('127.0.0.1')
+        next(c_obj)
+        sys.stdout = backup
+
+        with open(fileobj.name) as f:
+            self.assertEqual(f.read(), '')
+
 
 class PlotTable_test(unittest.TestCase):
     def test_instantiate(self):
