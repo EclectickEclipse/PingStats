@@ -71,7 +71,7 @@ elif parsed.address is not None:
                             file_name=parsed.name,
                             nofile=parsed.nofile,
                             delay=parsed.delay,
-                            refresh_frequency=parsed.refreshfrequency,
+                            refresh_freq=parsed.refreshfrequency,
                             table_length=parsed.tablelength,
                             quiet=parsed.quiet)
         plot.animate()
