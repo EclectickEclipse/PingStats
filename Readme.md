@@ -135,5 +135,19 @@ Optional arguments:
 
 ### Contribution
 
-To contribute please open an issue or create a fork and submit a pull request
-via *GitHub*
+To contribute please open an issue or create a fork and submit a pull request via *GitHub*
+
+---
+
+### Bug reporting
+
+To report a bug or broken execution please follow these steps.
+
+1. Open a new issue on
+   [GitHub](https://github.com/EclectickMedia/PingStats/issues)
+2. Describe your bug in as good a description as possible
+3. Run `tests.py` and attach the results to the new issue.
+
+Alternatively, if you do not have github, write an email to [Ariana
+Giroux](ariana.giroux@gmail.com) and attach the previously mentioned
+information.
