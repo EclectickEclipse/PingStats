@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
------------------------ FROM python-ping --------------------------------------
+------------ FROM https://github.com/l4m3rx/python-ping -----------------------
 
 
 The original code derived from ping.c distributed in Linux's netkit.
