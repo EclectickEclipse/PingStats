@@ -27,7 +27,7 @@ class _PlotTable:
 
             if length is None:
                 self.length = 250
-            elif length == 0:
+            elif length <= 0:
                 raise ValueError('Requires a table length of at least 1')
             else:
                 self.length = int(length)
