@@ -146,7 +146,7 @@ class Animate(_Plot, c.Core):
                 else:
                     self.ptable.appendy(val[1])
 
-                if not self.nofile:  # TODO needs use case testing.
+                if not self.nofile:
                     self.write_csv_data(self.cwriter, val)
 
                 yield

@@ -289,6 +289,21 @@ class Plotfile_test(unittest.TestCase):
                 self.assertIsInstance(y, float)
 
 
+class GenerateFile_from_Plotfile_test(unittest.TestCase):
+    @given(st.just('./test_data/PingStatsLog.csv'),
+           st.just('./test_data/test_image.png'))
+    def test_generate_file(self, data_path, image_path):
+        p = Plot.PlotFile(data_path, image_path)
+        p.show_plot()
+
+        self.assertTrue(os.access(image_path, os.F_OK))
+
+        if os.access(image_path, os.F_OK):
+            os.remove(image_path)
+        else:
+            self.fail('Could not find a generated image to remove.')
+
+
 if __name__ == '__main__':
     print(time.ctime())
     print('os.name: %s' % os.name)
