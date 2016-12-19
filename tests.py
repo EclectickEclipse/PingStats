@@ -289,9 +289,8 @@ class Plotfile_test(unittest.TestCase):
 
 
 class GenerateFile_from_Plotfile_test(unittest.TestCase):
-    @given(st.just('./test_data/PingStatsLog.csv'),
-           st.just('./test_data/test_image.png'))
-    def test_generate_file(self, data_path, image_path):
+    def test_generate_file(self, data_path='./test_data/PingStatsLog.csv',
+                           image_path='./test_data/test_image.png'):
         p = Plot.PlotFile(data_path, image_path)
         p.show_plot()
 
