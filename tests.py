@@ -199,13 +199,6 @@ class BasePlot_test(unittest.TestCase):
 
         plot.title_str = ''  # reset state to default
 
-    @given(st.booleans())
-    def test_instantiate_nofile(self, boolean):
-        plot = Plot._Plot
-        plot.nofile = boolean
-        self.assertIsInstance(plot(), Plot._Plot)
-        plot.nofile = False  # reset state to default
-
 
 class AnimatePlot_test(unittest.TestCase):
     @given(st.just('127.0.0.1'),
@@ -262,6 +255,24 @@ class AnimatePlot_test(unittest.TestCase):
 
         self.assertGreaterEqual(len(obj.ptable.getx()), 1)
         self.assertGreaterEqual(len(obj.ptable.gety()), 1)
+
+    @given(st.booleans())
+    def test_no_file(self, boolean):
+        if boolean:
+            p = Plot.Animate('127.0.0.1', file_path='test_data/',
+                             file_name='testCSV', nofile=boolean)
+            self.assertIsInstance(p, Plot.Animate)
+            self.assertFalse(os.access('test_data/testCSV.csv', os.F_OK))
+
+        else:
+            p = Plot.Animate('127.0.0.1', file_path='test_data/',
+                             file_name='testCSV', nofile=boolean)
+            self.assertIsInstance(p, Plot.Animate)
+            self.assertTrue(os.access('test_data/testCSV.csv', os.F_OK))
+            try:
+                os.remove('test_data/testCSV.csv')
+            except OSError as e:
+                self.fail('Could not remove file created. Raised %s' % str(e))
 
 
 class Plotfile_test(unittest.TestCase):

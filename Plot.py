@@ -86,8 +86,6 @@ class _Plot:
 
     ptable = _PlotTable()
 
-    nofile = False
-
     def __init__(self, *args, **kwargs):
         super(_Plot, self).__init__(*args, **kwargs)
         if type(self.title_str) is not str:
