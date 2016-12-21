@@ -61,7 +61,6 @@ parser.add_argument('-v', '--version',
 
 parsed = parser.parse_args()
 
-# TODO Test no file generation.
 
 if parsed.version:
     print(core.versionstr)

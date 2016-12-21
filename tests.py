@@ -107,6 +107,12 @@ class TestCore(unittest.TestCase):
 
         self.assertEquals(len(results), 1)
 
+    def test_nofile(self):
+        c.Core('127.0.0.1', file_path='test_data/', file_name='TestCSV',
+               nofile=True)
+
+        self.assertFalse(os.access('test_data/TestCSV.csv', os.F_OK))
+
 
 class PlotTable_test(unittest.TestCase):
     def test_instantiate(self):
