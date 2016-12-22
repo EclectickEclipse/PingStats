@@ -114,15 +114,15 @@ class Core:
         if address is None:
             raise RuntimeError('core.Core requires address')
         self.address = address
-        self.ping_generator = self.ping(self.address, verbose=self.quiet,
-                                        delay=self.delay)
+        self.ping_generator = ping(self.address, verbose=self.quiet,
+                                   delay=self.delay)
 
         # core.Core.build files
         self.file_path = file_path  # validated in self.build file
         self.file_name = file_name  # validated in self.build file
         self.nofile = nofile
         if not self.nofile:
-            self.built_file = self.buildfile(self.file_path, self.file_name)
+            self.built_file = buildfile(self.file_path, self.file_name)
             self.cwriter = csv.writer(self.built_file)
 
 
