@@ -99,11 +99,21 @@ class _Plot:
 
     def __init__(self, *args, **kwargs):
         """ Validates `self.title_str` and rotates plot labels. """
-
         super(_Plot, self).__init__(*args, **kwargs)
+
+        # table_length validation
+        try:
+            table_length = kwargs['table_length']
+        except KeyError:
+            table_length = None
+        if table_length is not None and type(table_length) is not int:
+            raise TypeError('table_length is not None or int')
+        if table_length is not None:
+            self.ptable.length = table_length
+
+        # title_str validation
         if type(self.title_str) is not str:
             raise TypeError('Plot title_str requires a string object')
-
         if self.title_str.count('\x00'):
             raise(ValueError('Title String must not have null bytes'))
 
@@ -169,14 +179,7 @@ class Animate(_Plot, c.Core):
         """ Validates kwargs, and generates a _PlotTable object. """
         super(Animate, self).__init__(*args, **kwargs)
 
-        try:
-            table_length = kwargs['table_length']
-        except KeyError:
-            table_length = None
-
-        if table_length is not None and type(table_length) is not int:
-            raise TypeError('table_length is not None or int')
-
+        # refresh_freq validation
         try:
             refresh_freq = kwargs['refresh_freq']
         except KeyError:
@@ -185,19 +188,15 @@ class Animate(_Plot, c.Core):
         if refresh_freq is not None and type(refresh_freq) is not int:
             raise TypeError('refresh_freq is not None or int')
 
-        if table_length is not None:
-            self.ptable.length = table_length
-
         if refresh_freq is None:
             self.ani = animation.FuncAnimation(self.fig, self._animate,
                                                fargs=(
                                                    self.ptable,))
+
         else:
             self.ani = animation.FuncAnimation(self.fig, self._animate,
                                                interval=refresh_freq, fargs=(
                                                     self.ptable,))
-
-        # self.t = threading.Thread(target=self.get_pings, args=(ping_obj,))
 
 
 class PlotFile(_Plot):
