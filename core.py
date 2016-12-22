@@ -16,6 +16,7 @@ versionstr = 'PingStats Version %s (C) Ariana Giroux, Eclectick Media ' \
 
 
 def validate_string(text):
+    """ Checks `text` for illegal characters. Returns True on validation. """
     invalid_characters = ['*', '\x00', '\x80']
     for character in invalid_characters:
         if character == '*':
@@ -28,8 +29,13 @@ def validate_string(text):
 
 
 class Core:
+    """ Provides core functionality for `PingStats`. """
     @staticmethod
     def buildfile(path, name):
+        """ Opens a CSV file at specified `path` + `name` + '.csv'.
+
+        Returns an open TextIOWrapper. """
+
         if path is not None:
             if not validate_string(path):
                 raise ValueError('Illegal path!')
@@ -57,7 +63,7 @@ class Core:
     @staticmethod
     def write_csv_data(writer, data):
         """ Writes a row of CSV data and returns the data that was read. """
-        if data is None:
+        if data is None:  # TODO Should None data be handled by super?
             return data
         else:
             writer.writerow(data)
@@ -65,6 +71,15 @@ class Core:
 
     @staticmethod
     def ping(address, timeout=3000, size=64, verbose=True, delay=0.22):
+        """ A generator that repeatedly calls `python-ping.single_ping`, and
+        yields the results.
+
+        All kwargs are passed to the underlying call to `python-ping`, aside
+        from `delay` which specifies the length of time to wait before the
+        next call to `python-ping` is performed.
+
+        Returns None if it is waiting for time to occur. """
+
         host_name = socket.gethostname()
 
         i = 1
@@ -88,6 +103,10 @@ class Core:
 
     def __init__(self, address, file_path=None, file_name=None, nofile=False,
                  quiet=False, delay=0.22, *args, **kwargs):
+        """ Constructs a `Core` object.
+
+        Instantiates a `ping` generator at `self.ping_generator`, and an
+        open CSV writer at `self.cwriter`"""
 
         self.quiet = not quiet  # flip bool
         self.delay = delay
