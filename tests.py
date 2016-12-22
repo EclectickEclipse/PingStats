@@ -115,6 +115,7 @@ class TestCore(unittest.TestCase):
 
 
 class PlotTable_test(unittest.TestCase):
+    """ Tests `Plot._PlotTable` functionality. """
     def test_instantiate(self):
         self.assertIsInstance(Plot._PlotTable(), Plot._PlotTable)
 
@@ -177,6 +178,7 @@ class PlotTable_test(unittest.TestCase):
 
 
 class BasePlot_test(unittest.TestCase):
+    """ Tests `Plot._Plot` functionality. """
     # TODO Test `Plot._Plot.show_plot`
     @given(st.one_of(st.tuples(st.integers(), st.integers()),
                      st.booleans(), st.integers()))
@@ -201,6 +203,8 @@ class BasePlot_test(unittest.TestCase):
 
 
 class AnimatePlot_test(unittest.TestCase):
+    """ Tests `Plot.Animate` functionality. """
+    # TODO Test `Plot.Animate.animate`
     @given(st.just('127.0.0.1'),
            st.one_of(st.just(None), st.integers()),
            st.one_of(st.just(None), st.integers()))
@@ -276,6 +280,7 @@ class AnimatePlot_test(unittest.TestCase):
 
 
 class Plotfile_test(unittest.TestCase):
+    """ Tests `Plot.PlotFile` functionality. """
     @given(st.just('./test_data/PingStatsLog.csv'))
     def test_init(self, path):
         obj = Plot.PlotFile(path)
@@ -306,6 +311,7 @@ class Plotfile_test(unittest.TestCase):
 
 
 class GenerateFile_from_Plotfile_test(unittest.TestCase):
+    """ Tests `Plot.PlotFile` image generation. """
     def test_generate_file(self, data_path='./test_data/PingStatsLog.csv',
                            image_path='./test_data/test_image.png'):
         p = Plot.PlotFile(data_path, image_path)

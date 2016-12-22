@@ -2,9 +2,9 @@ import sys
 import csv
 import datetime as dt
 import os
+from warnings import warn
 
 import core as c
-
 
 try:
     import matplotlib.pyplot as plt
@@ -16,9 +16,18 @@ except OSError as e:
 
 class _PlotTable:
         """ A class to maintain a specified number of objects to plot to
-        matplotlib. """
+        matplotlib.
+
+        Manages two lists:
+            self.x (takes `datetime.datetime` objects)
+            self.y (takes any `float` data type)
+        """
 
         def __init__(self, length=None):
+            """ Creates `self.x` and `self.y`, and validates a table `length`.
+
+            Length must be `int` or None. """
+
             self.x = []
             self.y = []
 
@@ -36,12 +45,11 @@ class _PlotTable:
             """ Append a new value to the x value of the table. Maintains
             specified length of table upon reaching max.
 
-            "a" - The value to append to the table.
+            "a" - A `datetime.datetime` object.
             """
 
             if type(a) is not dt.datetime:
-                raise TypeError('Requires a datetime.datetime.fromtimestamp '
-                                'object')
+                raise TypeError('Requires a datetime.datetime object')
 
             if len(self.x) < self.length:
                 self.x.append(a)
@@ -53,7 +61,7 @@ class _PlotTable:
             """ Append a new value to the y value of the table. Maintains
             specified length of table upon reaching max.
 
-            "a" - The value to append to the table.
+            "a" - Any float.
             """
 
             if type(a) is not float:
@@ -73,6 +81,9 @@ class _PlotTable:
 
 
 class _Plot:
+    """ Base class for `Animate` and `PlotFile`, maintains several matplotlib
+    properties. """
+
     fig = plt.figure()
 
     title_str = ''
@@ -87,6 +98,8 @@ class _Plot:
     ptable = _PlotTable()
 
     def __init__(self, *args, **kwargs):
+        """ Validates `self.title_str` and rotates plot labels. """
+
         super(_Plot, self).__init__(*args, **kwargs)
         if type(self.title_str) is not str:
             raise TypeError('Plot title_str requires a string object')
@@ -104,13 +117,15 @@ class _Plot:
             label.set_rotation(45)
 
     def show_plot(self):
-        # return plt.show(block=False)
+        """ Executes `matplotlib.pyplot.show` """
         return plt.show()
 
 
 class Animate(_Plot, c.Core):
+    """ Handles live plot generation. """
     def _animate(self, i, ptable):
-        """ Reads rows from a CSV file and render them to a plot.
+        """ Calls the next iteration of `c.Core.ping_generator`, and yields
+        data to the plot.
 
         "i" - Required by matplotlib.animation.FuncAnimation
         Returns None.
@@ -129,10 +144,11 @@ class Animate(_Plot, c.Core):
         next(self.get_pings(self.ping_generator))
 
     def animate(self):
-        # self.t.start()
+        """ A naming semantics wrapper for `_Plot.show_plot`. """
         return self.show_plot()
 
     def get_pings(self, obj):
+        """ Checks for None or appends to `self._PlotTable` """
         for val in obj:
             if val is None:
                 yield
@@ -150,6 +166,7 @@ class Animate(_Plot, c.Core):
                 yield
 
     def __init__(self, *args, **kwargs):
+        """ Validates kwargs, and generates a _PlotTable object. """
         super(Animate, self).__init__(*args, **kwargs)
 
         try:
@@ -186,6 +203,7 @@ class Animate(_Plot, c.Core):
 class PlotFile(_Plot):
     @staticmethod
     def generate_reader(csv_path):
+        """ Yields a `csv.reader` object built from `csv_path`. """
         if not os.access(csv_path, os.F_OK):
             raise RuntimeError('Cannot access %s!' % csv_path)
 
@@ -193,6 +211,8 @@ class PlotFile(_Plot):
 
     @staticmethod
     def generate_datetime(timestamp):
+        """ Yields a `datetime.datetime` object. """
+        warn('generate_datetime is deprecated in V2.4', DeprecationWarning)
         if type(timestamp) is not float:
             raise TypeError('timestamp must be float')
 
@@ -200,6 +220,7 @@ class PlotFile(_Plot):
 
     @staticmethod
     def yield_points(reader):
+        """ Yields an x and y coordinate for each row in `reader` """
         for row in reader:
             x = dt.datetime.fromtimestamp(float(row[0]))
 
