@@ -83,7 +83,7 @@ elif parsed.address is not None:
 
         for return_data in c.ping_generator:
             if not c.nofile:
-                c.write_csv_data(c.cwriter, return_data)
+                core.write_csv_data(c.cwriter, return_data)
 
             time.sleep(parsed.delay)
 

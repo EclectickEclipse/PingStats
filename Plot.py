@@ -161,7 +161,7 @@ class Animate(_Plot, c.Core):
                     self.ptable.appendy(val[1])
 
                 if not self.nofile:
-                    self.write_csv_data(self.cwriter, val)
+                    c.write_csv_data(self.cwriter, val)
 
                 yield
 
