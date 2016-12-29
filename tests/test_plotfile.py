@@ -12,13 +12,13 @@ import Plot
 
 class Plotfile_test(unittest.TestCase):
     """ Tests `Plot.PlotFile` functionality. """
-    @given(st.just('./tests/PingStatsLog.csv'))
+    @given(st.just('./tests/TestCSVLog.csv'))
     def test_init(self, path):
         obj = Plot.PlotFile(path)
 
         self.assertIsInstance(obj, Plot.PlotFile)
 
-    @given(st.just('./tests/PingStatsLog.csv'))
+    @given(st.just('./tests/TestCSVLog.csv'))
     def test_generate_reader(self, path):
         fileobj = open(path)
         reader = csv.reader(fileobj)
@@ -34,7 +34,7 @@ class Plotfile_test(unittest.TestCase):
                               type(dt.datetime.fromtimestamp(timestamp)))
 
     def test_yield_points(self):
-        with open('./tests/PingStatsLog.csv') as f:
+        with open('./tests/TestCSVLog.csv') as f:
             reader = csv.reader(f)
             for x, y in Plot.PlotFile.yield_points(reader):
                 self.assertIsInstance(x, dt.datetime)
