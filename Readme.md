@@ -26,6 +26,9 @@ This repository looks first for [python-ping](https://github.com/l4m3rx/python-p
 
 This can be achieved by running `git clone` in the `PingStats` directory, and then renaming the resulting folder from `python-ping` to `pythonping`. 
 
+This may be fixed soon, due to an [ongoing discussion on repo
+naming](https://github.com/l4m3rx/python-ping/issues/23)
+
 ---
 
 ## Running tests
