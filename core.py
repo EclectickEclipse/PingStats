@@ -128,9 +128,6 @@ class Core:
         self.nofile = nofile
         if not self.nofile:
             self.built_file = buildfile(self.file_path, self.file_name)
-            # TODO Create write_csv_data wrapper for core.Core
-            # core.Core maintains a csv writer. Having a wrapper ensures proper
-            # data write.
             self.cwriter = csv.writer(self.built_file)
 
 

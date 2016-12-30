@@ -12,7 +12,6 @@ import Plot
 class AnimatePlot_test(unittest.TestCase):
     """ Tests `Plot.Animate` functionality. """
     # TODO Test `Plot.Animate.animate`
-    # TODO Test get_pings call to self.write_csv
     @given(st.just('127.0.0.1'),
            st.one_of(st.just(None), st.integers()),
            st.one_of(st.just(None), st.integers()))
@@ -44,7 +43,7 @@ class AnimatePlot_test(unittest.TestCase):
                           '\'%s\'.' % (str(table_length), str(refresh_freq)))
 
     def test_get_pings_with_good_ip(self):
-        obj = Plot.Animate('127.0.0.1')
+        obj = Plot.Animate('127.0.0.1', nofile=True)
         gp = obj.get_pings(obj.ping_generator)
 
         time_now = time.time()
@@ -57,7 +56,7 @@ class AnimatePlot_test(unittest.TestCase):
         self.assertGreaterEqual(len(obj.ptable.gety()), 1)
 
     def test_get_pings_with_bad_ip(self):
-        obj = Plot.Animate('0.0.0.0')
+        obj = Plot.Animate('0.0.0.0', nofile=True)
         gp = obj.get_pings(obj.ping_generator)
 
         time_now = time.time()
@@ -67,6 +66,25 @@ class AnimatePlot_test(unittest.TestCase):
 
         self.assertGreaterEqual(len(obj.ptable.getx()), 1)
         self.assertGreaterEqual(len(obj.ptable.gety()), 1)
+
+    def test_get_pings_write_csv(self):
+        obj = Plot.Animate('0.0.0.0', file_path='tests/',
+                           file_name='get_pings_test.csv')
+        gp = obj.get_pings(obj.ping_generator)
+
+        time_now = time.time()
+        for result in gp:
+            if time.time() - time_now > obj.delay:
+                break
+
+        self.assertGreaterEqual(len(obj.ptable.getx()), 1)
+        self.assertGreaterEqual(len(obj.ptable.gety()), 1)
+        self.assertTrue(os.access(obj.built_file.name, os.F_OK))
+        try:
+            os.remove(obj.built_file.name)
+        except OSError:
+            self.fail('Could not remove file at path: %s'
+                      % obj.built_file.name)
 
     @given(st.booleans())
     def test_no_file(self, boolean):
