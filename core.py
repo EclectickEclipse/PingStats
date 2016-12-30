@@ -8,7 +8,7 @@ from pythonping import ping as pyping
 
 # GLOBALS
 buildname = "PingStats"
-version = "2.3-00ca3bf"
+version = "2.3-fb25aa3"
 versiondate = "Mon Dec 19 02:07:36 2016"
 versionstr = "PingStats Version %s (C) Ariana Giroux, Eclectick Media " \
              "Solutions. circa %s" % (
