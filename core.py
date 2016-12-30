@@ -101,6 +101,11 @@ def ping(address, timeout=3000, size=64, verbose=True, delay=0.22):
 
 class Core:
     """ Provides core functionality for `PingStats`. """
+
+    def write_csv(self, data):
+        """ Provides a wrapper to `core.write_csv_data`. """
+        write_csv_data(self.cwriter, data)
+
     def __init__(self, address, file_path=None, file_name=None, nofile=False,
                  quiet=False, delay=0.22, *args, **kwargs):
         """ Constructs a `Core` object.
