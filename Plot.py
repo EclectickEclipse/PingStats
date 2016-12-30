@@ -133,7 +133,7 @@ class _Plot:
 
 class Animate(_Plot, c.Core):
     """ Handles live plot generation. """
-    def _animate(self, i, ptable):
+    def _animate_logic(self, i, ptable):
         """ Calls the next iteration of `c.Core.ping_generator`, and yields
         data to the plot.
 
@@ -189,12 +189,12 @@ class Animate(_Plot, c.Core):
             raise TypeError('refresh_freq is not None or int')
 
         if refresh_freq is None:
-            self.ani = animation.FuncAnimation(self.fig, self._animate,
+            self.ani = animation.FuncAnimation(self.fig, self._animate_logic,
                                                fargs=(
                                                    self.ptable,))
 
         else:
-            self.ani = animation.FuncAnimation(self.fig, self._animate,
+            self.ani = animation.FuncAnimation(self.fig, self._animate_logic,
                                                interval=refresh_freq, fargs=(
                                                     self.ptable,))
 
