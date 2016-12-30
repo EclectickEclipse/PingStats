@@ -12,6 +12,7 @@ import Plot
 class AnimatePlot_test(unittest.TestCase):
     """ Tests `Plot.Animate` functionality. """
     # TODO Test `Plot.Animate.animate`
+    # TODO Test get_pings call to self.write_csv
     @given(st.just('127.0.0.1'),
            st.one_of(st.just(None), st.integers()),
            st.one_of(st.just(None), st.integers()))
