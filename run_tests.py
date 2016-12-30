@@ -22,6 +22,10 @@ stdout, stderr = p.communicate()
 p.kill()
 print('stdout: \n%s\nstderr:\n%s\n\n' % (stdout, stderr))
 
+print('\n\nIf `test_instantiate_with_good_ip (test_animateplot.'
+      'AnimatePlot_test)` fails, please run the tests again.\n\n')
+time.sleep(0.3)
+
 loader = unittest.TestLoader()
 tests = loader.discover('tests/')
 runner = unittest.TextTestRunner(buffer=True, verbosity=2)
