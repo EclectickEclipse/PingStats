@@ -10,6 +10,42 @@ more detail please see the afore mentioned repository.
 
 It can be used after the ping data has been collected without `sudo`.
 
+# Kivy Branch
+
+This branch attempts to provide a different backend than matplotlib for
+visualizing ping information, allowing us to compile and release an executable
+for most major OS's.
+
+### Kivy installation
+
+Due to the use of a different backend than matplotlib, there are a few extra
+steps to install and compile from source in this branch.
+
+1. Install `Kivy`
+   - Follow [these
+     instructions](https://kivy.org/docs/installation/installation.html)
+
+2. Create a `virtual environment` for `Kivy`
+   - via `$ kivy -m venv venv`
+   
+   Calling `kivy -m` enables you to run a module in the `Python` environment,
+   here we select `venv` *(short for virtual environment)*, and pass it a name
+   for the resulting `virtual environment`. *(in this case we use venv for
+   short)*
+
+3. Activate the `virtual environment` we just created.
+   - via `$ source venv/bin/activate`
+
+   To leave the virtual environment, use `$ deactivate`
+
+3. Install `garden.graph` to the `venv` *(graph graphical backend)*.
+   - via `$ garden install --app graph`
+   
+   We will include the `--app` flag to instruct `Kivy` to only install the
+   backend for **this** app.
+
+4. Install `python-ping` as per the following instructions.
+
 ## Installation of python-ping
 
 Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of a `-`
