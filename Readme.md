@@ -16,6 +16,9 @@ This branch attempts to provide a different backend than matplotlib for
 visualizing ping information, allowing us to compile and release an executable
 for most major OS's.
 
+This feature set is being developed due to a request from
+[frawst](https://github.com/frawst)
+
 ### Kivy installation
 
 Due to the use of a different backend than matplotlib, there are a few extra
