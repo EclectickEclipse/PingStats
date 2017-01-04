@@ -3,13 +3,19 @@ import csv
 import datetime as dt
 import os
 from warnings import warn
+import threading
+
+# kivy imports
+from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
 
 import core as c
 
 try:
+    import matplotlib
     import matplotlib.pyplot as plt
-    import matplotlib.animation as animation
     from matplotlib import style
+    matplotlib.use('module://resources.backend_kivy')  # I HATE THIS!
 except OSError as e:
     raise RuntimeError('Could not load matplotlib!').with_traceback()
 
@@ -131,37 +137,34 @@ class _Plot:
         return plt.show()
 
 
-class Animate(_Plot, c.Core):
-    """ Handles live plot generation. """
-    def _animate_logic(self, i, ptable):
-        """ Calls the next iteration of `c.Core.ping_generator`, and yields
-        data to the plot.
+class _Graph(BoxLayout):
+    def __init__(self, **kwargs):
+        self.orientation = "vertical"
+        super(_Graph, self).__init__(**kwargs)
 
-        "i" - Required by matplotlib.animation.FuncAnimation
-        Returns None.
-        """
-        self.ax1.clear()
-
-        plt.xlabel('Timestamps')
-        plt.ylabel('Return Time (in milliseconds)')
-        plt.title('Ping Over Time')
-
-        # DRAW POINTS
-        self.ax1.plot_date(ptable.getx(), ptable.gety(), 'r-')
-        for label in self.ax1.xaxis.get_ticklabels():
+        # Create a figure
+        fig, ax = plt.subplots()
+        style.use('seaborn-dark-palette')
+        for label in ax.xaxis.get_ticklabels():
             label.set_rotation(45)
+        self.ax = ax
+        plt.xlabel('Sequence Number')
+        plt.ylabel('Return Time')
+        self.py_plot = plt
 
-        next(self.get_pings(self.ping_generator))
+        # Get Canvas
+        canvas = fig.canvas
+        self.fig_canvas = canvas
+        self.add_widget(canvas)
 
-    def animate(self):
-        """ A naming semantics wrapper for `_Plot.show_plot`. """
-        return self.show_plot()
 
+class Animate(_Plot, _Graph, c.Core):
+    """ Handles live plot generation. """
     def get_pings(self, obj):
         """ Checks for None or appends to `self._PlotTable` """
         for val in obj:
             if val is None:
-                yield
+                pass
             else:
                 self.ptable.appendx(dt.datetime.fromtimestamp(val[0]))
 
@@ -173,30 +176,21 @@ class Animate(_Plot, c.Core):
                 if not self.nofile:
                     self.write_csv(val)
 
-                yield
+    def trigger_draw(self, *args):
+        """ Triggers `self.fig_canvas.draw()`. """
+        self.ax.clear()
+        try:
+            self.py_plot.plot_date(self._table.x, self._table.y)
+        except:
+            pass
+        self.fig_canvas.draw()
 
     def __init__(self, *args, **kwargs):
         """ Validates kwargs, and generates a _PlotTable object. """
         super(Animate, self).__init__(*args, **kwargs)
 
-        # refresh_freq validation
-        try:
-            refresh_freq = kwargs['refresh_freq']
-        except KeyError:
-            refresh_freq = None
-
-        if refresh_freq is not None and type(refresh_freq) is not int:
-            raise TypeError('refresh_freq is not None or int')
-
-        if refresh_freq is None:
-            self.ani = animation.FuncAnimation(self.fig, self._animate_logic,
-                                               fargs=(
-                                                   self.ptable,))
-
-        else:
-            self.ani = animation.FuncAnimation(self.fig, self._animate_logic,
-                                               interval=refresh_freq, fargs=(
-                                                    self.ptable,))
+        threading.Thread(target=self.get_pings, fargs=(self.ping_generator,))
+        Clock.schedule_interval(self.trigger_draw, 1 / 60)
 
 
 class PlotFile(_Plot):
