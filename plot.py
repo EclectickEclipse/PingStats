@@ -13,9 +13,9 @@ import core as c
 
 try:
     import matplotlib
+    matplotlib.use('module://kivy.garden.matplotlib.backend_kivy')
     import matplotlib.pyplot as plt
     from matplotlib import style
-    matplotlib.use('module://resources.backend_kivy')  # I HATE THIS!
 except OSError as e:
     raise RuntimeError('Could not load matplotlib!').with_traceback()
 
@@ -158,7 +158,7 @@ class _Graph(BoxLayout):
         self.add_widget(canvas)
 
 
-class Animate(_Plot, _Graph, c.Core):
+class Animate(_Graph, c.Core):
     """ Handles live plot generation. """
     def get_pings(self, obj):
         """ Checks for None or appends to `self._PlotTable` """

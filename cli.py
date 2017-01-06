@@ -1,7 +1,9 @@
 import core
-import Plot
+import sys
 import argparse
 import time
+import plot
+argv = sys.argv[1:]
 
 parser = argparse.ArgumentParser(
     description='%s. This program defines some basic ping statistic '
@@ -59,7 +61,7 @@ parser.add_argument('-v', '--version',
                     help='Flag this option to display software version.',
                     action='store_true')
 
-parsed = parser.parse_args()
+parsed = parser.parse_args(argv)
 
 
 if parsed.version:
@@ -68,7 +70,7 @@ if parsed.version:
 elif parsed.address is not None:
 
     if parsed.showliveplot:
-        plot = Plot.Animate(parsed.address, file_path=parsed.path,
+        plot = plot.Animate(parsed.address, file_path=parsed.path,
                             file_name=parsed.name,
                             nofile=parsed.nofile,
                             delay=parsed.delay,
@@ -88,7 +90,7 @@ elif parsed.address is not None:
             time.sleep(parsed.delay)
 
 elif parsed.plotfile is not None:
-    pf = Plot.PlotFile(parsed.plotfile, parsed.generateimage)
+    pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
     pf.show_plot()
 else:
     parser.print_help()
