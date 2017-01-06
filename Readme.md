@@ -41,8 +41,8 @@ steps to install and compile from source in this branch.
 
    To leave the virtual environment, use `$ deactivate`
 
-3. Install `garden.graph` to the `venv` *(graph graphical backend)*.
-   - via `$ garden install --app graph`
+3. Install `garden.matplotlib` to the `venv` *(graph graphical backend)*.
+   - via `$ garden install --app matplotlib`
    
    We will include the `--app` flag to instruct `Kivy` to only install the
    backend for **this** app.
