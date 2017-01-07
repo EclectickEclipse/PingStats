@@ -72,10 +72,8 @@ naming](https://github.com/l4m3rx/python-ping/issues/23)
 
 ## Running tests
 
-The included `tests.py` module can be run for automatic testing of the
-software run by [python's
-hypothesis](https://github.com/HypothesisWorks/hypothesis-python). Follow the
-instructions provided to install the software.
+Due to `Kivy`'s runtime not working with python's `unittest`, the tests have
+been removed from this branch.
 
 --- 
 
