@@ -2,14 +2,33 @@
 from kivy.app import App
 
 # Kivy UI
-from kivy.uix.widget import Widget
+from kivy.uix.accordion import Accordion, AccordionItem
+from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.accordion import Accordion, AccordionItem
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.switch import Switch
+
+settings = {  # GLOBAL SETTINGS DATA
+    'address': 'google.ca',
+    'track': {
+        'return': True,
+        'ttl': False
+    },
+
+    'csv': {
+        'name': 'PingStatsLog',
+        'path': './',
+        'generate': True
+    },
+
+    'core': {
+        'wait': 0.22,
+        'length': 250
+    }
+}
 
 
 class MainSettings(GridLayout):
@@ -92,13 +111,6 @@ class AdvancedSettings(GridLayout):
         self.add_widget(self.core_length)
 
 
-class GraphDisplay(Widget):
-    # TODO Display graph
-
-    def __init__(self, **kwargs):
-        super(GraphDisplay, self).__init__(**kwargs)
-
-
 class PaneSelect(Accordion):
     def __init__(self, **kwargs):
         super(PaneSelect, self).__init__(**kwargs)
@@ -118,19 +130,51 @@ class PaneSelect(Accordion):
         self.select(self.main_settings_pane)
 
 
-class Root(BoxLayout):
+class GraphScreen(Screen):
+    def __init__(self, **kwargs):
+        super(GraphScreen, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        self.button = Button(text='hello')
+        layout.add_widget(self.button)
+        self.add_widget(layout)
+
+
+class SettingsScreen(Screen):
     # TODO Gather settings when go is pressed
-    # TODO Switch to graph screen when go is pressed
-    orientation = 'vertical'
 
     def __init__(self, **kwargs):
-        super(Root, self).__init__(**kwargs)
+        super(SettingsScreen, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
 
-        self.add_widget(PaneSelect())
+        layout.add_widget(PaneSelect())
 
         self.go = Button(text='Go', size_hint_y=0.2)
 
-        self.add_widget(self.go)
+        layout.add_widget(self.go)
+
+        self.add_widget(layout)
+
+
+class Root(ScreenManager):
+    transition = FadeTransition()
+
+    def change(self, instance):
+        if instance.text.count('Go'):
+            self.current = 'graph'
+        else:
+            self.current = 'settings'
+
+    def __init__(self, **kwargs):
+        super(Root, self).__init__(**kwargs)
+        settings = SettingsScreen(name='settings')
+        graph = GraphScreen(name='graph')
+
+        settings.go.bind(on_press=self.change)
+        graph.button.bind(on_press=self.change)
+
+        self.add_widget(settings)
+        self.add_widget(graph)
+        self.current = 'settings'
 
 
 if __name__ == '__main__':
