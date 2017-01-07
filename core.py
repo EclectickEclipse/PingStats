@@ -106,8 +106,8 @@ class Core:
         """ Provides a wrapper to `core.write_csv_data`. """
         write_csv_data(self.cwriter, data)
 
-    def __init__(self, address, file_path=None, file_name=None, nofile=False,
-                 quiet=False, delay=0.22, *args, **kwargs):
+    def __init__(self, address=None, file_path=None, file_name=None,
+                 nofile=False, quiet=False, delay=0.22, *args, **kwargs):
         """ Constructs a `Core` object.
 
         Instantiates a `ping` generator at `self.ping_generator`, and an
