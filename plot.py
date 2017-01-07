@@ -138,9 +138,20 @@ class _Plot:
 
 
 class _Graph(BoxLayout):
+    ptable = _PlotTable()
+
     def __init__(self, **kwargs):
         self.orientation = "vertical"
         super(_Graph, self).__init__(**kwargs)
+
+        try:
+            table_length = kwargs['table_length']
+        except KeyError:
+            table_length = None
+        if table_length is not None and type(table_length) is not int:
+            raise TypeError('table_length is not None or int')
+        if table_length is not None:
+            self.ptable.length = table_length
 
         # Create a figure
         fig, ax = plt.subplots()
@@ -189,7 +200,7 @@ class Animate(_Graph, c.Core):
         """ Validates kwargs, and generates a _PlotTable object. """
         super(Animate, self).__init__(*args, **kwargs)
 
-        threading.Thread(target=self.get_pings, fargs=(self.ping_generator,))
+        threading.Thread(target=self.get_pings, args=(self.ping_generator,))
         Clock.schedule_interval(self.trigger_draw, 1 / 60)
 
 
