@@ -186,10 +186,10 @@ class PlotScreen(Screen):
             table_length=settings['core']['length']
         )
 
-        self.layout.add_widget(plot, index=0)
+        self.layout.add_widget(self.plot, index=0)
 
     def remove_graph(self):
-        self.remove_widget(plot)
+        self.remove_widget(self.plot)
         self.plot = None
 
     def __init__(self, **kwargs):
