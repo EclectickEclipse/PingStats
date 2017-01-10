@@ -171,9 +171,9 @@ class _Graph(BoxLayout):
 
 class Animate(_Graph, c.Core):
     """ Handles live plot generation. """
-    def get_pings(self, obj):
+    def get_pings(self, *args):
         """ Checks for None or appends to `self._PlotTable` """
-        for val in obj:
+        for val in self.ping_generator:
             if val is None:
                 pass
             else:
@@ -191,16 +191,22 @@ class Animate(_Graph, c.Core):
         """ Triggers `self.fig_canvas.draw()`. """
         self.ax.clear()
         try:
-            self.py_plot.plot_date(self._table.x, self._table.y)
+            self.py_plot.plot_date(self.ptable.x, self.ptable.y)
         except:
             pass
+
         self.fig_canvas.draw()
+
+    def kill_thread(self, *args):
+        self.t.join()
 
     def __init__(self, *args, **kwargs):
         """ Validates kwargs, and generates a _PlotTable object. """
         super(Animate, self).__init__(*args, **kwargs)
 
-        threading.Thread(target=self.get_pings, args=(self.ping_generator,))
+        self.t = threading.Thread(target=self.get_pings, args=(
+            self.ping_generator,))
+        self.t.start()
         Clock.schedule_interval(self.trigger_draw, 1 / 60)
 
 

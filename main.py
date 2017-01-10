@@ -1,5 +1,6 @@
 # Kivy runtime
 from kivy.app import App
+from kivy.clock import Clock
 
 # Kivy UI
 from kivy.uix.accordion import Accordion, AccordionItem
@@ -99,25 +100,25 @@ class AdvancedSettings(GridLayout):
 
     spacing = [50, 50]
 
-    def report_csv_name(self, instance, value):
+    def report_csv_name(self, instance):
         global settings
-        settings['csv']['name'] = value
+        settings['csv']['name'] = instance.text
 
-    def report_csv_path(self, instance, value):
+    def report_csv_path(self, instance):
         global settings
-        settings['csv']['path'] = value
+        settings['csv']['path'] = instance.text
 
-    def report_generate_file(self, instance, value):
+    def report_generate_file(self, instance):
         global settings
-        settings['csv']['generate'] = value
+        settings['csv']['generate'] = instance.text
 
-    def report_core_wait(self, instance, value):
+    def report_core_wait(self, instance):
         global settings
-        settings['core']['wait'] = float(value)
+        settings['core']['wait'] = float(instance.text)
 
-    def report_core_length(self, instance, value):
+    def report_core_length(self, instance):
         global settings
-        settings['core']['length'] = float(value)
+        settings['core']['length'] = float(instance.text)
 
     def __init__(self, **kwargs):
         super(AdvancedSettings, self).__init__(**kwargs)
@@ -177,6 +178,11 @@ class PlotScreen(Screen):
     def render_graph(self):
         global settings
 
+        try:
+            self.remove_graph()
+        except:
+            pass
+
         self.plot = plot.Animate(
             address=settings['address'],
             file_path=settings['csv']['path'],
@@ -189,6 +195,7 @@ class PlotScreen(Screen):
         self.layout.add_widget(self.plot, index=0)
 
     def remove_graph(self):
+        Clock.schedule_once(self.plot.kill_thread, -1)
         self.remove_widget(self.plot)
         self.plot = None
 
