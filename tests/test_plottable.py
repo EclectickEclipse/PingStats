@@ -6,37 +6,37 @@ import datetime as dt
 import time
 
 # PingStats modules
-import Plot
+import plot
 
 
 class PlotTable_test(unittest.TestCase):
     """ Tests `Plot._PlotTable` functionality. """
     def test_instantiate(self):
-        self.assertIsInstance(Plot._PlotTable(), Plot._PlotTable)
+        self.assertIsInstance(plot._PlotTable(), plot._PlotTable)
 
     def test_instantiate_catch_zero_length(self):
         with self.assertRaises(ValueError):
-            Plot._PlotTable(0)
+            plot._PlotTable(0)
 
     @given(st.integers(min_value=1))
     def test_instantiate_with_length_as_int(self, length):
-        self.assertIsInstance(Plot._PlotTable(length), Plot._PlotTable)
+        self.assertIsInstance(plot._PlotTable(length), plot._PlotTable)
 
     @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
                      st.booleans()))
     def test_instantiate_catch_invalid_data(self, data):
         with self.assertRaises(TypeError):
-            Plot._PlotTable(data)
+            plot._PlotTable(data)
 
     @given(st.one_of(st.text(), st.tuples(st.integers(), st.integers()),
                      st.booleans(), st.floats(), st.text()))
     def test_appendx_invalid_data_catch(self, data):
         with self.assertRaises(TypeError):
-            Plot._PlotTable().appendx(data)
+            plot._PlotTable().appendx(data)
 
     @given(st.just(dt.datetime.fromtimestamp(time.time())))
     def test_appendx_data_addition(self, data):
-        ptable = Plot._PlotTable()
+        ptable = plot._PlotTable()
         ptable.appendx(data)
 
         self.assertTrue(ptable.x.count(data))
@@ -44,7 +44,7 @@ class PlotTable_test(unittest.TestCase):
     @given(st.integers(min_value=1, max_value=5000), st.just(
         dt.datetime.fromtimestamp(time.time())))
     def test_appendx_flood(self, length_value, data):
-        ptable = Plot._PlotTable(length_value)
+        ptable = plot._PlotTable(length_value)
         for i in range(length_value + 1):
             ptable.appendx(data)
 
@@ -54,18 +54,18 @@ class PlotTable_test(unittest.TestCase):
                      st.booleans(), st.text()))
     def test_appendy_invalid_data_catch(self, data):
         with self.assertRaises(TypeError):
-            Plot._PlotTable().appendy(data)
+            plot._PlotTable().appendy(data)
 
     @given(st.floats())
     def test_appendy_data_addition(self, data):
-        ptable = Plot._PlotTable()
+        ptable = plot._PlotTable()
         ptable.appendy(data)
 
         self.assertTrue(ptable.y.count(data))
 
     @given(st.integers(min_value=1, max_value=5000), st.floats())
     def test_appendy_flood(self, integer, data):
-        ptable = Plot._PlotTable(integer)
+        ptable = plot._PlotTable(integer)
         for i in range(integer + 1):
             ptable.appendy(data)
 

@@ -6,7 +6,7 @@ import time
 import os
 
 # PingStats modules
-import Plot
+import plot
 
 
 class AnimatePlot_test(unittest.TestCase):
@@ -17,10 +17,10 @@ class AnimatePlot_test(unittest.TestCase):
            st.one_of(st.just(None), st.integers()))
     def test_instantiate_with_good_ip(self, address, table_length,
                                       refresh_freq):
-        self.assertIsInstance(Plot.Animate(address,
+        self.assertIsInstance(plot.Animate(address,
                                            table_length=table_length,
                                            refresh_freq=refresh_freq),
-                              Plot.Animate)
+                              plot.Animate)
 
         self.can_init = True
 
@@ -32,7 +32,7 @@ class AnimatePlot_test(unittest.TestCase):
     def test_instantiate_catch_bad_kwargs(self, address, table_length,
                                           refresh_freq):
         with self.assertRaises(TypeError) as e:
-            Plot.Animate(address,
+            plot.Animate(address,
                          table_length=table_length,
                          refresh_freq=refresh_freq)
 
@@ -43,7 +43,7 @@ class AnimatePlot_test(unittest.TestCase):
                           '\'%s\'.' % (str(table_length), str(refresh_freq)))
 
     def test_get_pings_with_good_ip(self):
-        obj = Plot.Animate('127.0.0.1', nofile=True)
+        obj = plot.Animate('127.0.0.1', nofile=True)
         gp = obj.get_pings(obj.ping_generator)
 
         time_now = time.time()
@@ -56,7 +56,7 @@ class AnimatePlot_test(unittest.TestCase):
         self.assertGreaterEqual(len(obj.ptable.gety()), 1)
 
     def test_get_pings_with_bad_ip(self):
-        obj = Plot.Animate('0.0.0.0', nofile=True)
+        obj = plot.Animate('0.0.0.0', nofile=True)
         gp = obj.get_pings(obj.ping_generator)
 
         time_now = time.time()
@@ -68,7 +68,7 @@ class AnimatePlot_test(unittest.TestCase):
         self.assertGreaterEqual(len(obj.ptable.gety()), 1)
 
     def test_get_pings_write_csv(self):
-        obj = Plot.Animate('0.0.0.0', file_path='tests/',
+        obj = plot.Animate('0.0.0.0', file_path='tests/',
                            file_name='get_pings_test.csv')
         gp = obj.get_pings(obj.ping_generator)
 
@@ -89,15 +89,15 @@ class AnimatePlot_test(unittest.TestCase):
     @given(st.booleans())
     def test_no_file(self, boolean):
         if boolean:
-            p = Plot.Animate('127.0.0.1', file_path='tests//',
+            p = plot.Animate('127.0.0.1', file_path='tests//',
                              file_name='testCSV', nofile=boolean)
-            self.assertIsInstance(p, Plot.Animate)
+            self.assertIsInstance(p, plot.Animate)
             self.assertFalse(os.access('tests/testCSV.csv', os.F_OK))
 
         else:
-            p = Plot.Animate('127.0.0.1', file_path='tests/',
+            p = plot.Animate('127.0.0.1', file_path='tests/',
                              file_name='testCSV', nofile=boolean)
-            self.assertIsInstance(p, Plot.Animate)
+            self.assertIsInstance(p, plot.Animate)
             self.assertTrue(os.access('tests/testCSV.csv', os.F_OK))
             try:
                 os.remove('tests/testCSV.csv')

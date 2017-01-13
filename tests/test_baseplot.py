@@ -1,7 +1,7 @@
 import unittest
 from hypothesis import given, strategies as st
 
-import Plot
+import plot
 
 
 class BasePlot_test(unittest.TestCase):
@@ -11,7 +11,7 @@ class BasePlot_test(unittest.TestCase):
                      st.booleans(), st.integers()))
     def test_instantiate_catch_invalid_title_string(self, data):
         with self.assertRaises(TypeError):
-            plot = Plot._Plot
+            plot = plot._Plot
             plot.title_str = data
 
             plot()
@@ -19,7 +19,7 @@ class BasePlot_test(unittest.TestCase):
     @given(st.just('\x00'))
     def test_instantiate_catch_null_byte_title_string(self, data):
         with self.assertRaises(ValueError) as e:
-            plot = Plot._Plot
+            plot = plot._Plot
             plot.title_str = data
             plot()
             self.failIf(str(e).count('Title String must not have null bytes'),

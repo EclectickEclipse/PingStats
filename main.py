@@ -1,5 +1,5 @@
 import core
-import Plot
+import plot
 import argparse
 import time
 
@@ -68,14 +68,14 @@ if parsed.version:
 elif parsed.address is not None:
 
     if parsed.showliveplot:
-        plot = Plot.Animate(parsed.address, file_path=parsed.path,
-                            file_name=parsed.name,
-                            nofile=parsed.nofile,
-                            delay=parsed.delay,
-                            refresh_freq=parsed.refreshfrequency,
-                            table_length=parsed.tablelength,
-                            quiet=parsed.quiet)
-        plot.animate()
+        p = plot.Animate(parsed.address, file_path=parsed.path,
+                         file_name=parsed.name,
+                         nofile=parsed.nofile,
+                         delay=parsed.delay,
+                         refresh_freq=parsed.refreshfrequency,
+                         table_length=parsed.tablelength,
+                         quiet=parsed.quiet)
+        p.animate()
 
     else:
         c = core.Core(parsed.address, parsed.path, parsed.name,
@@ -88,7 +88,7 @@ elif parsed.address is not None:
             time.sleep(parsed.delay)
 
 elif parsed.plotfile is not None:
-    pf = Plot.PlotFile(parsed.plotfile, parsed.generateimage)
+    pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
     pf.show_plot()
 else:
     parser.print_help()

@@ -4,14 +4,14 @@ import unittest
 import os
 
 # PingStats modules
-import Plot
+import plot
 
 
 class GenerateFile_from_Plotfile_test(unittest.TestCase):
     """ Tests `Plot.PlotFile` image generation. """
     def test_generate_file(self, data_path='./tests/TestCSVLog.csv',
                            image_path='./tests/test_image.png'):
-        p = Plot.PlotFile(data_path, image_path)
+        p = plot.PlotFile(data_path, image_path)
         p.show_plot()
 
         self.assertTrue(os.access(image_path, os.F_OK))
