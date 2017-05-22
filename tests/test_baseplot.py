@@ -11,17 +11,17 @@ class BasePlot_test(unittest.TestCase):
                      st.booleans(), st.integers()))
     def test_instantiate_catch_invalid_title_string(self, data):
         with self.assertRaises(TypeError):
-            plot = plot._Plot
-            plot.title_str = data
+            p = plot._Plot
+            p.title_str = data
 
-            plot()
+            p()
 
     @given(st.just('\x00'))
     def test_instantiate_catch_null_byte_title_string(self, data):
         with self.assertRaises(ValueError) as e:
-            plot = plot._Plot
-            plot.title_str = data
-            plot()
+            p = plot._Plot
+            p.title_str = data
+            p()
             self.failIf(str(e).count('Title String must not have null bytes'),
                         'Did not catch the right exception. Caught: %s' %
                         str(e))
