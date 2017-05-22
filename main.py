@@ -3,6 +3,12 @@ import plot
 import argparse
 import time
 
+from tkinter import *
+from tkinter import ttk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, \
+    NavigationToolbar2TkAgg
+import matplotlib.animation as animation
+
 parser = argparse.ArgumentParser(
     description='%s. This program defines some basic ping statistic '
                 'visualizationmethods through Python\'s \'matplotlib\'.'
@@ -38,6 +44,7 @@ parser.add_argument('-s', '--showliveplot',
                     'the last 500 ping sequences.', action='store_true')
 
 parser.add_argument('-sF', '--refreshfrequency',
+                    type=float,
                     help='Specify a number of milliseconds to wait between'
                     'refreshes of the -s plot visualization feature.'
                     'The lower the number, the better the performance'
@@ -45,6 +52,7 @@ parser.add_argument('-sF', '--refreshfrequency',
                     % core.buildname)
 
 parser.add_argument('-sL', '--tablelength',
+                    type=int,
                     help='The total number of pings to show for -s. The'
                     'lower the number, the better the performance of '
                     '%s visualization. Handy for \"potatoes.\"'
@@ -62,20 +70,37 @@ parser.add_argument('-v', '--version',
 parsed = parser.parse_args()
 
 
+def _quit():
+    root.quit()
+    root.destroy()
+
 if parsed.version:
     print(core.versionstr)
 
 elif parsed.address is not None:
 
     if parsed.showliveplot:
-        p = plot.Animate(parsed.address, file_path=parsed.path,
-                         file_name=parsed.name,
-                         nofile=parsed.nofile,
-                         delay=parsed.delay,
-                         refresh_freq=parsed.refreshfrequency,
-                         table_length=parsed.tablelength,
-                         quiet=parsed.quiet)
-        p.animate()
+        root = Tk()
+        p = plot.Animate(root,
+                         core.Core(parsed.address, parsed.path, parsed.name,
+                                   parsed.nofile, not parsed.quiet
+                                   ).ping_generator,
+                         table_length=parsed.tablelength
+                         )
+
+        p.pack(side=BOTTOM, fill=BOTH)
+
+        if parsed.refreshfrequency is None:
+            ani = animation.FuncAnimation(p.fig, p.animate,
+                                          interval=1000)
+        else:
+            ani = animation.FuncAnimation(p.fig, p.animate,
+                                          interval=parsed.refreshfrequency)
+
+        button = Button(root, text='Quit', command=_quit)
+        button.pack(side=BOTTOM)
+
+        root.mainloop()
 
     else:
         c = core.Core(parsed.address, parsed.path, parsed.name,
@@ -89,6 +114,6 @@ elif parsed.address is not None:
 
 elif parsed.plotfile is not None:
     pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
-    pf.show_plot()
+    pf.get_figure()
 else:
     parser.print_help()

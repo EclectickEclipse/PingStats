@@ -1,17 +1,18 @@
-import sys
-import csv
 import datetime as dt
-import os
-from warnings import warn
 
-import core as c
+from tkinter import *
 
 try:
-    import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('TkAgg')
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, \
+        NavigationToolbar2TkAgg
+    from matplotlib.figure import Figure
     import matplotlib.animation as animation
     from matplotlib import style
+    import matplotlib.pyplot as plt
 except OSError as e:
-    raise RuntimeError('Could not load matplotlib!').with_traceback()
+    raise RuntimeError('Could not load matplotlib!')
 
 
 class _PlotTable:
@@ -80,11 +81,11 @@ class _PlotTable:
             return self.y
 
 
-class _Plot:
+class _Plot(Frame):
     """ Base class for `Animate` and `PlotFile`, maintains several matplotlib
     properties. """
 
-    fig = plt.figure()
+    fig = Figure(figsize=(5, 5), dpi=100)
 
     title_str = ''
     for arg in sys.argv:
@@ -93,13 +94,32 @@ class _Plot:
         else:
             title_str += ' ' + arg
 
-    ax1 = plt.axes()
+    ax1 = fig.add_subplot(111)
+    fig.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
 
-    ptable = _PlotTable()
+    @property
+    def x_list(self):
+        return self.ptable.getx()
 
-    def __init__(self, *args, **kwargs):
+    @x_list.setter
+    def x_list(self, i):
+        self.ptable.appendx(i)
+
+    @property
+    def y_list(self):
+        return self.ptable.gety()
+
+    @y_list.setter
+    def y_list(self, i):
+        self.ptable.appendy(i)
+
+    def __init__(self, root, *args, **kwargs):
         """ Validates `self.title_str` and rotates plot labels. """
-        super(_Plot, self).__init__(*args, **kwargs)
+        super(_Plot, self).__init__()
+
+        self.root = root
+
+        self.ptable = _PlotTable()
 
         # table_length validation
         try:
@@ -117,23 +137,23 @@ class _Plot:
         if self.title_str.count('\x00'):
             raise(ValueError('Title String must not have null bytes'))
 
-        self.fig.canvas.set_window_title('%s | %s' % (c.buildname,
-                                                      self.title_str))
-        # style.use('ggplot')
         style.use('seaborn-darkgrid')
 
-        plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
         for label in self.ax1.xaxis.get_ticklabels():
             label.set_rotation(45)
 
-    def show_plot(self):
+        self.canvas = FigureCanvasTkAgg(self.fig, self)
+        self.canvas.show()
+        self.canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
+
+    def get_figure(self):
         """ Executes `matplotlib.pyplot.show` """
-        return plt.show()
+        return self.canvas
 
 
-class Animate(_Plot, c.Core):
+class Animate(_Plot):
     """ Handles live plot generation. """
-    def _animate_logic(self, i, ptable):
+    def animate(self, i):
         """ Calls the next iteration of `c.Core.ping_generator`, and yields
         data to the plot.
 
@@ -142,20 +162,19 @@ class Animate(_Plot, c.Core):
         """
         self.ax1.clear()
 
-        plt.xlabel('Timestamps')
-        plt.ylabel('Return Time (in milliseconds)')
-        plt.title('Ping Over Time')
+        # TODO Re-enable plot labels
+        # self.ax1.xlabel('Timestamps')
+        # self.ax1.ylabel('Return Time (in milliseconds)')
+        # self.ax1.title('Ping Over Time')
 
         # DRAW POINTS
-        self.ax1.plot_date(ptable.getx(), ptable.gety(), 'r-')
+        self.ax1.plot_date(self.x_list, self.y_list, 'g-')
         for label in self.ax1.xaxis.get_ticklabels():
             label.set_rotation(45)
 
-        next(self.get_pings(self.ping_generator))
+        self.fig.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
 
-    def animate(self):
-        """ A naming semantics wrapper for `_Plot.show_plot`. """
-        return self.show_plot()
+        next(self.get_pings(self.generator))
 
     def get_pings(self, obj):
         """ Checks for None or appends to `self._PlotTable` """
@@ -163,79 +182,62 @@ class Animate(_Plot, c.Core):
             if val is None:
                 yield
             else:
-                self.ptable.appendx(dt.datetime.fromtimestamp(val[0]))
+                self.x_list = dt.datetime.fromtimestamp(val[0])
 
                 if val[1] is None:
-                    self.ptable.appendy(-100.0)
+                    self.y_list = -100.0
                 else:
-                    self.ptable.appendy(val[1])
-
-                if not self.nofile:
-                    self.write_csv(val)
+                    self.y_list = val[1]
 
                 yield
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, root, generator, *args, **kwargs):
         """ Validates kwargs, and generates a _PlotTable object. """
-        super(Animate, self).__init__(*args, **kwargs)
-
-        # refresh_freq validation
-        try:
-            refresh_freq = kwargs['refresh_freq']
-        except KeyError:
-            refresh_freq = None
-
-        if refresh_freq is not None and type(refresh_freq) is not int:
-            raise TypeError('refresh_freq is not None or int')
-
-        if refresh_freq is None:
-            self.ani = animation.FuncAnimation(self.fig, self._animate_logic,
-                                               fargs=(
-                                                   self.ptable,))
-
-        else:
-            self.ani = animation.FuncAnimation(self.fig, self._animate_logic,
-                                               interval=refresh_freq, fargs=(
-                                                    self.ptable,))
+        super(Animate, self).__init__(root, *args, **kwargs)
+        self.generator = generator
 
 
 class PlotFile(_Plot):
-    @staticmethod
-    def generate_reader(csv_path):
-        """ Yields a `csv.reader` object built from `csv_path`. """
-        if not os.access(csv_path, os.F_OK):
-            raise RuntimeError('Cannot access %s!' % csv_path)
 
-        return csv.reader(open(csv_path))
-
-    @staticmethod
-    def generate_datetime(timestamp):
-        """ Yields a `datetime.datetime` object. """
-        warn('generate_datetime is deprecated in V2.4', DeprecationWarning)
-        if type(timestamp) is not float:
-            raise TypeError('timestamp must be float')
-
-        return dt.datetime.fromtimestamp(timestamp)
-
-    @staticmethod
-    def yield_points(reader):
-        """ Yields an x and y coordinate for each row in `reader` """
-        for row in reader:
-            x = dt.datetime.fromtimestamp(float(row[0]))
-
-            if row[1] == '':  # none
-                y = -100.0
-
-            else:
-                try:
-                    y = float(row[1])
-                except ValueError as e:
-                    raise e('Could not handle second data point in row %s' %
-                            row)
-
-            yield x, y
-
+    # @staticmethod
+    # def generate_reader(csv_path):
+    #     """ Yields a `csv.reader` object built from `csv_path`. """
+    #     if not os.access(csv_path, os.F_OK):
+    #         raise RuntimeError('Cannot access %s!' % csv_path)
+    #
+    #     return csv.reader(open(csv_path))
+    #
+    # @staticmethod
+    # def generate_datetime(timestamp):
+    #     """ Yields a `datetime.datetime` object. """
+    #     warn('generate_datetime is deprecated in V2.4', DeprecationWarning)
+    #     if type(timestamp) is not float:
+    #         raise TypeError('timestamp must be float')
+    #
+    #     return dt.datetime.fromtimestamp(timestamp)
+    #
+    # @staticmethod
+    # def yield_points(reader):
+    #     """ Yields an x and y coordinate for each row in `reader` """
+    #     for row in reader:
+    #         x = dt.datetime.fromtimestamp(float(row[0]))
+    #
+    #         if row[1] == '':  # none
+    #             y = -100.0
+    #
+    #         else:
+    #             try:
+    #                 y = float(row[1])
+    #             except ValueError as e:
+    #                 raise e('Could not handle second data point in row %s' %
+    #                         row)
+    #
+    #         yield x, y
+    #
     def __init__(self, csv_file, image_path=None, *args, **kwargs):
+        raise DeprecationWarning('PlotFile is under maintenence')
+
+        # TODO Re-enable plotfile
         super(PlotFile, self).__init__(*args, **kwargs)
 
         self.image_path = image_path
@@ -256,9 +258,9 @@ class PlotFile(_Plot):
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
-
-    def show_plot(self):
-        if self.image_path is not None:
-            plt.savefig(self.image_path)
-        else:
-            super(PlotFile, self).show_plot()
+    #
+    # def show_plot(self):
+    #     if self.image_path is not None:
+    #         plt.savefig(self.image_path)
+    #     else:
+    #         super(PlotFile, self).show_plot()
