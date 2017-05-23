@@ -208,7 +208,7 @@ elif parsed.address is not None:
         p = plot.Animate(root,
                          core.Core(parsed.address, parsed.path, parsed.name,
                                    parsed.nofile, not parsed.quiet,
-                                   parsed.timeout).ping_generator,
+                                   timeout=parsed.timeout).ping_generator,
                          table_length=parsed.tablelength
                          )
 
