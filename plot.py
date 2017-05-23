@@ -180,6 +180,9 @@ class Animate(_Plot):
     def get_pings(self, obj):
         """ Checks for None or appends to `self._PlotTable` """
         for val in obj:
+            if not self.nofile:
+                self.core.write_csv(val)
+
             if val is None:
                 yield
             else:
@@ -192,10 +195,12 @@ class Animate(_Plot):
 
                 yield
 
-    def __init__(self, root, generator, *args, **kwargs):
+    def __init__(self, root, core, *args, **kwargs):
         """ Validates kwargs, and generates a _PlotTable object. """
         super(Animate, self).__init__(root, *args, **kwargs)
-        self.generator = generator
+        self.core = core
+        self.nofile = core.nofile
+        self.generator = core.ping_generator
 
 
 class PlotFile:

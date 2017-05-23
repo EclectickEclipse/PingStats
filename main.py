@@ -238,7 +238,7 @@ class Plot(ttk.Frame):
         self.p = plot.Animate(self.plot_frame,
                               core.Core(address, path, name, not write,
                                         not parsed.quiet, delay,
-                                        timeout=timeout).ping_generator,
+                                        timeout=timeout),
                               table_length=length)
         self.p.pack(side=TOP, fill=BOTH)
 
@@ -260,7 +260,7 @@ elif parsed.address is not None:
         p = plot.Animate(root,
                          core.Core(parsed.address, parsed.path, parsed.name,
                                    parsed.nofile, not parsed.quiet,
-                                   timeout=parsed.timeout).ping_generator,
+                                   timeout=parsed.timeout),
                          table_length=parsed.tablelength
                          )
 
