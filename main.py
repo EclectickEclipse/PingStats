@@ -14,8 +14,9 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('-a', '--address', help='The IP address to ping.')
 
-parser.add_argument('-d', '--delay', help='The interval of time (in seconds'
-                    ') to wait between ping requests.', type=float,
+parser.add_argument('-d', '--delay', help='The interval of time (in seconds) '
+                                          'to wait between ping requests.',
+                    type=float,
                     default=0.22)
 
 parser.add_argument('-t', '--timeout',
@@ -45,8 +46,14 @@ parser.add_argument('-q', '--quiet', help='Flag this for quiet operation.',
                     action='store_true')
 
 parser.add_argument('-s', '--showliveplot',
-                    help='Flag this option to display an animated plot of'
-                    'the last 500 ping sequences.', action='store_true')
+                    help='Flag this option to display a live plot of return '
+                         'time (in ms) by time received. Use this command to '
+                         'skip the UI entirely.', action='store_true')
+
+parser.add_argument('-c', '--cli',
+                    help='Flag this option if you want to skip running the UI '
+                         'entirely, and instead just rely on CLI arguments.',
+                    action='store_true')
 
 parser.add_argument('-sF', '--refreshfrequency',
                     type=float, default=1000,
@@ -75,7 +82,7 @@ parser.add_argument('-v', '--version',
 parsed = parser.parse_args()
 
 
-def _quit():
+def _quit():  # used by -s
     root.quit()
     root.destroy()
 
@@ -83,6 +90,35 @@ def _quit():
 class Main(Tk):
     def __init__(self, *args, **kwargs):
         super(Main, self).__init__(*args, **kwargs)
+        # tk.Tk.__init__(self, *args, **kwargs)
+        container = ttk.Frame(self)
+
+        container.pack(side="top", fill="both", expand=True)
+
+        self.frames = {
+            Settings: Settings(container, self),
+            Plot: Plot(container, self),
+        }
+
+        for F in self.frames:
+            self.frames[F].grid(row=0, column=0, sticky="nsew")
+
+        self.show_settings()
+
+    def show_settings(self):
+        self.frames[Settings].tkraise()
+
+    def show_plot(self):
+        self.frames[Plot].generate_plot(
+            lambda: self.frames[Settings].ping_settings.get_values(),
+            lambda: self.frames[Settings].file_settings.get_values(),
+            lambda: self.frames[Settings].plot_settings.get_values())
+        self.frames[Plot].tkraise()
+
+
+class Settings(ttk.Frame):
+    def __init__(self, parent, controller):
+        super(Settings, self).__init__(parent)
 
         # PING SETTINGS
         self.ping_settings = PingSettings(self)
@@ -97,28 +133,8 @@ class Main(Tk):
         self.plot_settings.pack(pady=10)
 
         self.run = Button(self, text='Start ping and display plot',
-                          command=self.start_ping)
+                          command=lambda: controller.show_plot())
         self.run.pack(side=BOTTOM)
-
-    def start_ping(self):
-        address, delay, timeout = self.ping_settings.get_values()
-        name, path, write = self.file_settings.get_values()
-        frequency, length = self.plot_settings.get_values()
-
-        delay = int(delay)
-        timeout = int(timeout)
-        frequency = float(frequency)
-        length = int(length)
-
-        top = Toplevel(self)
-        top.title('%s | %s | %s' % (address, frequency, length))
-        p = plot.Animate(top,
-                         core.Core(address, path, name, not write, True,
-                                   delay).ping_generator,
-                         table_length=length)
-        p.pack(side=BOTTOM, fill=BOTH)
-
-        ani = animation.FuncAnimation(p.fig, p.animate, interval=frequency)
 
 
 class PingSettings(ttk.Frame):
@@ -128,17 +144,20 @@ class PingSettings(ttk.Frame):
 
         Label(self, text='Address:').grid(row=1, column=0)
         if parsed.address is not None:
-            self.address_entry = Entry(self, text=parsed.address)
+            self.address_entry = Entry(self)
+            self.address_entry.insert(0, parsed.address)
         else:
             self.address_entry = Entry(self)
         self.address_entry.grid(row=1, column=1)
 
         Label(self, text='Delay between pings:').grid(row=2, column=0)
-        self.delay_entry = Entry(self, text=str(parsed.delay))
+        self.delay_entry = Entry(self)
+        self.delay_entry.insert(0, str(parsed.delay))
         self.delay_entry.grid(row=2, column=1)
 
         Label(self, text='Timeout:').grid(row=3, column=0)
         self.timeout_entry = Entry(self)
+        self.timeout_entry.insert(0, str(parsed.timeout))
         self.timeout_entry.grid(row=3, column=1)
 
     def get_values(self):
@@ -152,14 +171,13 @@ class FileSettings(ttk.Frame):
         Label(self, text='CSV File Settings').grid(row=0, columnspan=2)
 
         Label(self, text='File Name:').grid(row=1, column=0)
-        if parsed.name is not None:
-            self.name_entry = Entry(self, text=parsed.name)
-        else:
-            self.name_entry = Entry(self, text='PingStatsLog')
+        self.name_entry = Entry(self)
+        self.name_entry.insert(0, parsed.name)
         self.name_entry.grid(row=1, column=1)
 
         Label(self, text='File Path:').grid(row=2, column=0)
-        self.path_entry = Entry(self, text=parsed.path)
+        self.path_entry = Entry(self)
+        self.path_entry.insert(0, parsed.path)
         self.path_entry.grid(row=2, column=1)
 
         self.write_file = BooleanVar()
@@ -180,22 +198,56 @@ class PlotSettings(ttk.Frame):
         Label(self, text='Plot refresh frequency, in milliseconds:').grid(
             row=1, column=0
         )
-        if parsed.refreshfrequency is not None:
-            self.frequency_entry = Entry(self,
-                                         text=str(parsed.refreshfrequency))
-        else:
-            self.frequency_entry = Entry(self)
+        self.frequency_entry = Entry(self)
+        self.frequency_entry.insert(0, str(parsed.refreshfrequency))
         self.frequency_entry.grid(row=1, column=1)
 
         Label(self, text='Number of points to display:').grid(row=2, column=0)
-        if parsed.tablelength is not None:
-            self.length_entry = Entry(self, text=str(parsed.tablelength))
-        else:
-            self.length_entry = Entry(self)
+        self.length_entry = Entry(self)
+        self.length_entry.insert(0, str(parsed.tablelength))
         self.length_entry.grid(row=2, column=1)
 
     def get_values(self):
         return self.frequency_entry.get(), self.length_entry.get()
+
+
+class Plot(ttk.Frame):
+    def __init__(self, parent, controller):
+        super(Plot, self).__init__(parent)
+
+        button = Button(self, text='Stop ping and return to settings.',
+                        command=lambda: self.destroy_and_return(controller))
+        button.pack(side=BOTTOM)
+
+        self.plot_frame = ttk.Frame(self)
+        self.plot_frame.pack()
+
+        self.p = None
+        self.ani = None
+
+    def generate_plot(self, func1, func2, func3):
+        address, delay, timeout = func1()
+        name, path, write = func2()
+        frequency, length = func3()
+
+        delay = float(delay)
+        timeout = int(timeout)
+        frequency = float(frequency)
+        length = int(length)
+
+        self.p = plot.Animate(self.plot_frame,
+                              core.Core(address, path, name, not write,
+                                        not parsed.quiet, delay,
+                                        timeout=timeout).ping_generator,
+                              table_length=length)
+        self.p.pack(side=TOP, fill=BOTH)
+
+        self.ani = animation.FuncAnimation(self.p.fig, self.p.animate,
+                                           interval=frequency)
+
+    def destroy_and_return(self, controller):
+        self.p.destroy()
+        controller.show_settings()
 
 
 if parsed.version:
@@ -212,19 +264,20 @@ elif parsed.address is not None:
                          table_length=parsed.tablelength
                          )
 
-        p.pack(side=BOTTOM, fill=BOTH)
+        p.grid(row=1, column=0)
 
         ani = animation.FuncAnimation(p.fig, p.animate,
                                       interval=parsed.refreshfrequency)
 
         button = Button(root, text='Quit', command=_quit)
-        button.pack(side=BOTTOM)
+        button.grid(row=0, columnspan=2)
 
         root.mainloop()
+        quit()
 
-    else:
+    elif parsed.cli:
         c = core.Core(parsed.address, parsed.path, parsed.name,
-                      parsed.nofile, parsed.quiet)
+                      parsed.nofile, not parsed.quiet, timeout=parsed.timeout)
 
         for return_data in c.ping_generator:
             if not c.nofile:
@@ -232,12 +285,13 @@ elif parsed.address is not None:
 
             time.sleep(parsed.delay)
 
-elif parsed.plotfile is not None:
-    pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
-    pf.get_figure()
-else:
-    parser.print_help()
+        quit()
 
-# if __name__ == '__main__':
-#     root = Main()
-#     root.mainloop()
+elif parsed.plotfile is not None:
+    pf = plot.PlotFile(parsed.plotfile, image_path=parsed.generateimage)
+    pf.show_plot()
+    quit()
+
+if __name__ == '__main__':
+    root = Main()
+    root.mainloop()
