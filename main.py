@@ -287,9 +287,10 @@ elif parsed.address is not None:
 
         quit()
 
-# elif parsed.plotfile is not None:
-#     pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
-#     pf.get_figure()
+elif parsed.plotfile is not None:
+    pf = plot.PlotFile(parsed.plotfile, image_path=parsed.generateimage)
+    pf.show_plot()
+    quit()
 
 if __name__ == '__main__':
     root = Main()
