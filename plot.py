@@ -115,10 +115,7 @@ class _Plot(Frame):
 
     def __init__(self, root, *args, **kwargs):
         """ Validates `self.title_str` and rotates plot labels. """
-        super(_Plot, self).__init__()
-
-        self.root = root
-
+        super(_Plot, self).__init__(root)
         self.ptable = _PlotTable()
 
         # table_length validation
