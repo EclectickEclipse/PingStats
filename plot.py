@@ -1,6 +1,10 @@
 import datetime as dt
+import csv
+from warnings import warn
+import os
 
 from tkinter import *
+from tkinter import ttk
 
 try:
     import matplotlib
@@ -81,7 +85,7 @@ class _PlotTable:
             return self.y
 
 
-class _Plot(Frame):
+class _Plot(ttk.Frame):
     """ Base class for `Animate` and `PlotFile`, maintains several matplotlib
     properties. """
 
@@ -194,54 +198,52 @@ class Animate(_Plot):
         self.generator = generator
 
 
-class PlotFile(_Plot):
+class PlotFile:
+    fig = plt.figure(figsize=(5, 5), dpi=100)
+    ax1 = plt.axes()
 
-    # @staticmethod
-    # def generate_reader(csv_path):
-    #     """ Yields a `csv.reader` object built from `csv_path`. """
-    #     if not os.access(csv_path, os.F_OK):
-    #         raise RuntimeError('Cannot access %s!' % csv_path)
-    #
-    #     return csv.reader(open(csv_path))
-    #
-    # @staticmethod
-    # def generate_datetime(timestamp):
-    #     """ Yields a `datetime.datetime` object. """
-    #     warn('generate_datetime is deprecated in V2.4', DeprecationWarning)
-    #     if type(timestamp) is not float:
-    #         raise TypeError('timestamp must be float')
-    #
-    #     return dt.datetime.fromtimestamp(timestamp)
-    #
-    # @staticmethod
-    # def yield_points(reader):
-    #     """ Yields an x and y coordinate for each row in `reader` """
-    #     for row in reader:
-    #         x = dt.datetime.fromtimestamp(float(row[0]))
-    #
-    #         if row[1] == '':  # none
-    #             y = -100.0
-    #
-    #         else:
-    #             try:
-    #                 y = float(row[1])
-    #             except ValueError as e:
-    #                 raise e('Could not handle second data point in row %s' %
-    #                         row)
-    #
-    #         yield x, y
-    #
-    def __init__(self, csv_file, image_path=None, *args, **kwargs):
-        raise DeprecationWarning('PlotFile is under maintenence')
+    @staticmethod
+    def generate_reader(csv_path):
+        """ Yields a `csv.reader` object built from `csv_path`. """
+        if not os.access(csv_path, os.F_OK):
+            raise RuntimeError('Cannot access %s!' % csv_path)
 
+        return csv.reader(open(csv_path))
+
+    @staticmethod
+    def generate_datetime(timestamp):
+        """ Yields a `datetime.datetime` object. """
+        warn('generate_datetime is deprecated in V2.4', DeprecationWarning)
+        if type(timestamp) is not float:
+            raise TypeError('timestamp must be float')
+
+        return dt.datetime.fromtimestamp(timestamp)
+
+    def yield_points(self):
+        """ Yields an x and y coordinate for each row in `reader` """
+        for row in self.creader:
+            x = dt.datetime.fromtimestamp(float(row[0]))
+
+            if row[1] == '':  # none
+                y = -100.0
+
+            else:
+                y = float(row[1])
+
+            yield x, y
+
+    def __init__(self, csv_file, image_path=None):
         # TODO Re-enable plotfile
-        super(PlotFile, self).__init__(*args, **kwargs)
+        plt.subplots_adjust(left=0.13, bottom=0.33, right=0.95, top=0.89)
+        style.use('seaborn-darkgrid')
+        for label in self.ax1.xaxis.get_ticklabels():
+            label.set_rotation(45)
 
         self.image_path = image_path
 
         self.creader = self.generate_reader(csv_file)
 
-        self.points_generator = self.yield_points(self.creader)
+        self.points_generator = self.yield_points()
 
         self.x = []
         self.y = []
@@ -255,9 +257,9 @@ class PlotFile(_Plot):
         plt.xlabel('Timestamps')
         plt.ylabel('Return Time (in milliseconds)')
         plt.title('Ping Over Time')
-    #
-    # def show_plot(self):
-    #     if self.image_path is not None:
-    #         plt.savefig(self.image_path)
-    #     else:
-    #         super(PlotFile, self).show_plot()
+
+    def show_plot(self):
+        if self.image_path is not None:
+            plt.savefig(self.image_path)
+        else:
+            plt.show()
