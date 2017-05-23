@@ -112,6 +112,7 @@ class Core:
 
         Instantiates a `ping` generator at `self.ping_generator`, and an
         open CSV writer at `self.cwriter`"""
+        # TODO enable custom timeout settings
 
         self.quiet = not quiet  # flip bool
         self.delay = delay

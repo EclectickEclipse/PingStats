@@ -5,8 +5,6 @@ import time
 
 from tkinter import *
 from tkinter import ttk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, \
-    NavigationToolbar2TkAgg
 import matplotlib.animation as animation
 
 parser = argparse.ArgumentParser(
@@ -74,6 +72,110 @@ def _quit():
     root.quit()
     root.destroy()
 
+
+class Main(Tk):
+    def __init__(self, *args, **kwargs):
+        super(Main, self).__init__(*args, **kwargs)
+
+        # PING SETTINGS
+        self.ping_settings = PingSettings(self)
+        self.ping_settings.pack(pady=10)
+
+        # FILE SETTINGS
+        self.file_settings = FileSettings(self)
+        self.file_settings.pack(pady=10)
+
+        # PLOT SETTINGS
+        self.plot_settings = PlotSettings(self)
+        self.plot_settings.pack(pady=10)
+
+        self.run = Button(self, text='Start ping and display plot',
+                          command=self.start_ping)
+        self.run.pack(side=BOTTOM)
+
+    def start_ping(self):
+        address, delay, timeout = self.ping_settings.get_values()
+        name, path, write = self.file_settings.get_values()
+        frequency, length = self.plot_settings.get_values()
+
+
+class PingSettings(ttk.Frame):
+    def __init__(self, root, **kwargs):
+        super(PingSettings, self).__init__(root, **kwargs)
+        Label(self, text='Ping Settings').grid(row=0, columnspan=2)
+
+        Label(self, text='Address:').grid(row=1, column=0)
+        if parsed.address is not None:
+            self.address_entry = Entry(self, text=parsed.address)
+        else:
+            self.address_entry = Entry(self)
+        self.address_entry.grid(row=1, column=1)
+
+        Label(self, text='Delay between pings:').grid(row=2, column=0)
+        self.delay_entry = Entry(self, text=str(parsed.delay))
+        self.delay_entry.grid(row=2, column=1)
+
+        Label(self, text='Timeout:').grid(row=3, column=0)
+        self.timeout_entry = Entry(self)
+        self.timeout_entry.grid(row=3, column=1)
+
+    def get_values(self):
+        return (self.address_entry.get(), self.delay_entry.get(),
+                self.timeout_entry.get())
+
+
+class FileSettings(ttk.Frame):
+    def __init__(self, root, **kwargs):
+        super(FileSettings, self).__init__(root, **kwargs)
+        Label(self, text='CSV File Settings').grid(row=0, columnspan=2)
+
+        Label(self, text='File Name:').grid(row=1, column=0)
+        if parsed.name is not None:
+            self.name_entry = Entry(self, text=parsed.name)
+        else:
+            self.name_entry = Entry(self, text='PingStatsLog')
+        self.name_entry.grid(row=1, column=1)
+
+        Label(self, text='File Path:').grid(row=2, column=0)
+        self.path_entry = Entry(self, text=parsed.path)
+        self.path_entry.grid(row=2, column=1)
+
+        self.write_file = BooleanVar()
+        self.write_file.set(not parsed.nofile)
+        Checkbutton(self, text='Write CSV file',
+                    variable=self.write_file).grid(row=3, columnspan=2)
+
+    def get_values(self):
+        return (self.name_entry.get(), self.path_entry.get(),
+                self.write_file.get())
+
+
+class PlotSettings(ttk.Frame):
+    def __init__(self, root, **kwargs):
+        super(PlotSettings, self).__init__(root, **kwargs)
+        Label(self, text='Plot Settings').grid(row=0, columnspan=2)
+
+        Label(self, text='Plot refresh frequency, in milliseconds:').grid(
+            row=1, column=0
+        )
+        if parsed.refreshfrequency is not None:
+            self.frequency_entry = Entry(self,
+                                         text=str(parsed.refreshfrequency))
+        else:
+            self.frequency_entry = Entry(self)
+        self.frequency_entry.grid(row=1, column=1)
+
+        Label(self, text='Number of points to display:').grid(row=2, column=0)
+        if parsed.tablelength is not None:
+            self.length_entry = Entry(self, text=str(parsed.tablelength))
+        else:
+            self.length_entry = Entry(self)
+        self.length_entry.grid(row=2, column=1)
+
+    def get_values(self):
+        return self.frequency_entry.get(), self.length_entry.get()
+
+
 if parsed.version:
     print(core.versionstr)
 
@@ -117,3 +219,7 @@ elif parsed.plotfile is not None:
     pf.get_figure()
 else:
     parser.print_help()
+
+if __name__ == '__main__':
+    root = Main()
+    root.mainloop()
