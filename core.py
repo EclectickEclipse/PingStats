@@ -2,6 +2,7 @@ import time
 import socket
 import datetime as dt
 import csv
+import os
 
 from pythonping import ping as pyping
 
@@ -33,25 +34,16 @@ def buildfile(path, name):
 
     Returns an open TextIOWrapper. """
 
-    if path is not None:
-        if not validate_string(path):
-            raise ValueError('Illegal path!')
+    if not validate_string(path):
+        raise ValueError('Illegal path!')
 
-    if path is None:
-        path = ''
+    if not validate_string(name):
+        raise ValueError('Illegal file name!')
 
-    if name is not None:
-        if not validate_string(name):
-            raise ValueError('Illegal file name!')
-
-    if name is None:
-        name = buildname + 'Log.csv'
-    else:
-
-        name += '.csv'
+    name += '.csv'
 
     try:
-        return open(path + name, 'a+')
+        return open(os.path.join(path, name), 'a+')
     except OSError:
         print('Failed to open \'%s\', defaulting to \'%sLog.csv\'.' % (
             (path + name), buildname))
@@ -107,12 +99,11 @@ class Core:
         write_csv_data(self.cwriter, data)
 
     def __init__(self, address, file_path=None, file_name=None, nofile=False,
-                 quiet=False, delay=0.22, *args, **kwargs):
+                 quiet=False, delay=0.22, timeout=3000, *args, **kwargs):
         """ Constructs a `Core` object.
 
         Instantiates a `ping` generator at `self.ping_generator`, and an
         open CSV writer at `self.cwriter`"""
-        # TODO enable custom timeout settings
 
         self.quiet = not quiet  # flip bool
         self.delay = delay
@@ -120,8 +111,8 @@ class Core:
         if address is None:
             raise RuntimeError('core.Core requires address')
         self.address = address
-        self.ping_generator = ping(self.address, verbose=not self.quiet,
-                                   delay=self.delay)
+        self.ping_generator = ping(self.address, timeout=timeout,
+                                   verbose=not self.quiet, delay=self.delay)
 
         # core.Core.build files
         self.file_path = file_path  # validated in self.build file
