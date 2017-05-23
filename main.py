@@ -14,8 +14,9 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument('-a', '--address', help='The IP address to ping.')
 
-parser.add_argument('-d', '--delay', help='The interval of time (in seconds'
-                    ') to wait between ping requests.', type=float,
+parser.add_argument('-d', '--delay', help='The interval of time (in seconds) '
+                                          'to wait between ping requests.',
+                    type=float,
                     default=0.22)
 
 parser.add_argument('-t', '--timeout',
@@ -45,8 +46,14 @@ parser.add_argument('-q', '--quiet', help='Flag this for quiet operation.',
                     action='store_true')
 
 parser.add_argument('-s', '--showliveplot',
-                    help='Flag this option to display an animated plot of'
-                    'the last 500 ping sequences.', action='store_true')
+                    help='Flag this option to display a live plot of return '
+                         'time (in ms) by time received. Use this command to '
+                         'skip the UI entirely.', action='store_true')
+
+parser.add_argument('-c', '--cli',
+                    help='Flag this option if you want to skip running the UI '
+                         'entirely, and instead just rely on CLI arguments.',
+                    action='store_true')
 
 parser.add_argument('-sF', '--refreshfrequency',
                     type=float, default=1000,
@@ -75,7 +82,7 @@ parser.add_argument('-v', '--version',
 parsed = parser.parse_args()
 
 
-def _quit():
+def _quit():  # used by -s
     root.quit()
     root.destroy()
 
@@ -243,40 +250,42 @@ class Plot(ttk.Frame):
         controller.show_settings()
 
 
-# if parsed.version:
-#     print(core.versionstr)
-#
-# elif parsed.address is not None:
-#
-#     if parsed.showliveplot:
-#         root = Tk()
-#         p = plot.Animate(root,
-#                          core.Core(parsed.address, parsed.path, parsed.name,
-#                                    parsed.nofile, not parsed.quiet,
-#                                    timeout=parsed.timeout).ping_generator,
-#                          table_length=parsed.tablelength
-#                          )
-#
-#         p.grid(row=1, column=0)
-#
-#         ani = animation.FuncAnimation(p.fig, p.animate,
-#                                       interval=parsed.refreshfrequency)
-#
-#         button = Button(root, text='Quit', command=_quit)
-#         button.grid(row=0, columnspan=2)
-#
-#         root.mainloop()
-#         quit()
-#
-#     else:
-#         c = core.Core(parsed.address, parsed.path, parsed.name,
-#                       parsed.nofile, parsed.quiet)
-#
-#         for return_data in c.ping_generator:
-#             if not c.nofile:
-#                 core.write_csv_data(c.cwriter, return_data)
-#
-#             time.sleep(parsed.delay)
+if parsed.version:
+    print(core.versionstr)
+
+elif parsed.address is not None:
+
+    if parsed.showliveplot:
+        root = Tk()
+        p = plot.Animate(root,
+                         core.Core(parsed.address, parsed.path, parsed.name,
+                                   parsed.nofile, not parsed.quiet,
+                                   timeout=parsed.timeout).ping_generator,
+                         table_length=parsed.tablelength
+                         )
+
+        p.grid(row=1, column=0)
+
+        ani = animation.FuncAnimation(p.fig, p.animate,
+                                      interval=parsed.refreshfrequency)
+
+        button = Button(root, text='Quit', command=_quit)
+        button.grid(row=0, columnspan=2)
+
+        root.mainloop()
+        quit()
+
+    elif parsed.cli:
+        c = core.Core(parsed.address, parsed.path, parsed.name,
+                      parsed.nofile, not parsed.quiet, timeout=parsed.timeout)
+
+        for return_data in c.ping_generator:
+            if not c.nofile:
+                core.write_csv_data(c.cwriter, return_data)
+
+            time.sleep(parsed.delay)
+
+        quit()
 
 # elif parsed.plotfile is not None:
 #     pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
