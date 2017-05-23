@@ -98,6 +98,21 @@ class Main(Tk):
         name, path, write = self.file_settings.get_values()
         frequency, length = self.plot_settings.get_values()
 
+        delay = int(delay)
+        timeout = int(timeout)
+        frequency = float(frequency)
+        length = int(length)
+
+        top = Toplevel(self)
+        top.title('%s | %s | %s' % (address, frequency, length))
+        p = plot.Animate(top,
+                         core.Core(address, path, name, not write, True,
+                                   delay).ping_generator,
+                         table_length=length)
+        p.pack(side=BOTTOM, fill=BOTH)
+
+        ani = animation.FuncAnimation(p.fig, p.animate, interval=frequency)
+
 
 class PingSettings(ttk.Frame):
     def __init__(self, root, **kwargs):
@@ -176,49 +191,49 @@ class PlotSettings(ttk.Frame):
         return self.frequency_entry.get(), self.length_entry.get()
 
 
-if parsed.version:
-    print(core.versionstr)
-
-elif parsed.address is not None:
-
-    if parsed.showliveplot:
-        root = Tk()
-        p = plot.Animate(root,
-                         core.Core(parsed.address, parsed.path, parsed.name,
-                                   parsed.nofile, not parsed.quiet
-                                   ).ping_generator,
-                         table_length=parsed.tablelength
-                         )
-
-        p.pack(side=BOTTOM, fill=BOTH)
-
-        if parsed.refreshfrequency is None:
-            ani = animation.FuncAnimation(p.fig, p.animate,
-                                          interval=1000)
-        else:
-            ani = animation.FuncAnimation(p.fig, p.animate,
-                                          interval=parsed.refreshfrequency)
-
-        button = Button(root, text='Quit', command=_quit)
-        button.pack(side=BOTTOM)
-
-        root.mainloop()
-
-    else:
-        c = core.Core(parsed.address, parsed.path, parsed.name,
-                      parsed.nofile, parsed.quiet)
-
-        for return_data in c.ping_generator:
-            if not c.nofile:
-                core.write_csv_data(c.cwriter, return_data)
-
-            time.sleep(parsed.delay)
-
-elif parsed.plotfile is not None:
-    pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
-    pf.get_figure()
-else:
-    parser.print_help()
+# if parsed.version:
+#     print(core.versionstr)
+#
+# elif parsed.address is not None:
+#
+#     if parsed.showliveplot:
+#         root = Tk()
+#         p = plot.Animate(root,
+#                          core.Core(parsed.address, parsed.path, parsed.name,
+#                                    parsed.nofile, not parsed.quiet
+#                                    ).ping_generator,
+#                          table_length=parsed.tablelength
+#                          )
+#
+#         p.pack(side=BOTTOM, fill=BOTH)
+#
+#         if parsed.refreshfrequency is None:
+#             ani = animation.FuncAnimation(p.fig, p.animate,
+#                                           interval=1000)
+#         else:
+#             ani = animation.FuncAnimation(p.fig, p.animate,
+#                                           interval=parsed.refreshfrequency)
+#
+#         button = Button(root, text='Quit', command=_quit)
+#         button.pack(side=BOTTOM)
+#
+#         root.mainloop()
+#
+#     else:
+#         c = core.Core(parsed.address, parsed.path, parsed.name,
+#                       parsed.nofile, parsed.quiet)
+#
+#         for return_data in c.ping_generator:
+#             if not c.nofile:
+#                 core.write_csv_data(c.cwriter, return_data)
+#
+#             time.sleep(parsed.delay)
+#
+# elif parsed.plotfile is not None:
+#     pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
+#     pf.get_figure()
+# else:
+#     parser.print_help()
 
 if __name__ == '__main__':
     root = Main()
