@@ -73,8 +73,6 @@ parser.add_argument('-v', '--version',
                     action='store_true')
 
 parsed = parser.parse_args()
-print(parsed.address, parsed.delay, parsed.timeout, parsed.name, parsed.path,
-      parsed.refreshfrequency, parsed.tablelength)
 
 
 def _quit():
@@ -85,6 +83,35 @@ def _quit():
 class Main(Tk):
     def __init__(self, *args, **kwargs):
         super(Main, self).__init__(*args, **kwargs)
+        # tk.Tk.__init__(self, *args, **kwargs)
+        container = ttk.Frame(self)
+
+        container.pack(side="top", fill="both", expand=True)
+
+        self.frames = {
+            Settings: Settings(container, self),
+            Plot: Plot(container, self),
+        }
+
+        for F in self.frames:
+            self.frames[F].grid(row=0, column=0, sticky="nsew")
+
+        self.show_settings()
+
+    def show_settings(self):
+        self.frames[Settings].tkraise()
+
+    def show_plot(self):
+        self.frames[Plot].generate_plot(
+            lambda: self.frames[Settings].ping_settings.get_values(),
+            lambda: self.frames[Settings].file_settings.get_values(),
+            lambda: self.frames[Settings].plot_settings.get_values())
+        self.frames[Plot].tkraise()
+
+
+class Settings(ttk.Frame):
+    def __init__(self, parent, controller):
+        super(Settings, self).__init__(parent)
 
         # PING SETTINGS
         self.ping_settings = PingSettings(self)
@@ -99,32 +126,8 @@ class Main(Tk):
         self.plot_settings.pack(pady=10)
 
         self.run = Button(self, text='Start ping and display plot',
-                          command=self.start_ping)
+                          command=lambda: controller.show_plot())
         self.run.pack(side=BOTTOM)
-
-    def start_ping(self):
-        address, delay, timeout = self.ping_settings.get_values()
-        name, path, write = self.file_settings.get_values()
-        frequency, length = self.plot_settings.get_values()
-
-        delay = float(delay)
-        timeout = int(timeout)
-        frequency = float(frequency)
-        length = int(length)
-
-        top = Toplevel(self)
-        top.title('%s | %s | %s' % (address, frequency, length))
-        p = plot.Animate(top,
-                         core.Core(address, path, name, not write,
-                                   not parsed.quiet, delay).ping_generator,
-                         table_length=length)
-        p.pack(side=BOTTOM, fill=BOTH)
-
-        ani = animation.FuncAnimation(p.fig, p.animate, interval=frequency)
-        button = Button(top, text='Quit', command=_quit)
-        button.pack(side=BOTTOM)
-        ani.frame_seq()  # Plot frame will not execute unless some call to
-        # ani is made. This however throws a type error. Why is this necessary?
 
 
 class PingSettings(ttk.Frame):
@@ -201,6 +204,45 @@ class PlotSettings(ttk.Frame):
         return self.frequency_entry.get(), self.length_entry.get()
 
 
+class Plot(ttk.Frame):
+    def __init__(self, parent, controller):
+        super(Plot, self).__init__(parent)
+
+        button = Button(self, text='Stop ping and return to settings.',
+                        command=lambda: self.destroy_and_return(controller))
+        button.pack(side=BOTTOM)
+
+        self.plot_frame = ttk.Frame(self)
+        self.plot_frame.pack()
+
+        self.p = None
+        self.ani = None
+
+    def generate_plot(self, func1, func2, func3):
+        address, delay, timeout = func1()
+        name, path, write = func2()
+        frequency, length = func3()
+
+        delay = float(delay)
+        timeout = int(timeout)
+        frequency = float(frequency)
+        length = int(length)
+
+        self.p = plot.Animate(self.plot_frame,
+                              core.Core(address, path, name, not write,
+                                        not parsed.quiet, delay,
+                                        timeout=timeout).ping_generator,
+                              table_length=length)
+        self.p.pack(side=TOP, fill=BOTH)
+
+        self.ani = animation.FuncAnimation(self.p.fig, self.p.animate,
+                                           interval=frequency)
+
+    def destroy_and_return(self, controller):
+        self.p.destroy()
+        controller.show_settings()
+
+
 # if parsed.version:
 #     print(core.versionstr)
 #
@@ -215,15 +257,16 @@ class PlotSettings(ttk.Frame):
 #                          table_length=parsed.tablelength
 #                          )
 #
-#         p.pack(side=BOTTOM, fill=BOTH)
+#         p.grid(row=1, column=0)
 #
 #         ani = animation.FuncAnimation(p.fig, p.animate,
 #                                       interval=parsed.refreshfrequency)
 #
 #         button = Button(root, text='Quit', command=_quit)
-#         button.pack(side=BOTTOM)
+#         button.grid(row=0, columnspan=2)
 #
 #         root.mainloop()
+#         quit()
 #
 #     else:
 #         c = core.Core(parsed.address, parsed.path, parsed.name,
@@ -234,12 +277,10 @@ class PlotSettings(ttk.Frame):
 #                 core.write_csv_data(c.cwriter, return_data)
 #
 #             time.sleep(parsed.delay)
-#
+
 # elif parsed.plotfile is not None:
 #     pf = plot.PlotFile(parsed.plotfile, parsed.generateimage)
 #     pf.get_figure()
-# else:
-#     parser.print_help()
 
 if __name__ == '__main__':
     root = Main()
