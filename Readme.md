@@ -56,83 +56,93 @@ The software requires the following additional `Python` packages:
 ### USAGE
 
 
-usage: main.py
+usage: main.py 
 
-	       [-h] [-a ADDRESS] [-d DELAY] [-gi] [-n NAME] [-p PATH]
+		       [-h] [-a ADDRESS] [-d DELAY] [-t TIMEOUT] [-gi GENERATEIMAGE]
+	
+		       [-n NAME] [-p PATH] [-pf PLOTFILE] [-q] [-s] [-c]
+	
+		       [-sF REFRESHFREQUENCY] [-sL TABLELENGTH] [-sNF] [-v]
 
-               [-pf PLOTFILE] [-q] [-s] [-sF REFRESHFREQUENCY]
-
-               [-sL TABLELENGTH] [-sNF] [-v]
-
-PingStats Version 2.2 (C) Ariana Giroux, Eclectick Media Solutions. circa Sun
-Dec 4 05:03:21 2016. This program defines some basic ping statistic
+PingStats Version 2.4 (C) Ariana Giroux, Eclectick Media Solutions. circa Tue
+May 23 17:01:17 2017. This program defines some basic ping statistic
 visualization methods through Python's 'matplotlib'.
 
-Optional arguments:
+optional arguments:
+
   -h, --help            
   
   			show this help message and exit
-
+  
   -a ADDRESS, --address ADDRESS
-
+  
                         The IP address to ping.
-
+			
   -d DELAY, --delay DELAY
-
+  
                         The interval of time (in seconds) to wait between ping
                         requests.
-
-  -gi, --generateimage 
-
-			Used in conjunction with the -pf option, this option
+			
+  -t TIMEOUT, --timeout TIMEOUT
+  
+                        The amount of time to set for each packets' timeout.
+			
+  -gi GENERATEIMAGE, --generateimage GENERATEIMAGE
+  
+                        Used in conjunction with the -pf option, this option
                         sends a name for a '*.png' file to save to the current
                         working directory.
-
+			
   -n NAME, --name NAME  
-
-			Flag this option to use a custom name for the CSV
+  
+  			Flag this option to use a custom name for the CSV
                         output file.
-
-  -p PATH, --path PATH  `The path to output csv files to`
-
+			
+  -p PATH, --path PATH  
+  			The path to output csv files to
+			
   -pf PLOTFILE, --plotfile PLOTFILE
-
+  
                         Include the path to a previously generated CSVfile to
                         generate a plot.
-
+			
   -q, --quiet           
   
   			Flag this for quiet operation.
-
   -s, --showliveplot    
-
-			Flag this option to display an animated plot of the
-                        last 500 ping sequences.
-
+  
+  			Flag this option to display a live plot of return time
+                        (in ms) by time received. Use this command to skip the
+                        UI entirely.
+			
+  -c, --cli             
+  
+  			Flag this option if you want to skip running the UI
+                        entirely, and instead just rely on CLI arguments.
+			
   -sF REFRESHFREQUENCY, --refreshfrequency REFRESHFREQUENCY
-
+  
                         Specify a number of milliseconds to wait
                         betweenrefreshes of the -s plot visualization
-                        feature.The lower the number, the better the
-                        performanceof PingStats visualization. Handy for
+                        feature. The lower the number, the better the
+                        performance of PingStats visualization. Handy for
                         "potatoes"
-
+			
   -sL TABLELENGTH, --tablelength TABLELENGTH
-
+  
                         The total number of pings to show for -s. Thelower the
                         number, the better the performance of PingStats
                         visualization. Handy for "potatoes."
-
+			
   -sNF, --nofile        
-
-			Flag this option to disable outputting ping
+  
+  			Flag this option to disable outputting ping
                         information to a csv file during live plotting. Helps
                         with memory consumption.
-
+			
   -v, --version         
-  
-  			Flag this option to display software version.
-
+  			
+			Flag this option to display software version.
 
 ---
 
