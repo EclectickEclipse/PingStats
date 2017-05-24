@@ -1,22 +1,16 @@
 # Preamble and Technical Notes
 
-This software aims to provide efficient ping visulaization via Python's
-`matplotlib` via pure python implementations of the Ping protocol via
-[python-ping](https://github.com/l4m3rx/python-ping).
+This software aims to provide efficient ping visualization via Python's `matplotlib` via pure python implementations of the Ping protocol via [python-ping](https://github.com/l4m3rx/python-ping).
 
-Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of raw
-sockets, the software requires `sudo` permissions to generate ping packets. For
-more detail please see the afore mentioned repository.
+Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of raw sockets, the software requires `sudo` permissions to generate ping packets. For more detail please see the afore mentioned repository.
 
-It can be used after the ping data has been collected without `sudo`.
+It can be used after the ping data has been collected without `sudo` to display a plot of the CSV data gathered (the `-pf` and `-gi` arguments).
 
 ## Installation of python-ping
 
-Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of a `-`
-character in the package title, you need to install the software without the
-`-` included in the folder title. 
+Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of a `-` character in the package title, you need to install the software without the `-` included in the folder title. 
 
-This repository looks first for [python-ping](https://github.com/l4m3rx/python-ping) as a folder within the software's parent directory. For example:
+This repository looks for pythonping as a folder within the software's parent directory to load [python-ping](https://github.com/l4m3rx/python-ping). For example:
 
 ```
 -PingStats
@@ -24,19 +18,22 @@ This repository looks first for [python-ping](https://github.com/l4m3rx/python-p
 |-pingstats repo files
 ```
 
-This can be achieved by running `git clone` in the `PingStats` directory, and then renaming the resulting folder from `python-ping` to `pythonping`. 
+This can be achieved by running the following command from within the repository's local directory:
 
-This may be fixed soon, due to an [ongoing discussion on repo
-naming](https://github.com/l4m3rx/python-ping/issues/23)
+```sh
+git clone https://github.com/l4m3rx/python-ping.git pythonping
+```
+
+This may be fixed soon, due to an [ongoing discussion on repo naming](https://github.com/l4m3rx/python-ping/issues/23)
 
 ---
 
 ## Running tests
 
 The included `tests.py` module can be run for automatic testing of the
-software run by [python's
-hypothesis](https://github.com/HypothesisWorks/hypothesis-python). Follow the
-instructions provided to install the software.
+software run by [python's hypothesis](https://github.com/HypothesisWorks/hypothesis-python). Follow the instructions provided to install the software.
+
+Please note, as of `V2.4` these tests are broken, and will not work. See #89 for reference.
 
 --- 
 
@@ -48,13 +45,14 @@ The software requires the following additional `Python` packages:
 
 2. [python-ping](https://github.com/l4m3rx/python-ping) installed via above method.
 
-3. [hypothesis](https://github.com/HypothesisWorks/hypothesis-python) installable via `pip install hypothesis` (used for `tests.py`)
+3. [hypothesis](https://github.com/HypothesisWorks/hypothesis-python) installable via `pip install hypothesis` (used for tests)
 
 
 ---
 
 ### USAGE
 
+To use the software's UI, you can either supply command line arguments, or simply run `main.py`
 
 usage: main.py 
 
