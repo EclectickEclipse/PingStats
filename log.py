@@ -21,15 +21,22 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(stream_formatter)
 stream_handler.setLevel(logging.INFO)
 
-file_handler = handlers.RotatingFileHandler('logs/plot.log',
+core_handler = handlers.RotatingFileHandler('logs/core.log',
                                             maxBytes=500000, backupCount=5)
-file_handler.setFormatter(file_formatter)
-file_handler.setLevel(logging.DEBUG)
+core_handler.setFormatter(file_formatter)
+core_handler.setLevel(logging.DEBUG)
 
-logger = logging.getLogger('base')
-logger.setLevel(logging.DEBUG)
-logger.addHandler(stream_handler)
+plot_handler = handlers.RotatingFileHandler('logs/plot.log',
+                                            maxBytes=500000, backupCount=5)
+plot_handler.setFormatter(file_formatter)
+plot_handler.setLevel(logging.DEBUG)
+
+core_logger = logging.getLogger('base.core')
+core_logger.setLevel(logging.DEBUG)
+core_logger.addHandler(core_handler)
+core_logger.addHandler(stream_handler)
 
 plot_logger = logging.getLogger('base.plot')
 plot_logger.setLevel(logging.DEBUG)
-plot_logger.addHandler(file_handler)
+plot_logger.addHandler(plot_handler)
+plot_logger.addHandler(stream_handler)

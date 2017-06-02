@@ -6,6 +6,7 @@ import os
 
 from pythonping import ping as pyping
 
+from log import core_logger as logger
 
 # GLOBALS
 buildname = "PingStats"
@@ -22,8 +23,10 @@ def validate_string(text):
     for character in invalid_characters:
         if character == '*':
             if text.startswith(character):
+                logger.warning('Bad character: %s' % character)
                 return False
         elif text.count(character):
+            logger.warning('Bad character: %s' % character)
             return False
 
     return True
@@ -55,6 +58,7 @@ def write_csv_data(writer, data):
     if data is None:  # TODO Should None data be handled by super?
         return data
     else:
+        logger.debug(data)
         writer.writerow(data)
         return data
 
@@ -104,6 +108,9 @@ class Core:
 
         Instantiates a `ping` generator at `self.ping_generator`, and an
         open CSV writer at `self.cwriter`"""
+
+        logger.debug((address, file_path, file_name, nofile, quiet, delay,
+                      timeout, args, kwargs))
 
         self.quiet = not quiet  # flip bool
         self.delay = delay
