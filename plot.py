@@ -6,13 +6,14 @@ import os
 from tkinter import *
 from tkinter import ttk
 
+from log import plot_logger
+
 try:
     import matplotlib
     matplotlib.use('TkAgg')
-    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, \
-        NavigationToolbar2TkAgg
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     from matplotlib.figure import Figure
-    import matplotlib.animation as animation
+    # import matplotlib.animation as animation
     from matplotlib import style
     import matplotlib.pyplot as plt
 except OSError as e:
@@ -180,6 +181,10 @@ class Animate(_Plot):
     def get_pings(self, obj):
         """ Checks for None or appends to `self._PlotTable` """
         for val in obj:
+            if not self.nofile:
+                plot_logger.debug(val)
+                self.core.write_csv(val)
+
             if val is None:
                 yield
             else:
@@ -192,10 +197,16 @@ class Animate(_Plot):
 
                 yield
 
-    def __init__(self, root, generator, *args, **kwargs):
+    def __init__(self, root, core, *args, **kwargs):
         """ Validates kwargs, and generates a _PlotTable object. """
         super(Animate, self).__init__(root, *args, **kwargs)
-        self.generator = generator
+        self.core = core
+        self.nofile = core.nofile
+        if not self.nofile:
+            plot_logger.info('write log')
+        else:
+            plot_logger.info('-sNF')
+        self.generator = core.ping_generator
 
 
 class PlotFile:
