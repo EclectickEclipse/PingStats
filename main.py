@@ -108,11 +108,8 @@ class Main(Tk):
     def show_settings(self):
         self.frames[Settings].tkraise()
 
-    def show_plot(self):
-        self.frames[Plot].generate_plot(
-            lambda: self.frames[Settings].ping_settings.get_values(),
-            lambda: self.frames[Settings].file_settings.get_values(),
-            lambda: self.frames[Settings].plot_settings.get_values())
+    def show_plot(self, ping, file, plot):
+        self.frames[Plot].generate_plot(ping, file, plot)
         self.frames[Plot].tkraise()
 
 
@@ -133,7 +130,11 @@ class Settings(ttk.Frame):
         self.plot_settings.pack(pady=10)
 
         self.run = Button(self, text='Start ping and display plot',
-                          command=lambda: controller.show_plot())
+                          command=lambda: controller.show_plot(
+                              self.ping_settings.get_values(),
+                              self.file_settings.get_values(),
+                              self.plot_settings.get_values()
+                          ))
         self.run.pack(side=BOTTOM)
 
 
@@ -180,12 +181,12 @@ class FileSettings(ttk.Frame):
         self.path_entry.insert(0, parsed.path)
         self.path_entry.grid(row=2, column=1)
 
-        self.write_file = BooleanVar()
-        self.write_file.set(not parsed.nofile)
+        self.write_file = BooleanVar(value=not parsed.nofile)
         Checkbutton(self, text='Write CSV file',
                     variable=self.write_file).grid(row=3, columnspan=2)
 
     def get_values(self):
+        print(self.write_file.get())
         return (self.name_entry.get(), self.path_entry.get(),
                 self.write_file.get())
 
@@ -225,10 +226,10 @@ class Plot(ttk.Frame):
         self.p = None
         self.ani = None
 
-    def generate_plot(self, func1, func2, func3):
-        address, delay, timeout = func1()
-        name, path, write = func2()
-        frequency, length = func3()
+    def generate_plot(self, ping_tuple, file_tuple, plot_tuple):
+        address, delay, timeout = ping_tuple
+        name, path, write = file_tuple
+        frequency, length = plot_tuple
 
         delay = float(delay)
         timeout = int(timeout)
