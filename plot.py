@@ -6,7 +6,7 @@ import os
 from tkinter import *
 from tkinter import ttk
 
-from log import plot_logger
+from log import plot_logger as logger
 
 try:
     import matplotlib
@@ -181,8 +181,8 @@ class Animate(_Plot):
     def get_pings(self, obj):
         """ Checks for None or appends to `self._PlotTable` """
         for val in obj:
-            if not self.nofile:
-                plot_logger.debug(val)
+            if not self.nofile and val is not None:
+                logger.debug(val)
                 self.core.write_csv(val)
 
             if val is None:
@@ -203,9 +203,9 @@ class Animate(_Plot):
         self.core = core
         self.nofile = core.nofile
         if not self.nofile:
-            plot_logger.info('write log')
+            logger.info('write log')
         else:
-            plot_logger.info('-sNF')
+            logger.info('-sNF')
         self.generator = core.ping_generator
 
 

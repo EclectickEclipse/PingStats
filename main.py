@@ -7,6 +7,8 @@ from tkinter import *
 from tkinter import ttk
 import matplotlib.animation as animation
 
+from log import main_logger as logger
+
 parser = argparse.ArgumentParser(
     description='%s. This program defines some basic ping statistic '
                 'visualizationmethods through Python\'s \'matplotlib\'.'
@@ -91,6 +93,7 @@ class Main(Tk):
     def __init__(self, *args, **kwargs):
         super(Main, self).__init__(*args, **kwargs)
         # tk.Tk.__init__(self, *args, **kwargs)
+        logger.debug('Main: %s %s' % (args, kwargs))
         container = ttk.Frame(self)
 
         container.pack(side="top", fill="both", expand=True)
@@ -106,16 +109,20 @@ class Main(Tk):
         self.show_settings()
 
     def show_settings(self):
+        logger.debug('Main: settings')
         self.frames[Settings].tkraise()
 
     def show_plot(self, ping, file, plot):
+        logger.debug('Main: pass args to generate_plot')
         self.frames[Plot].generate_plot(ping, file, plot)
+        logger.debug('Main: %s.tkraise()' % str(self.frames[Plot]))
         self.frames[Plot].tkraise()
 
 
 class Settings(ttk.Frame):
     def __init__(self, parent, controller):
         super(Settings, self).__init__(parent)
+        logger.debug('Settings: %s %s' % (parent, controller))
 
         # PING SETTINGS
         self.ping_settings = PingSettings(self)
@@ -141,6 +148,7 @@ class Settings(ttk.Frame):
 class PingSettings(ttk.Frame):
     def __init__(self, root, **kwargs):
         super(PingSettings, self).__init__(root, **kwargs)
+        logger.debug('PingSettings: %s %s' % (root, kwargs))
         Label(self, text='Ping Settings').grid(row=0, columnspan=2)
 
         Label(self, text='Address:').grid(row=1, column=0)
@@ -162,6 +170,9 @@ class PingSettings(ttk.Frame):
         self.timeout_entry.grid(row=3, column=1)
 
     def get_values(self):
+        logger.debug("PingSettings: %s %s %s" % (self.address_entry.get(),
+                                                 self.delay_entry.get(),
+                                                 self.timeout_entry.get()))
         return (self.address_entry.get(), self.delay_entry.get(),
                 self.timeout_entry.get())
 
@@ -169,6 +180,7 @@ class PingSettings(ttk.Frame):
 class FileSettings(ttk.Frame):
     def __init__(self, root, **kwargs):
         super(FileSettings, self).__init__(root, **kwargs)
+        logger.debug('FileSettings: %s %s' % (root, kwargs))
         Label(self, text='CSV File Settings').grid(row=0, columnspan=2)
 
         Label(self, text='File Name:').grid(row=1, column=0)
@@ -186,7 +198,9 @@ class FileSettings(ttk.Frame):
                     variable=self.write_file).grid(row=3, columnspan=2)
 
     def get_values(self):
-        print(self.write_file.get())
+        logger.debug('FileSettings: %s %s %s' % (self.name_entry.get(),
+                                                self.path_entry.get(),
+                                                self.write_file.get()))
         return (self.name_entry.get(), self.path_entry.get(),
                 self.write_file.get())
 
@@ -194,6 +208,7 @@ class FileSettings(ttk.Frame):
 class PlotSettings(ttk.Frame):
     def __init__(self, root, **kwargs):
         super(PlotSettings, self).__init__(root, **kwargs)
+        logger.debug('PlotSettings: %s %s' % (root, kwargs))
         Label(self, text='Plot Settings').grid(row=0, columnspan=2)
 
         Label(self, text='Plot refresh frequency, in milliseconds:').grid(
@@ -209,12 +224,15 @@ class PlotSettings(ttk.Frame):
         self.length_entry.grid(row=2, column=1)
 
     def get_values(self):
+        logger.debug('PlotSettings: %s %s' % (self.frequency_entry.get(),
+                                                 self.length_entry.get()))
         return self.frequency_entry.get(), self.length_entry.get()
 
 
 class Plot(ttk.Frame):
     def __init__(self, parent, controller):
         super(Plot, self).__init__(parent)
+        logger.debug('Plot: %s %s' % (parent, controller))
 
         button = Button(self, text='Stop ping and return to settings.',
                         command=lambda: self.destroy_and_return(controller))
@@ -227,6 +245,7 @@ class Plot(ttk.Frame):
         self.ani = None
 
     def generate_plot(self, ping_tuple, file_tuple, plot_tuple):
+        logger.debug('Plot: %s %s %s' % (ping_tuple, file_tuple, plot_tuple))
         address, delay, timeout = ping_tuple
         name, path, write = file_tuple
         frequency, length = plot_tuple
@@ -247,7 +266,9 @@ class Plot(ttk.Frame):
                                            interval=frequency)
 
     def destroy_and_return(self, controller):
+        logger.debug('Plot: destroy')
         self.p.destroy()
+        logger.debug('Plot: show')
         controller.show_settings()
 
 
@@ -258,6 +279,7 @@ elif parsed.address is not None:
 
     if parsed.showliveplot:
         root = Tk()
+        logger.debug('showliveplot: %s' % root)
         p = plot.Animate(root,
                          core.Core(parsed.address, parsed.path, parsed.name,
                                    parsed.nofile, not parsed.quiet,
@@ -265,10 +287,14 @@ elif parsed.address is not None:
                          table_length=parsed.tablelength
                          )
 
+        logger.debug('showliveplot: plot.Animate = %s' % str(p))
+
         p.grid(row=1, column=0)
 
         ani = animation.FuncAnimation(p.fig, p.animate,
                                       interval=parsed.refreshfrequency)
+
+        logger.debug('showliveplot: ani = %s' % str(ani))
 
         button = Button(root, text='Quit', command=_quit)
         button.grid(row=0, columnspan=2)
@@ -279,6 +305,8 @@ elif parsed.address is not None:
     elif parsed.cli:
         c = core.Core(parsed.address, parsed.path, parsed.name,
                       parsed.nofile, not parsed.quiet, timeout=parsed.timeout)
+
+        logger.debug('cli: core = %s' % str(c))
 
         for return_data in c.ping_generator:
             if not c.nofile:

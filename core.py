@@ -127,6 +127,7 @@ class Core:
         self.nofile = nofile
         if not self.nofile:
             self.built_file = buildfile(self.file_path, self.file_name)
+            logger.info('Log file at %s' % self.built_file.name)
             self.cwriter = csv.writer(self.built_file)
 
     def yield_generator(self):
