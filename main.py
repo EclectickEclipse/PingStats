@@ -129,35 +129,34 @@ class Settings(ttk.Frame):
         self.plot_settings = PlotSettings(self)
         self.plot_settings.pack(pady=10)
 
-        self.run = Button(self, text='Start ping and display plot',
-                          command=lambda: controller.show_plot(
-                              self.ping_settings.get_values(),
-                              self.file_settings.get_values(),
-                              self.plot_settings.get_values()
-                          ))
+        self.run = ttk.Button(self, text='Start ping and display plot',
+                              command=lambda: controller.show_plot(
+                                      self.ping_settings.get_values(),
+                                      self.file_settings.get_values(),
+                                      self.plot_settings.get_values()))
         self.run.pack(side=BOTTOM)
 
 
 class PingSettings(ttk.Frame):
     def __init__(self, root, **kwargs):
         super(PingSettings, self).__init__(root, **kwargs)
-        Label(self, text='Ping Settings').grid(row=0, columnspan=2)
+        ttk.Label(self, text='Ping Settings').grid(row=0, columnspan=2)
 
-        Label(self, text='Address:').grid(row=1, column=0)
+        ttk.Label(self, text='Address:').grid(row=1, column=0)
         if parsed.address is not None:
-            self.address_entry = Entry(self)
+            self.address_entry = ttk.Entry(self)
             self.address_entry.insert(0, parsed.address)
         else:
-            self.address_entry = Entry(self)
+            self.address_entry = ttk.Entry(self)
         self.address_entry.grid(row=1, column=1)
 
-        Label(self, text='Delay between pings:').grid(row=2, column=0)
-        self.delay_entry = Entry(self)
+        ttk.Label(self, text='Delay between pings:').grid(row=2, column=0)
+        self.delay_entry = ttk.Entry(self)
         self.delay_entry.insert(0, str(parsed.delay))
         self.delay_entry.grid(row=2, column=1)
 
-        Label(self, text='Timeout:').grid(row=3, column=0)
-        self.timeout_entry = Entry(self)
+        ttk.Label(self, text='Timeout:').grid(row=3, column=0)
+        self.timeout_entry = ttk.Entry(self)
         self.timeout_entry.insert(0, str(parsed.timeout))
         self.timeout_entry.grid(row=3, column=1)
 
@@ -169,21 +168,21 @@ class PingSettings(ttk.Frame):
 class FileSettings(ttk.Frame):
     def __init__(self, root, **kwargs):
         super(FileSettings, self).__init__(root, **kwargs)
-        Label(self, text='CSV File Settings').grid(row=0, columnspan=2)
+        ttk.Label(self, text='CSV File Settings').grid(row=0, columnspan=2)
 
-        Label(self, text='File Name:').grid(row=1, column=0)
-        self.name_entry = Entry(self)
+        ttk.Label(self, text='File Name:').grid(row=1, column=0)
+        self.name_entry = ttk.Entry(self)
         self.name_entry.insert(0, parsed.name)
         self.name_entry.grid(row=1, column=1)
 
-        Label(self, text='File Path:').grid(row=2, column=0)
-        self.path_entry = Entry(self)
+        ttk.Label(self, text='File Path:').grid(row=2, column=0)
+        self.path_entry = ttk.Entry(self)
         self.path_entry.insert(0, parsed.path)
         self.path_entry.grid(row=2, column=1)
 
         self.write_file = BooleanVar(value=not parsed.nofile)
-        Checkbutton(self, text='Write CSV file',
-                    variable=self.write_file).grid(row=3, columnspan=2)
+        ttk.Checkbutton(self, text='Write CSV file',
+                        variable=self.write_file).grid(row=3, columnspan=2)
 
     def get_values(self):
         print(self.write_file.get())
@@ -194,17 +193,18 @@ class FileSettings(ttk.Frame):
 class PlotSettings(ttk.Frame):
     def __init__(self, root, **kwargs):
         super(PlotSettings, self).__init__(root, **kwargs)
-        Label(self, text='Plot Settings').grid(row=0, columnspan=2)
+        ttk.Label(self, text='Plot Settings').grid(row=0, columnspan=2)
 
-        Label(self, text='Plot refresh frequency, in milliseconds:').grid(
+        ttk.Label(self, text='Plot refresh frequency, in milliseconds:').grid(
             row=1, column=0
         )
-        self.frequency_entry = Entry(self)
+        self.frequency_entry = ttk.Entry(self)
         self.frequency_entry.insert(0, str(parsed.refreshfrequency))
         self.frequency_entry.grid(row=1, column=1)
 
-        Label(self, text='Number of points to display:').grid(row=2, column=0)
-        self.length_entry = Entry(self)
+        ttk.Label(self, text='Number of points to display:').grid(row=2,
+                                                                  column=0)
+        self.length_entry = ttk.Entry(self)
         self.length_entry.insert(0, str(parsed.tablelength))
         self.length_entry.grid(row=2, column=1)
 
@@ -216,8 +216,8 @@ class Plot(ttk.Frame):
     def __init__(self, parent, controller):
         super(Plot, self).__init__(parent)
 
-        button = Button(self, text='Stop ping and return to settings.',
-                        command=lambda: self.destroy_and_return(controller))
+        button = ttk.Button(self, text='Stop ping and return to settings.',
+                            command=lambda: self.destroy_and_return(controller))
         button.pack(side=BOTTOM)
 
         self.plot_frame = ttk.Frame(self)
@@ -270,7 +270,7 @@ elif parsed.address is not None:
         ani = animation.FuncAnimation(p.fig, p.animate,
                                       interval=parsed.refreshfrequency)
 
-        button = Button(root, text='Quit', command=_quit)
+        button = ttk.Button(root, text='Quit', command=_quit)
         button.grid(row=0, columnspan=2)
 
         root.mainloop()
