@@ -6,25 +6,11 @@ Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of raw sockets
 
 It can be used after the ping data has been collected without `sudo` to display a plot of the CSV data gathered (the `-pf` and `-gi` arguments).
 
-## Installation of python-ping
+# Installation
 
-Due to [python-ping's](https://github.com/l4m3rx/python-ping) use of a `-` character in the package title, you need to install the software without the `-` included in the folder title. 
+The software includes an install script, which should run fine under any \*Nix environment and should be fine with Git Bash on Windows environments.
 
-This repository looks for pythonping as a folder within the software's parent directory to load [python-ping](https://github.com/l4m3rx/python-ping). For example:
-
-```
--PingStats
-|-pythonping/
-|-pingstats repo files
-```
-
-This can be achieved by running the following command from within the repository's local directory:
-
-```sh
-git clone https://github.com/l4m3rx/python-ping.git pythonping
-```
-
-This may be fixed soon, due to an [ongoing discussion on repo naming](https://github.com/l4m3rx/python-ping/issues/23)
+> Note, this script requires access to the `pip` and `virtualenv` softwares for `python3`.
 
 ---
 
