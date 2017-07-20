@@ -1,0 +1,3 @@
+[submodule "pythonping"]
+	path = pythonping
+	url = https://github.com/l4m3rx/python-ping
